@@ -42,7 +42,6 @@
 ├── docs/                   # 文档目录
 │   └── superpowers/specs/ # 设计文档
 ├── Dockerfile              # Docker 配置
-├── db.json                 # 示例数据（开发用）
 └── README.md               # 项目说明文档
 ```
 
@@ -130,7 +129,7 @@ npm start
 docker build -t kanban-board .
 
 # 运行容器
-docker run -p 80:80 kanban-board
+docker run --name kanban -p 80:80 kanban-board
 ```
 
 ## API 端点

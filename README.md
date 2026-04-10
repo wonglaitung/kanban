@@ -61,7 +61,7 @@
 
 2. **运行容器**
    ```bash
-   docker run -p 80:80 kanban-board
+   docker run --name kanban -p 80:80 kanban-board
    ```
 
 3. **访问应用**
@@ -195,7 +195,8 @@ interface Settings {
 
 - 令牌保护为简单防护机制，适合小型团队内部使用
 - 建议部署在内部网络或使用 HTTPS
-- 生产环境请修改默认令牌
+- 默认令牌为 `123456`，生产环境请修改
+- 登录后可通过界面右上角的"修改令牌"按钮更改令牌
 
 ## 许可证
 
