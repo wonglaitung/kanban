@@ -1,5 +1,8 @@
 # AGENTS.md - 项目上下文文件
 
+> **  经验教训**：所有关键警告和最佳实践请参阅 [lessons.md](lessons.md)
+> **🔧 编程规范**：规范化开发流程、系统设计决策、测试验证要求请遵守 [docs/programmer_skill.md](docs/programmer_skill.md)
+
 ## 项目概述
 
 这是一个**看板系统(Kanban Board)**项目，为小型团队（1-5人）提供简单实用的任务管理系统。
