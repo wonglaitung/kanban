@@ -106,6 +106,26 @@ body {
 .header-right {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.change-password-btn {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(0, 153, 255, 0.1));
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  color: var(--neon-cyan);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.change-password-btn:hover {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(0, 153, 255, 0.2));
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
 }
 
 .search-box {
