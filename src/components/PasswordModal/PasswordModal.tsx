@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { simpleHash } from '../../services/api';
+import { useState, useEffect } from 'react';
 import './PasswordModal.css';
 
 interface PasswordModalProps {
   isSetup: boolean;
-  storedHash: string;
+  storedPassword: string;
   onSuccess: () => void;
-  onSetPassword: (hash: string) => Promise<void>;
+  onSetPassword: (password: string) => Promise<void>;
 }
 
-export function PasswordModal({ isSetup, storedHash, onSuccess, onSetPassword }: PasswordModalProps) {
+export function PasswordModal({ isSetup, storedPassword, onSuccess, onSetPassword }: PasswordModalProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,10 +16,10 @@ export function PasswordModal({ isSetup, storedHash, onSuccess, onSetPassword }:
 
   useEffect(() => {
     // If no password is set yet, show setup mode
-    if (isSetup && !storedHash) {
+    if (isSetup && !storedPassword) {
       return;
     }
-  }, [isSetup, storedHash]);
+  }, [isSetup, storedPassword]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +32,7 @@ export function PasswordModal({ isSetup, storedHash, onSuccess, onSetPassword }:
 
     setLoading(true);
     try {
-      if (isSetup && !storedHash) {
+      if (isSetup && !storedPassword) {
         // Setup new password
         if (!confirmPassword.trim()) {
           setError('请确认密码');
@@ -45,11 +44,11 @@ export function PasswordModal({ isSetup, storedHash, onSuccess, onSetPassword }:
           setLoading(false);
           return;
         }
-        await onSetPassword(simpleHash(password));
+        await onSetPassword(password);
         onSuccess();
       } else {
         // Verify password
-        if (simpleHash(password) === storedHash) {
+        if (password === storedPassword) {
           onSuccess();
         } else {
           setError('密码错误');
@@ -63,7 +62,7 @@ export function PasswordModal({ isSetup, storedHash, onSuccess, onSetPassword }:
     }
   };
 
-  const isSetupMode = isSetup && !storedHash;
+  const isSetupMode = isSetup && !storedPassword;
 
   return (
     <div className="modal-overlay password-overlay">

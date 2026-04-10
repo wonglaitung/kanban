@@ -13,7 +13,7 @@ import './App.css';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isPasswordSetup, setIsPasswordSetup] = useState(false);
-  const [storedHash, setStoredHash] = useState('');
+  const [storedPassword, setStoredPassword] = useState('');
   const [showPasswordModal, setShowPasswordModal] = useState(true);
 
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -45,8 +45,8 @@ function App() {
     const checkPassword = async () => {
       try {
         const settings = await getSettings();
-        const currentHash = settings.password || '';
-        setStoredHash(currentHash);
+        const currentPassword = settings.password || '';
+        setStoredPassword(currentPassword);
         setIsPasswordSetup(true);
 
         // Check if already authenticated in this session
@@ -54,8 +54,8 @@ function App() {
         const storedAuth = sessionStorage.getItem(authKey);
         if (storedAuth) {
           const authData = JSON.parse(storedAuth);
-          // Verify the stored hash matches current password hash
-          if (authData.hash === currentHash) {
+          // Verify the stored password matches current password
+          if (authData.password === currentPassword) {
             setIsAuthenticated(true);
             setShowPasswordModal(false);
           } else {
@@ -71,9 +71,9 @@ function App() {
     checkPassword();
   }, []);
 
-  const handleSetPassword = async (hash: string) => {
-    await updateSettings({ password: hash });
-    setStoredHash(hash);
+  const handleSetPassword = async (password: string) => {
+    await updateSettings({ password });
+    setStoredPassword(password);
   };
 
   const handlePasswordSuccess = () => {
@@ -81,7 +81,7 @@ function App() {
     setShowPasswordModal(false);
     // Store auth state in sessionStorage
     const authKey = 'kanban_auth';
-    sessionStorage.setItem(authKey, JSON.stringify({ hash: storedHash, timestamp: Date.now() }));
+    sessionStorage.setItem(authKey, JSON.stringify({ password: storedPassword, timestamp: Date.now() }));
   };
 
   // Task handlers
@@ -186,7 +186,7 @@ function App() {
     return (
       <PasswordModal
         isSetup={isPasswordSetup}
-        storedHash={storedHash}
+        storedPassword={storedPassword}
         onSuccess={handlePasswordSuccess}
         onSetPassword={handleSetPassword}
       />
