@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap');
-
 :root {
   --neon-cyan: #00f0ff;
   --neon-blue: #0099ff;
@@ -30,19 +28,19 @@ html, body, #root {
 
 body {
   min-height: 100vh;
-  font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
   background: var(--dark-bg);
   color: var(--text-primary);
   overflow-x: hidden;
 }
 
 button {
-  font-family: 'Rajdhani', inherit;
+  font-family: inherit;
   font-weight: 600;
 }
 
 input, textarea, select {
-  font-family: 'Rajdhani', inherit;
+  font-family: inherit;
 }
 
 /* Animated grid background */

@@ -160,7 +160,7 @@ body {
 }
 
 .app-header h1 {
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'SF Mono', Monaco, monospace;
   font-size: 28px;
   font-weight: 700;
   color: var(--neon-cyan);
