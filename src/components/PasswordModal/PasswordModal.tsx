@@ -6,9 +6,10 @@ interface PasswordModalProps {
   storedPassword: string;
   onSuccess: (password: string) => void;
   onSetPassword: (password: string) => Promise<void>;
+  onClose?: () => void;
 }
 
-export function PasswordModal({ isSetup, storedPassword, onSuccess, onSetPassword }: PasswordModalProps) {
+export function PasswordModal({ isSetup, storedPassword, onSuccess, onSetPassword, onClose }: PasswordModalProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -67,6 +68,11 @@ export function PasswordModal({ isSetup, storedPassword, onSuccess, onSetPasswor
   return (
     <div className="modal-overlay password-overlay">
       <div className="modal-content password-modal" onClick={e => e.stopPropagation()}>
+        {onClose && (
+          <button className="modal-close-btn" onClick={onClose} title="关闭">
+            ×
+          </button>
+        )}
         <div className="password-icon">
           {isSetupMode ? '🔐' : '🔓'}
         </div>

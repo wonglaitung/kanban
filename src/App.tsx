@@ -304,6 +304,7 @@ function App() {
             alert('密码修改成功！');
           }}
           onSetPassword={handleSetPassword}
+          onClose={() => setShowChangePassword(false)}
         />
       )}
     </div>
