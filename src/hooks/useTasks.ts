@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Task } from '../types';
-import { getTasks, createTask, updateTask, deleteTask as deleteTaskApi } from '../services/api';
+import { getTasks, createTask, updateTask, deleteTask as deleteTaskApi, duplicateTask as duplicateTaskApi } from '../services/api';
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -71,6 +71,18 @@ export function useTasks() {
     }
   }, []);
 
+  const duplicateTask = useCallback(async (id: string) => {
+    try {
+      const newTask = await duplicateTaskApi(id);
+      setTasks(prev => [...prev, newTask].sort((a, b) => a.order - b.order));
+      return newTask;
+    } catch (err) {
+      setError('复制任务失败');
+      console.error(err);
+      throw err;
+    }
+  }, []);
+
   const moveTask = useCallback(async (taskId: string, targetColumnId: string, newOrder: number) => {
     try {
       const updated = await updateTask(taskId, {
@@ -122,6 +134,7 @@ export function useTasks() {
     addTask,
     editTask,
     removeTask,
+    duplicateTask,
     moveTask,
     reorderTasks,
     refreshTasks: fetchTasks,

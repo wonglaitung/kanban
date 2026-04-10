@@ -189,6 +189,54 @@ app.delete('/api/tasks/:id', (req, res) => {
   }
 });
 
+// Duplicate task
+app.post('/api/tasks/:id/duplicate', (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+    
+    if (!existing) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // Get max order in the same column
+    const maxOrderResult = db.prepare('SELECT MAX("order") as maxOrder FROM tasks WHERE columnId = ?').get(existing.columnId);
+    const newOrder = (maxOrderResult.maxOrder || 0) + 1;
+
+    const newId = 'task-' + Date.now();
+    const now = new Date().toISOString();
+    
+    const stmt = db.prepare(`
+      INSERT INTO tasks (id, title, description, assignee, priority, dueDate, tags, columnId, "order", progress, progressText, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    // Add " (副本)" to the title to indicate it's a duplicate
+    const newTitle = existing.title + ' (副本)';
+    
+    stmt.run(
+      newId,
+      newTitle,
+      existing.description,
+      existing.assignee,
+      existing.priority,
+      existing.dueDate,
+      existing.tags,
+      existing.columnId,
+      newOrder,
+      existing.progress,
+      existing.progressText,
+      now,
+      now
+    );
+    
+    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(newId);
+    res.status(201).json(parseTask(task));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // === Settings API ===
 
 app.get('/api/settings', (req, res) => {

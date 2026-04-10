@@ -12,6 +12,7 @@ interface BoardProps {
   onAddTask: (columnId: string) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
+  onDuplicateTask: (taskId: string) => void;
   onEditColumn: (column: ColumnType) => void;
   onDeleteColumn: (columnId: string) => void;
   onAddColumn: () => void;
@@ -26,6 +27,7 @@ export function Board({
   onAddTask,
   onEditTask,
   onDeleteTask,
+  onDuplicateTask,
   onEditColumn,
   onDeleteColumn,
   onAddColumn,
@@ -173,6 +175,7 @@ export function Board({
               onAddTask={onAddTask}
               onEditTask={onEditTask}
               onDeleteTask={onDeleteTask}
+              onDuplicateTask={onDuplicateTask}
               onEditColumn={onEditColumn}
               onDeleteColumn={onDeleteColumn}
               isOver={overColumnId === column.id}
@@ -192,6 +195,7 @@ export function Board({
                 task={activeTask}
                 onEdit={() => {}}
                 onDelete={() => {}}
+                onDuplicate={() => {}}
                 isDragging
               />
             </div>
