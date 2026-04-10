@@ -1,9 +1,14 @@
-FROM node:18-alpine
+FROM node:18-slim
 
 WORKDIR /app
 
 # Install build dependencies for better-sqlite3 and sqlite3 CLI
-RUN apk add --no-cache python3 make g++ sqlite
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    make \
+    g++ \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy server package files
 COPY server/package.json ./server/
@@ -12,6 +17,9 @@ RUN npm install
 
 # Copy server code
 COPY server/ ./
+
+# Rebuild native modules for this Node version
+RUN npm rebuild better-sqlite3
 
 # Build frontend
 WORKDIR /app
