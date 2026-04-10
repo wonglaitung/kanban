@@ -76,12 +76,12 @@ function App() {
     setStoredPassword(password);
   };
 
-  const handlePasswordSuccess = () => {
+  const handlePasswordSuccess = (password: string) => {
     setIsAuthenticated(true);
     setShowPasswordModal(false);
     // Store auth state in sessionStorage
     const authKey = 'kanban_auth';
-    sessionStorage.setItem(authKey, JSON.stringify({ password: storedPassword, timestamp: Date.now() }));
+    sessionStorage.setItem(authKey, JSON.stringify({ password, timestamp: Date.now() }));
   };
 
   // Task handlers
