@@ -1,0 +1,40 @@
+export interface Column {
+  id: string;
+  title: string;
+  order: number;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  assignee: string;
+  priority: 'high' | 'medium' | 'low';
+  dueDate: string;
+  tags: string[];
+  columnId: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Settings {
+  password: string;
+}
+
+export interface DragDropContext {
+  activeTask: Task | null;
+  overColumnId: string | null;
+}
+
+export const PRIORITY_COLORS = {
+  high: '#ef4444',
+  medium: '#f59e0b',
+  low: '#10b981',
+} as const;
+
+export const PRIORITY_LABELS = {
+  high: '高',
+  medium: '中',
+  low: '低',
+} as const;

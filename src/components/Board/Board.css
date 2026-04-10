@@ -1,0 +1,73 @@
+.board-container {
+  flex: 1;
+  overflow-x: auto;
+  padding: 20px;
+}
+
+.board {
+  display: flex;
+  gap: 24px;
+  min-height: 100%;
+}
+
+.board::-webkit-scrollbar {
+  height: 8px;
+}
+
+.board::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.board::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-blue));
+  border-radius: 4px;
+}
+
+.add-column-btn {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.1) 0%, rgba(0, 153, 255, 0.1) 100%);
+  border: 2px dashed rgba(0, 240, 255, 0.3);
+  border-radius: 12px;
+  min-width: 280px;
+  height: 120px;
+  color: var(--neon-cyan);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.add-column-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.add-column-btn:hover {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.15) 0%, rgba(0, 153, 255, 0.15) 100%);
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-2px);
+}
+
+.add-column-btn:hover::before {
+  left: 100%;
+}
+
+.drag-overlay-card {
+  transform: rotate(3deg) scale(1.02);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.4), 0 0 60px rgba(0, 153, 255, 0.2);
+  cursor: grabbing;
+  border: 1px solid var(--neon-cyan);
+}
