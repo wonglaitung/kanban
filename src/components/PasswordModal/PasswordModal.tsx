@@ -4,7 +4,7 @@ import './PasswordModal.css';
 interface PasswordModalProps {
   isSetup: boolean;
   storedPassword: string;
-  onSuccess: () => void;
+  onSuccess: (password: string) => void;
   onSetPassword: (password: string) => Promise<void>;
 }
 
@@ -45,11 +45,11 @@ export function PasswordModal({ isSetup, storedPassword, onSuccess, onSetPasswor
           return;
         }
         await onSetPassword(password);
-        onSuccess();
+        onSuccess(password);
       } else {
         // Verify password
         if (password === storedPassword) {
-          onSuccess();
+          onSuccess(password);
         } else {
           setError('密码错误');
         }
