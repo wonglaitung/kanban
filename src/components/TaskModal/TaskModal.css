@@ -76,7 +76,7 @@
 
 .modal-header h2 {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'SF Mono', Monaco, monospace;
   font-size: 18px;
   font-weight: 600;
   color: var(--neon-cyan);
@@ -319,13 +319,13 @@
   width: 80px;
   text-align: center;
   padding: 10px !important;
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'SF Mono', Monaco, monospace;
   font-weight: 600;
 }
 
 .progress-unit {
   color: var(--neon-cyan);
   font-weight: 700;
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'SF Mono', Monaco, monospace;
   font-size: 14px;
 }

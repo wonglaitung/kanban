@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { DndContext, DragOverlay, closestCorners, PointerSensor, KeyboardSensor, useSensor, useSensors, DragStartEvent, DragEndEvent, DragOverEvent } from '@dnd-kit/core';
 import type { Column as ColumnType, Task } from '../../types';
 import { Column } from '../Column';
@@ -29,7 +29,7 @@ export function Board({
   onEditColumn,
   onDeleteColumn,
   onAddColumn,
-  onTaskMove,
+  onTaskMove: _onTaskMove,
   onReorder,
 }: BoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);

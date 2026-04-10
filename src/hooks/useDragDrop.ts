@@ -20,7 +20,7 @@ interface UseDragDropProps {
   onReorder: (updates: Array<{ id: string; order: number; columnId?: string }>) => Promise<void>;
 }
 
-export function useDragDrop({ tasks, columns, onTaskMove, onReorder }: UseDragDropProps) {
+export function useDragDrop({ tasks, columns, onTaskMove: _onTaskMove, onReorder }: UseDragDropProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {

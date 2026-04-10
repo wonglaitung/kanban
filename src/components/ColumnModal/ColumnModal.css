@@ -30,7 +30,7 @@
   color: var(--text-primary);
   transition: all 0.3s ease;
   box-sizing: border-box;
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'SF Mono', Monaco, monospace;
   letter-spacing: 1px;
 }
 
@@ -42,5 +42,5 @@
 
 .column-modal .form-group input::placeholder {
   color: var(--text-muted);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: inherit;
 }
