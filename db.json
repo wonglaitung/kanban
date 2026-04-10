@@ -1,0 +1,75 @@
+{
+  "columns": [
+    {
+      "id": "col-1",
+      "title": "待办",
+      "order": 0
+    },
+    {
+      "id": "col-2",
+      "title": "进行中",
+      "order": 1
+    },
+    {
+      "id": "col-3",
+      "title": "审核",
+      "order": 2
+    },
+    {
+      "id": "col-4",
+      "title": "已完成",
+      "order": 3
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-1",
+      "title": "设计数据库架构",
+      "description": "完成项目数据库的表结构设计",
+      "assignee": "张三",
+      "priority": "high",
+      "dueDate": "2026-04-15",
+      "tags": [
+        "设计"
+      ],
+      "columnId": "col-1",
+      "order": 0,
+      "createdAt": "2026-04-10T06:44:27.284Z",
+      "updatedAt": "2026-04-10T07:51:05.999Z"
+    },
+    {
+      "id": "task-2",
+      "title": "开发用户认证模块",
+      "description": "实现登录、注册和密码重置功能",
+      "assignee": "李四",
+      "priority": "medium",
+      "dueDate": "2026-04-18",
+      "tags": [
+        "开发",
+        "安全"
+      ],
+      "columnId": "col-2",
+      "order": 0,
+      "createdAt": "2026-04-10T06:44:27.283Z",
+      "updatedAt": "2026-04-10T07:51:05.998Z"
+    },
+    {
+      "id": "task-3",
+      "title": "编写单元测试",
+      "description": "为核心业务逻辑编写单元测试用例",
+      "assignee": "王五",
+      "priority": "low",
+      "dueDate": "2026-04-20",
+      "tags": [
+        "测试"
+      ],
+      "columnId": "col-3",
+      "order": 0,
+      "createdAt": "2026-04-10T12:00:00Z",
+      "updatedAt": "2026-04-10T07:33:27.996Z"
+    }
+  ],
+  "settings": {
+    "password": "-575b1510"
+  }
+}

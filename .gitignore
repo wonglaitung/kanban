@@ -26,9 +26,6 @@ Thumbs.db
 *.log
 nohup.out
 
-# Database
-db.json
-
 # Cache
 .cache/
 *.tsbuildinfo
