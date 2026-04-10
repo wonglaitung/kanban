@@ -135,6 +135,23 @@
   box-sizing: border-box;
 }
 
+/* Special styles for date input */
+.form-group input[type="date"] {
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.form-group input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(0.8);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.form-group input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {

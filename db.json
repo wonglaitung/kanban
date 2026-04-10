@@ -35,7 +35,7 @@
       "columnId": "col-1",
       "order": 0,
       "createdAt": "2026-04-10T06:44:27.284Z",
-      "updatedAt": "2026-04-10T07:51:05.999Z"
+      "updatedAt": "2026-04-10T08:05:46.450Z"
     },
     {
       "id": "task-2",
@@ -43,7 +43,7 @@
       "description": "实现登录、注册和密码重置功能",
       "assignee": "李四",
       "priority": "medium",
-      "dueDate": "2026-04-18",
+      "dueDate": "2026-04-15",
       "tags": [
         "开发",
         "安全"
@@ -51,7 +51,7 @@
       "columnId": "col-2",
       "order": 0,
       "createdAt": "2026-04-10T06:44:27.283Z",
-      "updatedAt": "2026-04-10T07:51:05.998Z"
+      "updatedAt": "2026-04-10T08:05:46.450Z"
     },
     {
       "id": "task-3",
@@ -66,7 +66,20 @@
       "columnId": "col-3",
       "order": 0,
       "createdAt": "2026-04-10T12:00:00Z",
-      "updatedAt": "2026-04-10T07:33:27.996Z"
+      "updatedAt": "2026-04-10T08:04:00.250Z"
+    },
+    {
+      "title": "task1",
+      "description": "abcd",
+      "assignee": "abcd",
+      "priority": "high",
+      "dueDate": "2026-04-30",
+      "tags": [],
+      "columnId": "col-1",
+      "order": 1,
+      "createdAt": "2026-04-10T08:05:39.396Z",
+      "updatedAt": "2026-04-10T08:05:46.451Z",
+      "id": "MfDz6JM"
     }
   ],
   "settings": {
