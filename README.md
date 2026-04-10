@@ -61,12 +61,48 @@
 
 2. **运行容器**
    ```bash
+   # 基本运行（数据存储在容器内）
    docker run --name kanban -p 80:80 kanban-board
+
+   # 数据持久化到宿主机（推荐）
+   docker run --name kanban -p 80:80 \
+     -v /path/to/kanban-data:/app/server/data \
+     kanban-board
    ```
 
+   参数说明：
+   - `-p 80:80` - 端口映射，格式为 `宿主机端口:容器端口`
+   - `-v /path/to/kanban-data:/app/server/data` - 数据卷挂载，将 SQLite 数据库存储到宿主机
+
 3. **访问应用**
-   
+
    打开浏览器访问 `http://localhost`
+
+### 数据持久化
+
+为了防止容器删除后数据丢失，建议将数据目录挂载到宿主机：
+
+```bash
+# 创建数据目录
+mkdir -p ~/kanban-data
+
+# 运行容器并挂载数据目录
+docker run --name kanban -p 80:80 \
+  -v ~/kanban-data:/app/server/data \
+  kanban-board
+```
+
+数据备份：
+```bash
+# 备份数据库文件
+cp ~/kanban-data/kanban.db ~/kanban-backup-$(date +%Y%m%d).db
+```
+
+数据恢复：
+```bash
+# 将备份文件复制到数据目录
+cp ~/kanban-backup-20240101.db ~/kanban-data/kanban.db
+```
 
 ## 项目结构
 
@@ -185,11 +221,10 @@ interface Settings {
 - `npm run preview` - 预览生产构建
 - `npm run lint` - 运行代码检查
 
-## 数据持久化
+## 数据存储位置
 
-- 开发环境：数据存储在 `server/data/kanban.db` SQLite 文件
-- Docker 环境：数据存储在容器内的 `/app/server/data/kanban.db`
-- 建议定期备份 SQLite 数据库文件
+- 开发环境：`server/data/kanban.db`
+- Docker 环境：使用数据卷挂载到宿主机（参见上方说明）
 
 ## 安全说明
 
