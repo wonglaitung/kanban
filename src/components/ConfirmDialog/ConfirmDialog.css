@@ -39,7 +39,7 @@
 
 .confirm-dialog h3 {
   margin: 0 0 16px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'SF Mono', Monaco, monospace;
   font-size: 18px;
   font-weight: 600;
   color: var(--neon-pink);

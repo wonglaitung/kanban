@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Board } from './components/Board';
 import { TaskModal } from './components/TaskModal';
 import { ColumnModal } from './components/ColumnModal';
@@ -26,7 +26,7 @@ function App() {
   const [filterQuery, setFilterQuery] = useState('');
 
   const { columns, loading: columnsLoading, addColumn, editColumn, removeColumn } = useColumns();
-  const { tasks, loading: tasksLoading, addTask, editTask, removeTask, reorderTasks, getTasksByColumn } = useTasks();
+  const { tasks, loading: tasksLoading, addTask, editTask, removeTask, reorderTasks } = useTasks();
 
   // Filter tasks based on search query
   const filteredTasks = useMemo(() => {

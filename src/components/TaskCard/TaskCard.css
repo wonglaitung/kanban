@@ -115,7 +115,7 @@
   border-radius: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'SF Mono', Monaco, monospace;
   position: relative;
   overflow: hidden;
 }
@@ -172,7 +172,7 @@
   font-size: 14px;
   font-weight: 700;
   color: var(--neon-cyan);
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'SF Mono', Monaco, monospace;
 }
 
 .task-progress-bar {
@@ -209,7 +209,7 @@
 .task-due-date {
   font-size: 11px;
   color: var(--text-muted);
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'SF Mono', Monaco, monospace;
 }
 
 .task-due-date::before {
