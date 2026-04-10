@@ -11,6 +11,7 @@ interface ColumnProps {
   onAddTask: (columnId: string) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
+  onDuplicateTask: (taskId: string) => void;
   onEditColumn: (column: ColumnType) => void;
   onDeleteColumn: (columnId: string) => void;
   isOver?: boolean;
@@ -23,6 +24,7 @@ export function Column({
   onAddTask,
   onEditTask,
   onDeleteTask,
+  onDuplicateTask,
   onEditColumn,
   onDeleteColumn,
   isOver,
@@ -104,6 +106,7 @@ export function Column({
               task={task}
               onEdit={onEditTask}
               onDelete={onDeleteTask}
+              onDuplicate={onDuplicateTask}
             />
           ))}
         </SortableContext>

@@ -27,7 +27,7 @@ function App() {
   const [showChangeToken, setShowChangeToken] = useState(false);
 
   const { columns, loading: columnsLoading, addColumn, editColumn, removeColumn } = useColumns();
-  const { tasks, loading: tasksLoading, addTask, editTask, removeTask, reorderTasks } = useTasks();
+  const { tasks, loading: tasksLoading, addTask, editTask, removeTask, duplicateTask, reorderTasks } = useTasks();
 
   // Filter tasks based on search query
   const filteredTasks = useMemo(() => {
@@ -102,6 +102,15 @@ function App() {
     setDeleteTarget({ type: 'task', id: taskId });
     setShowDeleteConfirm(true);
   }, []);
+
+  const handleDuplicateTask = useCallback(async (taskId: string) => {
+    try {
+      await duplicateTask(taskId);
+    } catch (error) {
+      console.error('Failed to duplicate task:', error);
+      alert('复制任务失败，请重试');
+    }
+  }, [duplicateTask]);
 
   const handleConfirmDeleteTask = async () => {
     if (deleteTarget?.type === 'task') {
@@ -241,6 +250,7 @@ function App() {
           onAddTask={handleAddTask}
           onEditTask={handleEditTask}
           onDeleteTask={handleDeleteTask}
+          onDuplicateTask={handleDuplicateTask}
           onEditColumn={handleEditColumn}
           onDeleteColumn={handleDeleteColumn}
           onAddColumn={handleAddColumn}

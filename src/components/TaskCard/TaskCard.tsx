@@ -9,6 +9,7 @@ interface TaskCardProps {
   task: Task;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
+  onDuplicate: (taskId: string) => void;
   isDragging?: boolean;
 }
 
@@ -28,7 +29,7 @@ function formatUpdateTime(dateString: string): string {
   return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
 }
 
-export function TaskCard({ task, onEdit, onDelete, isDragging: _isDragging }: TaskCardProps) {
+export function TaskCard({ task, onEdit, onDelete, onDuplicate, isDragging: _isDragging }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -55,16 +56,28 @@ export function TaskCard({ task, onEdit, onDelete, isDragging: _isDragging }: Ta
     >
       <div className="task-card-header" {...attributes} {...listeners}>
         <h4 className="task-title">{task.title}</h4>
-        <button
-          className="delete-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(task.id);
-          }}
-          title="删除任务"
-        >
-          ×
-        </button>
+        <div className="task-card-actions">
+          <button
+            className="duplicate-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate(task.id);
+            }}
+            title="复制任务"
+          >
+            📋
+          </button>
+          <button
+            className="delete-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(task.id);
+            }}
+            title="删除任务"
+          >
+            ×
+          </button>
+        </div>
       </div>
       
       {task.description && (

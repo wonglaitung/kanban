@@ -61,6 +61,11 @@ export const deleteTask = async (id: string): Promise<void> => {
   await api.delete(`/tasks/${id}`);
 };
 
+export const duplicateTask = async (id: string): Promise<Task> => {
+  const response = await api.post<Task>(`/tasks/${id}/duplicate`);
+  return response.data;
+};
+
 // Batch update tasks
 export const batchUpdateTasks = async (updates: Array<{ id: string; order: number; columnId?: string }>): Promise<Task[]> => {
   const response = await api.post<Task[]>('/tasks/batch', { updates });
