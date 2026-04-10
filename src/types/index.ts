@@ -14,6 +14,7 @@ export interface Task {
   tags: string[];
   columnId: string;
   order: number;
+  progress: number; // 0-100
   createdAt: string;
   updatedAt: string;
 }

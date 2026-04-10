@@ -55,6 +55,18 @@ export function TaskCard({ task, onEdit, onDelete, isDragging }: TaskCardProps) 
         <p className="task-description">{task.description}</p>
       )}
       
+      {(task.progress !== undefined && task.progress > 0) && (
+        <div className="task-progress-container">
+          <div className="task-progress-bar">
+            <div
+              className="task-progress-fill"
+              style={{ width: `${task.progress}%` }}
+            />
+          </div>
+          <span className="task-progress-text">{task.progress}%</span>
+        </div>
+      )}
+
       <div className="task-meta">
         <span className="task-assignee">
           <span className="avatar">👤</span>

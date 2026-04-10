@@ -34,8 +34,9 @@
       ],
       "columnId": "col-1",
       "order": 0,
+      "progress": 30,
       "createdAt": "2026-04-10T06:44:27.284Z",
-      "updatedAt": "2026-04-10T08:05:46.450Z"
+      "updatedAt": "2026-04-10T08:10:52.069Z"
     },
     {
       "id": "task-2",
@@ -50,8 +51,9 @@
       ],
       "columnId": "col-2",
       "order": 0,
+      "progress": 60,
       "createdAt": "2026-04-10T06:44:27.283Z",
-      "updatedAt": "2026-04-10T08:05:46.450Z"
+      "updatedAt": "2026-04-10T08:10:53.787Z"
     },
     {
       "id": "task-3",
@@ -65,8 +67,9 @@
       ],
       "columnId": "col-3",
       "order": 0,
+      "progress": 80,
       "createdAt": "2026-04-10T12:00:00Z",
-      "updatedAt": "2026-04-10T08:04:00.250Z"
+      "updatedAt": "2026-04-10T08:10:57.079Z"
     },
     {
       "title": "task1",
@@ -74,11 +77,14 @@
       "assignee": "abcd",
       "priority": "high",
       "dueDate": "2026-04-30",
-      "tags": [],
-      "columnId": "col-1",
-      "order": 1,
+      "tags": [
+        "测试"
+      ],
+      "columnId": "col-4",
+      "order": 0,
+      "progress": 100,
       "createdAt": "2026-04-10T08:05:39.396Z",
-      "updatedAt": "2026-04-10T08:05:46.451Z",
+      "updatedAt": "2026-04-10T08:14:19.780Z",
       "id": "MfDz6JM"
     }
   ],

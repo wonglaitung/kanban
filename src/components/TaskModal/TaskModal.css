@@ -307,3 +307,58 @@
   box-shadow: none;
   transform: none;
 }
+
+/* Progress input styles */
+.progress-input-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: rgba(0, 240, 255, 0.1);
+  border-radius: 3px;
+  outline: none;
+}
+
+.progress-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  transition: transform 0.2s;
+}
+
+.progress-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.progress-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.progress-number {
+  width: 60px;
+  text-align: center;
+  padding: 8px 10px !important;
+}
+
+.progress-unit {
+  color: var(--neon-cyan);
+  font-weight: 600;
+  font-family: 'Orbitron', sans-serif;
+}

@@ -17,6 +17,7 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
     priority: 'medium' as Task['priority'],
     dueDate: '',
     tags: [] as string[],
+    progress: 0,
     columnId,
   });
   const [tagInput, setTagInput] = useState('');
@@ -32,6 +33,7 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
         priority: task.priority || 'medium',
         dueDate: task.dueDate || '',
         tags: task.tags || [],
+        progress: task.progress || 0,
         columnId: task.columnId,
       });
     } else {
@@ -39,7 +41,7 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
     }
   }, [task, columnId]);
 
-  const handleChange = (field: string, value: string | Task['priority']) => {
+  const handleChange = (field: string, value: string | number | Task['priority']) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -183,6 +185,29 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
                   <button type="button" onClick={() => handleRemoveTag(tag)}>×</button>
                 </span>
               ))}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>进度 ({formData.progress}%)</label>
+            <div className="progress-input-container">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={formData.progress}
+                onChange={e => handleChange('progress', parseInt(e.target.value))}
+                className="progress-slider"
+              />
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={formData.progress}
+                onChange={e => handleChange('progress', parseInt(e.target.value) || 0)}
+                className="progress-number"
+              />
+              <span className="progress-unit">%</span>
             </div>
           </div>
 
