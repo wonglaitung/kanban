@@ -1,8 +1,8 @@
 .task-card {
   background: linear-gradient(135deg, rgba(26, 31, 46, 0.95) 0%, rgba(17, 24, 39, 0.95) 100%);
-  border-radius: 10px;
-  padding: 14px;
-  margin-bottom: 10px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
   border: 1px solid var(--dark-border);
   cursor: grab;
   transition: all 0.3s ease;
@@ -44,7 +44,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .task-title {
@@ -78,12 +78,12 @@
 }
 
 .task-description {
-  margin: 0 0 10px;
-  font-size: 12px;
+  margin: 0 0 6px;
+  font-size: 11px;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.4;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -92,7 +92,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .task-assignee {
@@ -146,18 +146,18 @@
 }
 
 .task-progress-section {
-  margin-bottom: 12px;
-  padding: 10px 12px;
+  margin-bottom: 8px;
+  padding: 6px 8px;
   background: rgba(0, 240, 255, 0.05);
   border: 1px solid rgba(0, 240, 255, 0.15);
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .task-progress-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .task-progress-label {
@@ -192,18 +192,18 @@
 }
 
 .task-progress-text {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.4;
   margin: 0;
-  padding-top: 6px;
+  padding-top: 4px;
   border-top: 1px solid rgba(0, 240, 255, 0.1);
 }
 
 .task-footer {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .task-due-date {
