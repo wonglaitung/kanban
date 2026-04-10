@@ -1,9 +1,9 @@
-.password-overlay {
+.token-overlay {
   z-index: 2000;
   background: rgba(10, 14, 26, 0.95);
 }
 
-.password-modal {
+.token-modal {
   max-width: 400px;
   text-align: center;
   padding: 48px;
@@ -14,7 +14,7 @@
   overflow: hidden;
 }
 
-.password-modal .modal-close-btn {
+.token-modal .modal-close-btn {
   position: absolute;
   top: 12px;
   right: 16px;
@@ -35,12 +35,12 @@
   z-index: 10;
 }
 
-.password-modal .modal-close-btn:hover {
+.token-modal .modal-close-btn:hover {
   color: var(--neon-pink);
   background: rgba(255, 45, 149, 0.1);
 }
 
-.password-modal::before {
+.token-modal::before {
   content: '';
   position: absolute;
   top: 0;
@@ -51,7 +51,7 @@
   box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
 }
 
-.password-modal::after {
+.token-modal::after {
   content: '◆';
   position: absolute;
   top: 20px;
@@ -62,7 +62,7 @@
   animation: pulse 2s ease-in-out infinite;
 }
 
-.password-modal h2 {
+.token-modal h2 {
   margin: 24px 0 12px;
   font-family: 'SF Mono', Monaco, monospace;
   font-size: 24px;
@@ -73,7 +73,7 @@
   text-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
 }
 
-.password-icon {
+.token-icon {
   font-size: 56px;
   animation: float 3s ease-in-out infinite;
   filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.4));
@@ -84,7 +84,7 @@
   50% { transform: translateY(-10px); }
 }
 
-.password-hint {
+.token-hint {
   margin: 0 0 32px;
   color: var(--text-secondary);
   font-size: 13px;
@@ -92,15 +92,15 @@
   letter-spacing: 1px;
 }
 
-.password-modal form {
+.token-modal form {
   padding: 0;
 }
 
-.password-modal .form-group {
+.token-modal .form-group {
   margin-bottom: 16px;
 }
 
-.password-modal input {
+.token-modal input {
   width: 100%;
   padding: 14px 18px;
   background: rgba(10, 14, 26, 0.5);
@@ -115,13 +115,13 @@
   transition: all 0.3s ease;
 }
 
-.password-modal input:focus {
+.token-modal input:focus {
   outline: none;
   border-color: var(--neon-cyan);
   box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.1), 0 0 30px rgba(0, 240, 255, 0.2);
 }
 
-.password-modal input::placeholder {
+.token-modal input::placeholder {
   color: var(--text-muted);
   font-family: inherit;
 }

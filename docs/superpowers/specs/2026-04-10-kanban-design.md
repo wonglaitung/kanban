@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-设计一个简单实用的看板系统，用于小型团队（1-5人）管理组内任务。支持拖拽交互、任务详情管理和简单的密码保护。
+设计一个简单实用的看板系统，用于小型团队（1-5人）管理组内任务。支持拖拽交互、任务详情管理和简单的令牌保护。
 
 ## 需求总结
 
@@ -12,7 +12,7 @@
 - 支持自定义添加/修改列
 - 任务信息包含：标题、描述、负责人、优先级、截止日期、标签
 - 必须支持拖拽功能
-- 简单密码保护
+- 简单令牌保护
 
 ### 技术需求
 - 前端框架：React/Vue + 本地JSON文件存储
@@ -69,7 +69,7 @@ db.json (数据文件)
     }
   ],
   "settings": {
-    "password": "hashed_password"
+    "token": "hashed_token"
   }
 }
 ```
@@ -98,7 +98,7 @@ interface Task {
 }
 
 interface Settings {
-  password: string;
+  token: string;
 }
 ```
 
@@ -132,15 +132,15 @@ interface Settings {
 - 如果只剩最后一列，禁止删除
 - 删除确认对话框显示将受影响的任务数量
 
-### 4. 密码保护
-- 首次访问时设置密码
-- 后续访问需输入密码验证
-- 密码使用简单哈希存储在 db.json 的 settings 中
+### 4. 令牌保护
+- 首次访问时设置令牌
+- 后续访问需输入令牌验证
+- 令牌使用简单哈希存储在 db.json 的 settings 中
 - 客户端验证，无需后端复杂认证
 
 **安全说明**：
-- 此密码保护为简单防护机制，适合小型团队内部使用
-- 客户端哈希验证存在一定局限性（密码明文传输）
+- 此令牌保护为简单防护机制，适合小型团队内部使用
+- 客户端哈希验证存在一定局限性（令牌明文传输）
 - 如需更高安全性，建议部署在内部网络或使用 HTTPS
 - 未来可扩展为服务端验证（JSON Server 中间件）
 
@@ -154,7 +154,7 @@ src/
 │   ├── TaskCard/           # 任务卡片
 │   ├── TaskModal/          # 任务编辑弹窗
 │   ├── ColumnModal/        # 列编辑弹窗
-│   ├── PasswordModal/      # 密码输入弹窗
+│   ├── TokenModal/      # 令牌输入弹窗
 │   └── ConfirmDialog/      # 确认对话框
 ├── hooks/
 │   ├── useTasks.ts         # 任务 CRUD 操作
@@ -241,7 +241,7 @@ PUT    /tasks/:id        # 更新任务
 DELETE /tasks/:id        # 删除任务
 
 设置管理
-GET    /settings         # 获取设置（密码）
+GET    /settings         # 获取设置（令牌）
 PUT    /settings         # 更新设置
 ```
 
@@ -271,13 +271,13 @@ Content-Type: application/json
 }
 ```
 
-#### 3. 密码验证
+#### 3. 令牌验证
 客户端对比哈希值：
 ```typescript
 // 客户端逻辑
-const inputHash = simpleHash(inputPassword);
+const inputHash = simpleHash(inputToken);
 const storedHash = await api.getSettings();
-return inputHash === storedHash.password;
+return inputHash === storedHash.token;
 ```
 
 ## 错误处理
@@ -386,7 +386,7 @@ npm run server
 2. 列的 CRUD 操作
 3. 任务的 CRUD 操作
 4. 拖拽功能实现
-5. 密码保护功能
+5. 令牌保护功能
 
 ### 第二阶段：优化和完善
 1. UI/UX 优化
@@ -402,4 +402,4 @@ npm run server
 
 ## 总结
 
-这是一个简洁实用的看板系统设计，满足小型团队的任务管理需求。通过 React + JSON Server 的技术栈，实现了快速开发和数据持久化。拖拽功能使用现代化的 @dnd-kit 库，提供流畅的用户体验。密码保护机制简单有效，适合小型团队使用。整体架构清晰，易于维护和扩展。
+这是一个简洁实用的看板系统设计，满足小型团队的任务管理需求。通过 React + JSON Server 的技术栈，实现了快速开发和数据持久化。拖拽功能使用现代化的 @dnd-kit 库，提供流畅的用户体验。令牌保护机制简单有效，适合小型团队使用。整体架构清晰，易于维护和扩展。
