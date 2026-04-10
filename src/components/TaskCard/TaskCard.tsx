@@ -12,7 +12,7 @@ interface TaskCardProps {
   isDragging?: boolean;
 }
 
-export function TaskCard({ task, onEdit, onDelete, isDragging }: TaskCardProps) {
+export function TaskCard({ task, onEdit, onDelete, isDragging: _isDragging }: TaskCardProps) {
   const {
     attributes,
     listeners,

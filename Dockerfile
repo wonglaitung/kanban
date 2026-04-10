@@ -15,10 +15,14 @@ COPY . .
 # Build frontend
 RUN npm run build
 
-# Create startup script - backend runs on 3001 (internal only), frontend on 80
-RUN echo '#!/bin/sh\necho "Starting JSON Server on port 3001 (internal)..."\njson-server --watch db.json --port 3001 --host 0.0.0.0 &\necho "Starting Vite Preview on port 80..."\nnpx vite preview --port 80 --host 0.0.0.0' > /app/start.sh && chmod +x /app/start.sh
+# Create startup script
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'echo "Starting JSON Server on port 3001..."' >> /app/start.sh && \
+    echo 'json-server --watch db.json --port 3001 --host 0.0.0.0 &' >> /app/start.sh && \
+    echo 'echo "Starting Vite Preview on port 80..."' >> /app/start.sh && \
+    echo 'npx vite preview --port 80 --host 0.0.0.0' >> /app/start.sh && \
+    chmod +x /app/start.sh
 
-# Only expose frontend port - backend is accessed through frontend proxy
 EXPOSE 80
 
-CMD ["/app/start.sh"]
+CMD ["/bin/sh", "/app/start.sh"]
