@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Board } from './components/Board';
 import { TaskModal } from './components/TaskModal';
 import { ColumnModal } from './components/ColumnModal';
@@ -23,9 +23,22 @@ function App() {
   const [selectedColumn, setSelectedColumn] = useState<ColumnType | null>(null);
   const [activeColumnId, setActiveColumnId] = useState<string>('');
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'task' | 'column'; id: string; taskCount?: number } | null>(null);
+  const [filterQuery, setFilterQuery] = useState('');
 
   const { columns, loading: columnsLoading, addColumn, editColumn, removeColumn } = useColumns();
   const { tasks, loading: tasksLoading, addTask, editTask, removeTask, reorderTasks, getTasksByColumn } = useTasks();
+
+  // Filter tasks based on search query
+  const filteredTasks = useMemo(() => {
+    if (!filterQuery.trim()) return tasks;
+    const query = filterQuery.toLowerCase();
+    return tasks.filter(task =>
+      task.title?.toLowerCase().includes(query) ||
+      task.description?.toLowerCase().includes(query) ||
+      task.assignee?.toLowerCase().includes(query) ||
+      task.tags?.some(tag => tag.toLowerCase().includes(query))
+    );
+  }, [tasks, filterQuery]);
 
   // Check password on mount
   useEffect(() => {
@@ -184,15 +197,39 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-content">
-          <h1>📋 看板系统</h1>
-          <p className="subtitle">简单高效的任务管理</p>
+          <div className="header-left">
+            <h1>📋 看板系统</h1>
+            <p className="subtitle">简单高效的任务管理</p>
+          </div>
+          <div className="header-right">
+            <div className="search-box">
+              <span className="search-icon">🔍</span>
+              <input
+                type="text"
+                placeholder="搜索任务、负责人、标签..."
+                value={filterQuery}
+                onChange={(e) => setFilterQuery(e.target.value)}
+                className="search-input"
+              />
+              {filterQuery && (
+                <button
+                  className="clear-search"
+                  onClick={() => setFilterQuery('')}
+                  title="清除搜索"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </header>
 
       <main className="app-main">
         <Board
           columns={columns}
-          tasks={tasks}
+          tasks={filteredTasks}
+          totalTasks={tasks.length}
           onAddTask={handleAddTask}
           onEditTask={handleEditTask}
           onDeleteTask={handleDeleteTask}

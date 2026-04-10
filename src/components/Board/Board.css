@@ -4,6 +4,28 @@
   padding: 20px;
 }
 
+.filter-indicator {
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.1), rgba(184, 41, 255, 0.1));
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 8px;
+  color: var(--neon-cyan);
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Orbitron', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.filter-indicator::before {
+  content: '◈';
+  color: var(--neon-purple);
+}
+
 .board {
   display: flex;
   gap: 24px;

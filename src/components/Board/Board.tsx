@@ -8,6 +8,7 @@ import './Board.css';
 interface BoardProps {
   columns: ColumnType[];
   tasks: Task[];
+  totalTasks?: number;
   onAddTask: (columnId: string) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
@@ -21,6 +22,7 @@ interface BoardProps {
 export function Board({
   columns,
   tasks,
+  totalTasks,
   onAddTask,
   onEditTask,
   onDeleteTask,
@@ -146,8 +148,15 @@ export function Board({
       .sort((a, b) => a.order - b.order);
   }, [tasks]);
 
+  const isFiltering = totalTasks !== undefined && tasks.length !== totalTasks;
+
   return (
     <div className="board-container">
+      {isFiltering && (
+        <div className="filter-indicator">
+          <span>显示 {tasks.length} / {totalTasks} 个任务</span>
+        </div>
+      )}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
