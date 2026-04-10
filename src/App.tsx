@@ -24,6 +24,7 @@ function App() {
   const [activeColumnId, setActiveColumnId] = useState<string>('');
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'task' | 'column'; id: string; taskCount?: number } | null>(null);
   const [filterQuery, setFilterQuery] = useState('');
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const { columns, loading: columnsLoading, addColumn, editColumn, removeColumn } = useColumns();
   const { tasks, loading: tasksLoading, addTask, editTask, removeTask, reorderTasks } = useTasks();
@@ -202,6 +203,13 @@ function App() {
             <p className="subtitle">简单高效的任务管理</p>
           </div>
           <div className="header-right">
+            <button
+              className="change-password-btn"
+              onClick={() => setShowChangePassword(true)}
+              title="修改密码"
+            >
+              🔐 修改密码
+            </button>
             <div className="search-box">
               <span className="search-icon">🔍</span>
               <input
@@ -282,6 +290,20 @@ function App() {
             setShowDeleteConfirm(false);
             setDeleteTarget(null);
           }}
+        />
+      )}
+
+      {/* Change Password Modal */}
+      {showChangePassword && (
+        <PasswordModal
+          isSetup={true}
+          storedPassword=""
+          onSuccess={async (newPassword) => {
+            await handleSetPassword(newPassword);
+            setShowChangePassword(false);
+            alert('密码修改成功！');
+          }}
+          onSetPassword={handleSetPassword}
         />
       )}
     </div>
