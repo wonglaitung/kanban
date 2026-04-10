@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { Column, Task, Settings } from '../types';
 
-const API_URL = 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_URL,
