@@ -1,0 +1,143 @@
+# 项目进度记录
+
+## 2026-04-10 项目状态
+
+### 已完成功能 ✓
+
+#### 核心功能
+- [x] 看板基础架构搭建（React 18 + TypeScript + Vite）
+- [x] 列管理（CRUD操作：创建、读取、更新、删除）
+- [x] 任务管理（CRUD操作：创建、读取、更新、删除）
+- [x] 拖拽功能（使用 @dnd-kit 库）
+  - 支持列内拖拽排序
+  - 支持跨列拖拽移动
+  - 实时保存位置信息
+- [x] 任务详情管理
+  - 标题、描述、负责人
+  - 优先级（高/中/低）
+  - 截止日期
+  - 标签系统
+  - 进度显示（0-100）
+  - 进度描述文字
+- [x] 令牌保护机制
+  - 首次访问设置令牌
+  - 后续访问验证令牌
+  - 支持修改令牌
+  - 令牌存储在 SQLite 数据库
+
+#### 界面功能
+- [x] 响应式设计，适配不同屏幕
+- [x] 暗色主题（赛博朋克风格）
+- [x] 任务搜索功能（搜索标题、描述、负责人、标签）
+- [x] 实时更新时间显示（显示任务最后更新时间）
+- [x] 优先级颜色标识
+  - 高优先级：红色
+  - 中优先级：黄色
+  - 低优先级：绿色
+
+#### 后端架构
+- [x] Express 服务器搭建
+- [x] SQLite 数据库集成（better-sqlite3）
+- [x] RESTful API 设计
+- [x] 数据库 WAL 模式优化并发性能
+- [x] 乐观锁机制（基于 updatedAt 字段）
+
+#### 部署方案
+- [x] Docker 容器化部署
+- [x] 本地开发环境配置
+- [x] 生产环境配置
+
+### 最近完成的工作（最新提交）
+
+1. **令牌功能优化** (0862521)
+   - 将 password 统一重命名为 token
+   - 添加任务更新时间显示
+   - 优化用户体验
+
+2. **UI优化** (f24ef23, 23445bc)
+   - 更新令牌弹窗样式
+   - 修复关闭按钮 z-index 问题
+   - 使任务卡片更紧凑
+
+3. **后端迁移** (4f0f1c8)
+   - 从 JSON Server 迁移到 SQLite
+   - 提升数据持久化可靠性
+   - 支持更复杂的查询和事务
+
+4. **Docker支持** (def2e73)
+   - 添加 sqlite3 CLI 到 Docker 镜像
+   - 方便容器内数据库管理
+
+### 当前项目状态
+
+**开发阶段**: 核心功能已完成，可投入实际使用
+
+**技术栈**:
+- 前端: React 18 + TypeScript + Vite
+- 后端: Express + SQLite (better-sqlite3)
+- 拖拽: @dnd-kit/core + @dnd-kit/sortable
+- HTTP: Axios
+- 部署: Docker
+
+**代码质量**:
+- TypeScript 类型完整
+- 组件结构清晰
+- API 接口规范
+- 错误处理完善
+
+**部署方式**:
+- 本地开发: 前端 (npm run dev) + 后端 (cd server && npm start)
+- 生产部署: Docker 容器化
+
+### 待优化项（可选）
+
+- [ ] 添加任务评论功能
+- [ ] 支持文件附件上传
+- [ ] 任务时间追踪
+- [ ] 数据统计和报表
+- [ ] 多看板支持
+- [ ] 实时协作（WebSocket）
+- [ ] 单元测试覆盖
+- [ ] E2E 测试
+
+### 数据结构
+
+**Column (列)**:
+```typescript
+interface Column {
+  id: string;
+  title: string;
+  order: number;
+}
+```
+
+**Task (任务)**:
+```typescript
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  assignee: string;
+  priority: 'high' | 'medium' | 'low';
+  dueDate: string;
+  tags: string[];
+  columnId: string;
+  order: number;
+  progress: number;
+  progressText: string;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+**Settings (设置)**:
+```typescript
+interface Settings {
+  token: string;
+}
+```
+
+---
+
+更新时间: 2026-04-10
+更新人: iFlow CLI

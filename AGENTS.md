@@ -227,3 +227,14 @@ docker run -p 80:80 kanban-board
 - 数据统计和报表
 - 多看板支持
 - 实时协作（WebSocket）
+
+
+## Session Workflow
+
+**会话开始时必须执行**：
+1. 读取 `progress.txt` 文件，了解项目当前进展
+2. 审查 `lessons.md` 文件，检查是否有错误需要纠正
+
+**功能更新后**：
+1. 更新 `progress.txt`，记录新的进展
+2. 如有新的学习心得，更新 `lessons.md`
