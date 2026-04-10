@@ -1,8 +1,8 @@
 .task-card {
   background: linear-gradient(135deg, rgba(26, 31, 46, 0.95) 0%, rgba(17, 24, 39, 0.95) 100%);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin-bottom: 4px;
   border: 1px solid var(--dark-border);
   cursor: grab;
   transition: all 0.3s ease;
@@ -44,25 +44,25 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 
 .task-title {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
   flex: 1;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .delete-btn {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
-  padding: 0 4px;
+  padding: 0 2px;
   line-height: 1;
   opacity: 0;
   transition: all 0.3s ease;
@@ -78,10 +78,10 @@
 }
 
 .task-description {
-  margin: 0 0 6px;
-  font-size: 11px;
+  margin: 0 0 3px;
+  font-size: 10px;
   color: var(--text-secondary);
-  line-height: 1.4;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
@@ -92,29 +92,29 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 
 .task-assignee {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 4px;
+  font-size: 10px;
   color: var(--text-secondary);
 }
 
 .avatar {
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .task-priority {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   color: white;
-  padding: 3px 10px;
-  border-radius: 12px;
+  padding: 2px 6px;
+  border-radius: 10px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   font-family: 'SF Mono', Monaco, monospace;
   position: relative;
   overflow: hidden;
@@ -145,69 +145,36 @@
   box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
 }
 
-.task-progress-section {
-  margin-bottom: 8px;
-  padding: 6px 8px;
-  background: rgba(0, 240, 255, 0.05);
-  border: 1px solid rgba(0, 240, 255, 0.15);
-  border-radius: 6px;
-}
-
-.task-progress-header {
+.task-progress-inline {
   display: flex;
-  justify-content: space-between;
+  gap: 6px;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
+  font-size: 10px;
 }
 
 .task-progress-label {
-  font-size: 11px;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 600;
-}
-
-.task-progress-percent {
-  font-size: 14px;
-  font-weight: 700;
   color: var(--neon-cyan);
+  font-weight: 600;
   font-family: 'SF Mono', Monaco, monospace;
 }
 
-.task-progress-bar {
-  height: 6px;
-  background: rgba(0, 240, 255, 0.1);
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.task-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-blue));
-  border-radius: 3px;
-  transition: width 0.3s ease;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
-}
-
 .task-progress-text {
-  font-size: 11px;
   color: var(--text-secondary);
-  line-height: 1.4;
-  margin: 0;
-  padding-top: 4px;
-  border-top: 1px solid rgba(0, 240, 255, 0.1);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .task-footer {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .task-due-date {
-  font-size: 11px;
+  font-size: 9px;
   color: var(--text-muted);
   font-family: 'SF Mono', Monaco, monospace;
 }
@@ -220,17 +187,17 @@
 .task-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 3px;
 }
 
 .task-tag {
-  font-size: 10px;
+  font-size: 9px;
   background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(0, 153, 255, 0.1));
   color: var(--neon-cyan);
-  padding: 3px 8px;
-  border-radius: 4px;
+  padding: 2px 5px;
+  border-radius: 3px;
   border: 1px solid rgba(0, 240, 255, 0.2);
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
