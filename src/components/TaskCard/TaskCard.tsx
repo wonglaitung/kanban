@@ -85,6 +85,11 @@ export function TaskCard({ task, onEdit, onDelete, isDragging: _isDragging }: Ta
           <span className="avatar">👤</span>
           {task.assignee}
         </span>
+        {task.dueDate && (
+          <span className="task-due-date">
+            {task.dueDate}
+          </span>
+        )}
         <span
           className="task-priority"
           style={{ backgroundColor: priorityColor }}
@@ -94,25 +99,21 @@ export function TaskCard({ task, onEdit, onDelete, isDragging: _isDragging }: Ta
       </div>
       
       <div className="task-footer">
-        {task.dueDate && (
-          <span className="task-due-date">
-            📅 {task.dueDate}
-          </span>
-        )}
-        {task.tags && task.tags.length > 0 && (
-          <div className="task-tags">
-            {task.tags.map(tag => (
-              <span key={tag} className="task-tag">{tag}</span>
-            ))}
-          </div>
-        )}
-      </div>
-      
-      {task.updatedAt && (
-        <div className="task-updated">
-          更新于 {formatUpdateTime(task.updatedAt)}
+        <div className="task-footer-row">
+          {task.tags && task.tags.length > 0 && (
+            <div className="task-tags">
+              {task.tags.map(tag => (
+                <span key={tag} className="task-tag">{tag}</span>
+              ))}
+            </div>
+          )}
+          {task.updatedAt && (
+            <span className="task-updated">
+              更新于 {formatUpdateTime(task.updatedAt)}
+            </span>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

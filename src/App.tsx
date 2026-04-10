@@ -200,7 +200,7 @@ function App() {
         <div className="header-content">
           <div className="header-left">
             <h1>📋 看板系统</h1>
-            <p className="subtitle">简单高效的任务管理</p>
+            <span className="subtitle">简单高效的任务管理</span>
           </div>
           <div className="header-right">
             <button
