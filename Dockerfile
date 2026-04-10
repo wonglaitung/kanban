@@ -1,25 +1,23 @@
-# 构建阶段
-FROM node:18-alpine AS builder
+FROM node:18-alpine
 
 WORKDIR /app
 
-# 复制依赖文件
+# Install json-server globally
+RUN npm install -g json-server
+
+# Copy package files
 COPY package*.json ./
 RUN npm ci
 
-# 复制源码并构建
+# Copy source code
 COPY . .
+
+# Build frontend
 RUN npm run build
 
-# 生产阶段
-FROM nginx:alpine
+# Create startup script
+RUN echo '#!/bin/sh\njson-server --watch db.json --port 3001 --host 0.0.0.0 &\nnpx vite preview --port 80 --host 0.0.0.0' > /app/start.sh && chmod +x /app/start.sh
 
-# 复制构建产物到 nginx
-COPY --from=builder /app/dist /usr/share/nginx/html
+EXPOSE 80 3001
 
-# 复制 nginx 配置
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/app/start.sh"]
