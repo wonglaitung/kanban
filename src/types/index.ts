@@ -21,7 +21,7 @@ export interface Task {
 }
 
 export interface Settings {
-  password: string;
+  token: string;
 }
 
 export interface DragDropContext {

@@ -194,7 +194,7 @@ app.delete('/api/tasks/:id', (req, res) => {
 app.get('/api/settings', (req, res) => {
   try {
     const settings = db.prepare('SELECT * FROM settings WHERE id = 1').get();
-    res.json(settings || { password: '' });
+    res.json(settings || { token: '' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -202,9 +202,9 @@ app.get('/api/settings', (req, res) => {
 
 app.put('/api/settings', (req, res) => {
   try {
-    const { password } = req.body;
-    const stmt = db.prepare('UPDATE settings SET password = ? WHERE id = 1');
-    stmt.run(password);
+    const { token } = req.body;
+    const stmt = db.prepare('UPDATE settings SET token = ? WHERE id = 1');
+    stmt.run(token);
     const settings = db.prepare('SELECT * FROM settings WHERE id = 1').get();
     res.json(settings);
   } catch (err) {

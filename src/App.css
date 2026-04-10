@@ -109,7 +109,7 @@ body {
   gap: 12px;
 }
 
-.change-password-btn {
+.change-token-btn {
   background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(0, 153, 255, 0.1));
   border: 1px solid rgba(0, 240, 255, 0.3);
   color: var(--neon-cyan);
@@ -122,7 +122,7 @@ body {
   white-space: nowrap;
 }
 
-.change-password-btn:hover {
+.change-token-btn:hover {
   background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(0, 153, 255, 0.2));
   border-color: var(--neon-cyan);
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);

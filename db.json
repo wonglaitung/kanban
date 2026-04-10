@@ -42,7 +42,7 @@
     {
       "id": "task-2",
       "title": "开发用户认证模块",
-      "description": "实现登录、注册和密码重置功能",
+      "description": "实现登录、注册和令牌重置功能",
       "assignee": "李四",
       "priority": "medium",
       "dueDate": "2026-04-15",
@@ -53,7 +53,7 @@
       "columnId": "col-2",
       "order": 0,
       "progress": 80,
-      "progressText": "登录注册已完成，密码重置开发中",
+      "progressText": "登录注册已完成，令牌重置开发中",
       "createdAt": "2026-04-10T06:44:27.283Z",
       "updatedAt": "2026-04-10T08:24:53.934Z"
     },
@@ -93,6 +93,6 @@
     }
   ],
   "settings": {
-    "password": "P@ssw0rd"
+    "token": "P@ssw0rd"
   }
 }

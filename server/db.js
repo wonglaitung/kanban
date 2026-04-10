@@ -47,14 +47,14 @@ function initSchema() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS settings (
       id INTEGER PRIMARY KEY CHECK (id = 1),
-      password TEXT
+      token TEXT
     )
   `);
 
   // Insert default data if not exists
   const settingsStmt = db.prepare('SELECT * FROM settings WHERE id = 1');
   if (!settingsStmt.get()) {
-    db.prepare('INSERT INTO settings (id, password) VALUES (1, ?)').run('123456');
+    db.prepare('INSERT INTO settings (id, token) VALUES (1, ?)').run('123456');
   }
 
   const columnCount = db.prepare('SELECT COUNT(*) as count FROM columns').get().count;

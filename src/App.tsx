@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Board } from './components/Board';
 import { TaskModal } from './components/TaskModal';
 import { ColumnModal } from './components/ColumnModal';
-import { PasswordModal } from './components/PasswordModal';
+import { TokenModal } from './components/TokenModal';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { useColumns } from './hooks/useColumns';
 import { useTasks } from './hooks/useTasks';
@@ -12,9 +12,9 @@ import './App.css';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isPasswordSetup, setIsPasswordSetup] = useState(false);
-  const [storedPassword, setStoredPassword] = useState('');
-  const [showPasswordModal, setShowPasswordModal] = useState(true);
+  const [isTokenSetup, setIsTokenSetup] = useState(false);
+  const [storedToken, setStoredToken] = useState('');
+  const [showTokenModal, setShowTokenModal] = useState(true);
 
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showColumnModal, setShowColumnModal] = useState(false);
@@ -24,7 +24,7 @@ function App() {
   const [activeColumnId, setActiveColumnId] = useState<string>('');
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'task' | 'column'; id: string; taskCount?: number } | null>(null);
   const [filterQuery, setFilterQuery] = useState('');
-  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showChangeToken, setShowChangeToken] = useState(false);
 
   const { columns, loading: columnsLoading, addColumn, editColumn, removeColumn } = useColumns();
   const { tasks, loading: tasksLoading, addTask, editTask, removeTask, reorderTasks } = useTasks();
@@ -41,48 +41,48 @@ function App() {
     );
   }, [tasks, filterQuery]);
 
-  // Check password on mount
+  // Check token on mount
   useEffect(() => {
-    const checkPassword = async () => {
+    const checkToken = async () => {
       try {
         const settings = await getSettings();
-        const currentPassword = settings.password || '';
-        setStoredPassword(currentPassword);
-        setIsPasswordSetup(true);
+        const currentToken = settings.token || '';
+        setStoredToken(currentToken);
+        setIsTokenSetup(true);
 
         // Check if already authenticated in this session
         const authKey = 'kanban_auth';
         const storedAuth = sessionStorage.getItem(authKey);
         if (storedAuth) {
           const authData = JSON.parse(storedAuth);
-          // Verify the stored password matches current password
-          if (authData.password === currentPassword) {
+          // Verify the stored token matches current token
+          if (authData.token === currentToken) {
             setIsAuthenticated(true);
-            setShowPasswordModal(false);
+            setShowTokenModal(false);
           } else {
-            // Password changed, clear auth
+            // Token changed, clear auth
             sessionStorage.removeItem(authKey);
           }
         }
       } catch (error) {
-        console.error('Failed to check password:', error);
-        setShowPasswordModal(true);
+        console.error('Failed to check token:', error);
+        setShowTokenModal(true);
       }
     };
-    checkPassword();
+    checkToken();
   }, []);
 
-  const handleSetPassword = async (password: string) => {
-    await updateSettings({ password });
-    setStoredPassword(password);
+  const handleSetToken = async (token: string) => {
+    await updateSettings({ token });
+    setStoredToken(token);
   };
 
-  const handlePasswordSuccess = (password: string) => {
+  const handleTokenSuccess = (token: string) => {
     setIsAuthenticated(true);
-    setShowPasswordModal(false);
+    setShowTokenModal(false);
     // Store auth state in sessionStorage
     const authKey = 'kanban_auth';
-    sessionStorage.setItem(authKey, JSON.stringify({ password, timestamp: Date.now() }));
+    sessionStorage.setItem(authKey, JSON.stringify({ token, timestamp: Date.now() }));
   };
 
   // Task handlers
@@ -182,14 +182,14 @@ function App() {
     );
   }
 
-  // Password protection
-  if (!isAuthenticated && showPasswordModal) {
+  // Token protection
+  if (!isAuthenticated && showTokenModal) {
     return (
-      <PasswordModal
-        isSetup={isPasswordSetup}
-        storedPassword={storedPassword}
-        onSuccess={handlePasswordSuccess}
-        onSetPassword={handleSetPassword}
+      <TokenModal
+        isSetup={isTokenSetup}
+        storedToken={storedToken}
+        onSuccess={handleTokenSuccess}
+        onSetToken={handleSetToken}
       />
     );
   }
@@ -204,11 +204,11 @@ function App() {
           </div>
           <div className="header-right">
             <button
-              className="change-password-btn"
-              onClick={() => setShowChangePassword(true)}
-              title="修改密码"
+              className="change-token-btn"
+              onClick={() => setShowChangeToken(true)}
+              title="修改令牌"
             >
-              🔐 修改密码
+              🔐 修改令牌
             </button>
             <div className="search-box">
               <span className="search-icon">🔍</span>
@@ -293,18 +293,18 @@ function App() {
         />
       )}
 
-      {/* Change Password Modal */}
-      {showChangePassword && (
-        <PasswordModal
+      {/* Change Token Modal */}
+      {showChangeToken && (
+        <TokenModal
           isSetup={true}
-          storedPassword=""
-          onSuccess={async (newPassword) => {
-            await handleSetPassword(newPassword);
-            setShowChangePassword(false);
-            alert('密码修改成功！');
+          storedToken=""
+          onSuccess={async (newToken) => {
+            await handleSetToken(newToken);
+            setShowChangeToken(false);
+            alert('令牌修改成功！');
           }}
-          onSetPassword={handleSetPassword}
-          onClose={() => setShowChangePassword(false)}
+          onSetToken={handleSetToken}
+          onClose={() => setShowChangeToken(false)}
         />
       )}
     </div>
