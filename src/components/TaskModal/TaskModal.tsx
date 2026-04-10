@@ -18,6 +18,7 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
     dueDate: '',
     tags: [] as string[],
     progress: 0,
+    progressText: '',
     columnId,
   });
   const [tagInput, setTagInput] = useState('');
@@ -34,6 +35,7 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
         dueDate: task.dueDate || '',
         tags: task.tags || [],
         progress: task.progress || 0,
+        progressText: task.progressText || '',
         columnId: task.columnId,
       });
     } else {
@@ -188,27 +190,32 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
             </div>
           </div>
 
-          <div className="form-group">
-            <label>进度 ({formData.progress}%)</label>
-            <div className="progress-input-container">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={formData.progress}
-                onChange={e => handleChange('progress', parseInt(e.target.value))}
-                className="progress-slider"
-              />
-              <input
-                type="number"
-                min="0"
-                max="100"
-                value={formData.progress}
-                onChange={e => handleChange('progress', parseInt(e.target.value) || 0)}
-                className="progress-number"
-              />
-              <span className="progress-unit">%</span>
+          <div className="form-row">
+            <div className="form-group">
+              <label>进度百分比</label>
+              <div className="progress-input-container">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={formData.progress}
+                  onChange={e => handleChange('progress', parseInt(e.target.value) || 0)}
+                  className="progress-number"
+                  placeholder="0-100"
+                />
+                <span className="progress-unit">%</span>
+              </div>
             </div>
+          </div>
+
+          <div className="form-group">
+            <label>进度说明</label>
+            <input
+              type="text"
+              value={formData.progressText}
+              onChange={e => handleChange('progressText', e.target.value)}
+              placeholder="例如：已完成前端开发，等待后端接口"
+            />
           </div>
 
           <div className="form-actions">

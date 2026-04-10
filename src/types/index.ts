@@ -15,6 +15,7 @@ export interface Task {
   columnId: string;
   order: number;
   progress: number; // 0-100
+  progressText: string; // 进度描述文字
   createdAt: string;
   updatedAt: string;
 }

@@ -145,21 +145,42 @@
   box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
 }
 
-.task-progress-container {
+.task-progress-section {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  border-radius: 8px;
+}
+
+.task-progress-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  padding: 4px 0;
+  margin-bottom: 8px;
+}
+
+.task-progress-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.task-progress-percent {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  font-family: 'Orbitron', sans-serif;
 }
 
 .task-progress-bar {
-  flex: 1;
   height: 6px;
   background: rgba(0, 240, 255, 0.1);
   border-radius: 3px;
   overflow: hidden;
-  position: relative;
+  margin-bottom: 8px;
 }
 
 .task-progress-fill {
@@ -171,12 +192,12 @@
 }
 
 .task-progress-text {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--neon-cyan);
-  font-family: 'Orbitron', sans-serif;
-  min-width: 36px;
-  text-align: right;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0, 240, 255, 0.1);
 }
 
 .task-footer {

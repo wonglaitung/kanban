@@ -32,11 +32,12 @@
       "tags": [
         "设计"
       ],
-      "columnId": "col-1",
+      "columnId": "col-2",
       "order": 0,
       "progress": 30,
+      "progressText": "完成表结构设计，等待评审",
       "createdAt": "2026-04-10T06:44:27.284Z",
-      "updatedAt": "2026-04-10T08:10:52.069Z"
+      "updatedAt": "2026-04-10T08:23:16.801Z"
     },
     {
       "id": "task-2",
@@ -49,11 +50,12 @@
         "开发",
         "安全"
       ],
-      "columnId": "col-2",
+      "columnId": "col-1",
       "order": 0,
-      "progress": 60,
+      "progress": 0,
+      "progressText": "登录注册已完成，密码重置开发中",
       "createdAt": "2026-04-10T06:44:27.283Z",
-      "updatedAt": "2026-04-10T08:10:53.787Z"
+      "updatedAt": "2026-04-10T08:23:24.531Z"
     },
     {
       "id": "task-3",
@@ -68,6 +70,7 @@
       "columnId": "col-3",
       "order": 0,
       "progress": 80,
+      "progressText": "主要模块测试已完成，剩余边缘 cases",
       "createdAt": "2026-04-10T12:00:00Z",
       "updatedAt": "2026-04-10T08:10:57.079Z"
     },
@@ -83,6 +86,7 @@
       "columnId": "col-4",
       "order": 0,
       "progress": 100,
+      "progressText": "任务已完成并通过验收",
       "createdAt": "2026-04-10T08:05:39.396Z",
       "updatedAt": "2026-04-10T08:14:19.780Z",
       "id": "MfDz6JM"
