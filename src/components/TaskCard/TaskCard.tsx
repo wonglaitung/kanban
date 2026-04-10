@@ -55,15 +55,21 @@ export function TaskCard({ task, onEdit, onDelete, isDragging }: TaskCardProps) 
         <p className="task-description">{task.description}</p>
       )}
       
-      {(task.progress !== undefined && task.progress > 0) && (
-        <div className="task-progress-container">
+      {(task.progress !== undefined && task.progress >= 0) && (
+        <div className="task-progress-section">
+          <div className="task-progress-header">
+            <span className="task-progress-label">进度</span>
+            <span className="task-progress-percent">{task.progress}%</span>
+          </div>
           <div className="task-progress-bar">
             <div
               className="task-progress-fill"
               style={{ width: `${task.progress}%` }}
             />
           </div>
-          <span className="task-progress-text">{task.progress}%</span>
+          {task.progressText && (
+            <p className="task-progress-text">{task.progressText}</p>
+          )}
         </div>
       )}
 
