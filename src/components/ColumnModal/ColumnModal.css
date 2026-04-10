@@ -1,0 +1,46 @@
+.column-modal {
+  max-width: 440px;
+}
+
+.column-modal form {
+  padding: 24px;
+}
+
+.column-modal .form-group {
+  margin-bottom: 24px;
+}
+
+.column-modal .form-group label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.column-modal .form-group input {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(10, 14, 26, 0.5);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 8px;
+  font-size: 16px;
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 1px;
+}
+
+.column-modal .form-group input:focus {
+  outline: none;
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.1), 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+.column-modal .form-group input::placeholder {
+  color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif;
+}
