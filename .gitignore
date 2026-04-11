@@ -29,3 +29,9 @@ nohup.out
 # Cache
 .cache/
 *.tsbuildinfo
+
+# iFlow CLI config
+.iflow/
+
+# Database (runtime data)
+server/data/
