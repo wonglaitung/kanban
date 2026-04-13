@@ -338,7 +338,72 @@ try {
 
 ## 项目维护经验
 
-### 15. 及时清理废弃文件
+### 15. 模态框交互设计
+**问题背景**: 用户在填写任务表单时，误点击模态框外的遮罩层导致表单关闭，数据丢失
+
+**解决方案**:
+- 移除点击遮罩层关闭模态框的功能
+- 用户必须显式点击取消或关闭按钮才能关闭
+
+**代码示例**:
+```tsx
+// TaskModal.tsx - 不监听遮罩层点击事件
+<div className="modal-overlay">
+  <div className="modal-content">
+    {/* 只有点击取消或X按钮才能关闭 */}
+  </div>
+</div>
+```
+
+**经验总结**:
+对于包含用户输入的表单模态框，应避免点击外部关闭，防止数据意外丢失。重要的操作应要求用户显式确认。
+
+---
+
+### 16. 拖拽到空容器处理
+**问题背景**: 当列中没有任务时，拖拽区域高度为0，无法将任务拖入空列
+
+**解决方案**:
+```css
+.column-content {
+  min-height: 100px; /* 确保空列也有拖拽区域 */
+}
+```
+
+**经验总结**:
+拖拽功能需要考虑边界情况，如空容器。为空容器设置最小高度，确保拖拽目标区域始终可用。
+
+---
+
+### 17. 任务复制功能设计
+**需求背景**: 用户需要基于现有任务创建相似任务
+
+**实现方式**:
+- 后端添加 `/api/tasks/:id/duplicate` 端点
+- 复制任务所有字段，标题添加 '(副本)' 后缀
+- 新任务放置在同一列末尾
+
+**代码示例**:
+```javascript
+// 复制任务
+app.post('/api/tasks/:id/duplicate', (req, res) => {
+  const original = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+  const newTask = {
+    ...original,
+    id: generateId(),
+    title: original.title + ' (副本)',
+    order: getMaxOrder(original.columnId) + 1
+  };
+  // 插入新任务
+});
+```
+
+**经验总结**:
+复制功能要考虑唯一标识符、标题区分、位置安排等细节。明确复制后的任务状态，避免与原任务混淆。
+
+---
+
+### 18. 及时清理废弃文件
 **问题背景**: 项目从 JSON Server 迁移到 SQLite 后，遗留了 db.json 文件
 
 **清理内容**:
@@ -362,7 +427,7 @@ try {
 
 ---
 
-### 16. 文档完整性
+### 19. 文档完整性
 **问题发现**: README 中提到要修改默认令牌，但没写明默认令牌是什么
 
 **改进措施**:
@@ -380,7 +445,7 @@ try {
 
 ---
 
-### 17. Docker 容器命名
+### 20. Docker 容器命名
 **优化前**: `docker run -p 80:80 kanban-board`
 **优化后**: `docker run --name kanban -p 80:80 kanban-board`
 
@@ -422,5 +487,5 @@ docker logs kanban       # 查看日志
 
 ---
 
-最后更新: 2026-04-10 22:30
-更新人: iFlow CLI
+最后更新: 2026-04-13
+更新人: Claude Code
