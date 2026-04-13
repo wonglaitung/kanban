@@ -40,8 +40,8 @@ export function ColumnModal({ column, onSave, onClose }: ColumnModalProps) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content column-modal" onClick={e => e.stopPropagation()}>
+    <div className="modal-overlay">
+      <div className="modal-content column-modal">
         <div className="modal-header">
           <h2>{column ? '编辑列' : '新建列'}</h2>
           <button className="close-btn" onClick={onClose}>×</button>
