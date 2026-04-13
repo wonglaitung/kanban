@@ -102,8 +102,8 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content task-modal" onClick={e => e.stopPropagation()}>
+    <div className="modal-overlay">
+      <div className="modal-content task-modal">
         <div className="modal-header">
           <h2>{task ? '编辑任务' : '新建任务'}</h2>
           <button className="close-btn" onClick={onClose}>×</button>
