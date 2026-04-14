@@ -210,11 +210,11 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
 
           <div className="form-group">
             <label>进度说明</label>
-            <input
-              type="text"
+            <textarea
               value={formData.progressText}
               onChange={e => handleChange('progressText', e.target.value)}
               placeholder="例如：已完成前端开发，等待后端接口"
+              rows={3}
             />
           </div>
 
