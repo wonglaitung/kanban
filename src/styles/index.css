@@ -1,4 +1,6 @@
-:root {
+/* Theme: Dark Neon (default) */
+:root,
+[data-theme="dark-neon"] {
   --neon-cyan: #00f0ff;
   --neon-blue: #0099ff;
   --neon-purple: #b829ff;
@@ -13,6 +15,54 @@
   --text-primary: #e0f7ff;
   --text-secondary: #8b9bb4;
   --text-muted: #5a6a7d;
+  --accent-primary: #00f0ff;
+  --accent-secondary: #0099ff;
+  --border-color: rgba(0, 240, 255, 0.15);
+  --shadow-color: rgba(0, 240, 255, 0.3);
+}
+
+/* Theme: Light */
+[data-theme="light"] {
+  --neon-cyan: #0891b2;
+  --neon-blue: #2563eb;
+  --neon-purple: #7c3aed;
+  --neon-pink: #db2777;
+  --dark-bg: #f8fafc;
+  --dark-card: #ffffff;
+  --dark-surface: #f1f5f9;
+  --dark-border: rgba(37, 99, 235, 0.2);
+  --glow-cyan: 0 2px 8px rgba(8, 145, 178, 0.15);
+  --glow-blue: 0 2px 8px rgba(37, 99, 235, 0.15);
+  --glow-purple: 0 2px 8px rgba(124, 58, 237, 0.15);
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --accent-primary: #0891b2;
+  --accent-secondary: #2563eb;
+  --border-color: rgba(37, 99, 235, 0.2);
+  --shadow-color: rgba(37, 99, 235, 0.15);
+}
+
+/* Theme: Dark (minimal) */
+[data-theme="dark"] {
+  --neon-cyan: #64748b;
+  --neon-blue: #3b82f6;
+  --neon-purple: #8b5cf6;
+  --neon-pink: #ec4899;
+  --dark-bg: #0f172a;
+  --dark-card: #1e293b;
+  --dark-surface: #334155;
+  --dark-border: rgba(100, 116, 139, 0.3);
+  --glow-cyan: none;
+  --glow-blue: none;
+  --glow-purple: none;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-primary: #3b82f6;
+  --accent-secondary: #64748b;
+  --border-color: rgba(100, 116, 139, 0.3);
+  --shadow-color: rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -43,8 +93,9 @@ input, textarea, select {
   font-family: inherit;
 }
 
-/* Animated grid background */
-body::before {
+/* Animated grid background - only for dark-neon theme */
+[data-theme="dark-neon"] body::before,
+:root body::before {
   content: '';
   position: fixed;
   top: 0;
@@ -59,8 +110,9 @@ body::before {
   z-index: 0;
 }
 
-/* Floating particles effect */
-body::after {
+/* Floating particles effect - only for dark-neon theme */
+[data-theme="dark-neon"] body::after,
+:root body::after {
   content: '';
   position: fixed;
   top: 0;
@@ -73,6 +125,40 @@ body::after {
     radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.05) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* Subtle background for light theme */
+[data-theme="light"] body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.02) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="light"] body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 100% 0%, rgba(8, 145, 178, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Minimal background for dark theme */
+[data-theme="dark"] body::before,
+[data-theme="dark"] body::after {
+  content: none;
 }
 
 /* Custom scrollbar */

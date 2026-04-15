@@ -20,8 +20,11 @@ export interface Task {
   updatedAt: string;
 }
 
+export type Theme = 'dark-neon' | 'light' | 'dark';
+
 export interface Settings {
   token: string;
+  theme: Theme;
 }
 
 export interface DragDropContext {

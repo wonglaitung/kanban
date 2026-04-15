@@ -47,14 +47,22 @@ function initSchema() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS settings (
       id INTEGER PRIMARY KEY CHECK (id = 1),
-      token TEXT
+      token TEXT,
+      theme TEXT DEFAULT 'dark-neon'
     )
   `);
+
+  // Add theme column if it doesn't exist (migration for existing databases)
+  try {
+    db.exec('ALTER TABLE settings ADD COLUMN theme TEXT DEFAULT \'dark-neon\'');
+  } catch (e) {
+    // Column already exists, ignore error
+  }
 
   // Insert default data if not exists
   const settingsStmt = db.prepare('SELECT * FROM settings WHERE id = 1');
   if (!settingsStmt.get()) {
-    db.prepare('INSERT INTO settings (id, token) VALUES (1, ?)').run('123456');
+    db.prepare('INSERT INTO settings (id, token, theme) VALUES (1, ?, ?)').run('123456', 'dark-neon');
   }
 
   const columnCount = db.prepare('SELECT COUNT(*) as count FROM columns').get().count;
