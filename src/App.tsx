@@ -4,10 +4,11 @@ import { TaskModal } from './components/TaskModal';
 import { ColumnModal } from './components/ColumnModal';
 import { TokenModal } from './components/TokenModal';
 import { ConfirmDialog } from './components/ConfirmDialog';
+import { ThemeSelector } from './components/ThemeSelector';
 import { useColumns } from './hooks/useColumns';
 import { useTasks } from './hooks/useTasks';
 import { getSettings, updateSettings } from './services/api';
-import type { Task, Column as ColumnType } from './types';
+import type { Task, Column as ColumnType, Theme } from './types';
 import './App.css';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
   const [isTokenSetup, setIsTokenSetup] = useState(false);
   const [storedToken, setStoredToken] = useState('');
   const [showTokenModal, setShowTokenModal] = useState(true);
+  const [currentTheme, setCurrentTheme] = useState<Theme>('dark-neon');
 
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showColumnModal, setShowColumnModal] = useState(false);
@@ -50,6 +52,11 @@ function App() {
         setStoredToken(currentToken);
         setIsTokenSetup(true);
 
+        // Load and apply theme
+        const theme = (settings.theme as Theme) || 'dark-neon';
+        setCurrentTheme(theme);
+        document.documentElement.setAttribute('data-theme', theme);
+
         // Check if already authenticated in this session
         const authKey = 'kanban_auth';
         const storedAuth = sessionStorage.getItem(authKey);
@@ -73,8 +80,14 @@ function App() {
   }, []);
 
   const handleSetToken = async (token: string) => {
-    await updateSettings({ token });
+    await updateSettings({ token, theme: currentTheme });
     setStoredToken(token);
+  };
+
+  const handleThemeChange = async (theme: Theme) => {
+    setCurrentTheme(theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    await updateSettings({ token: storedToken, theme });
   };
 
   const handleTokenSuccess = (token: string) => {
@@ -212,6 +225,10 @@ function App() {
             <span className="subtitle">简单高效的任务管理</span>
           </div>
           <div className="header-right">
+            <ThemeSelector
+              currentTheme={currentTheme}
+              onThemeChange={handleThemeChange}
+            />
             <button
               className="change-token-btn"
               onClick={() => setShowChangeToken(true)}
