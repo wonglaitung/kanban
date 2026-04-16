@@ -7,6 +7,7 @@
 - **拖拽式任务管理** - 流畅的拖拽体验，支持跨列移动和列内排序
 - **多列状态流转** - 待办、进行中、审核、已完成
 - **任务详情管理** - 标题、描述、负责人、优先级、截止日期、标签、进度
+- **任务评论讨论** - 支持主管追问和负责人回复，任务卡片显示评论数量
 - **自定义列管理** - 添加、编辑、删除列
 - **令牌保护** - 简单的访问控制，保护看板数据
 - **实时更新时间** - 显示每个任务的最后更新时间
@@ -174,6 +175,18 @@ interface Settings {
 }
 ```
 
+### Comment (评论)
+```typescript
+interface Comment {
+  id: string;
+  taskId: string;      // 关联任务ID
+  author: string;      // 评论人
+  content: string;     // 评论内容
+  createdAt: string;   // 创建时间
+  updatedAt: string;   // 更新时间
+}
+```
+
 ## API 端点
 
 ### 列管理
@@ -193,6 +206,12 @@ interface Settings {
 ### 设置管理
 - `GET /api/settings` - 获取设置
 - `PUT /api/settings` - 更新设置
+
+### 评论管理
+- `GET /api/tasks/:id/comments` - 获取任务的所有评论
+- `POST /api/tasks/:id/comments` - 添加评论
+- `PUT /api/comments/:id` - 更新评论
+- `DELETE /api/comments/:id` - 删除评论
 
 ## 功能说明
 
