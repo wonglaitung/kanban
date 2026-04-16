@@ -270,21 +270,119 @@ app.post('/api/tasks/batch', (req, res) => {
   try {
     const { updates } = req.body; // Array of { id, order, columnId? }
     const now = new Date().toISOString();
-    
+
     const updateStmt = db.prepare(`
       UPDATE tasks SET "order" = ?, columnId = ?, updatedAt = ? WHERE id = ?
     `);
-    
+
     const transaction = db.transaction(() => {
       for (const u of updates) {
         updateStmt.run(u.order, u.columnId || null, now, u.id);
       }
     });
-    
+
     transaction();
-    
+
     const tasks = db.prepare('SELECT * FROM tasks ORDER BY "order"').all();
     res.json(tasks.map(parseTask));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// === Comments API ===
+
+// Get all comments for a task
+app.get('/api/tasks/:id/comments', (req, res) => {
+  try {
+    const { id } = req.params;
+    // Verify task exists
+    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const comments = db.prepare(
+      'SELECT * FROM comments WHERE taskId = ? ORDER BY createdAt DESC'
+    ).all(id);
+    res.json(comments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create comment for a task
+app.post('/api/tasks/:id/comments', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { author, content } = req.body;
+
+    // Verify task exists
+    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    if (!author || !content) {
+      return res.status(400).json({ error: 'Author and content are required' });
+    }
+
+    const commentId = 'comment-' + Date.now();
+    const now = new Date().toISOString();
+
+    const stmt = db.prepare(`
+      INSERT INTO comments (id, taskId, author, content, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    stmt.run(commentId, id, author, content, now, now);
+
+    const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(commentId);
+    res.status(201).json(comment);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update comment
+app.put('/api/comments/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+
+    const existing = db.prepare('SELECT * FROM comments WHERE id = ?').get(id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    if (!content) {
+      return res.status(400).json({ error: 'Content is required' });
+    }
+
+    const now = new Date().toISOString();
+    const stmt = db.prepare(`
+      UPDATE comments SET content = ?, updatedAt = ? WHERE id = ?
+    `);
+    stmt.run(content, now, id);
+
+    const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(id);
+    res.json(comment);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete comment
+app.delete('/api/comments/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const existing = db.prepare('SELECT * FROM comments WHERE id = ?').get(id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    db.prepare('DELETE FROM comments WHERE id = ?').run(id);
+    res.status(204).end();
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

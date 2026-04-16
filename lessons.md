@@ -468,6 +468,69 @@ docker logs kanban       # 查看日志
 
 ---
 
+## 数据库迁移经验
+
+### 21. 零停机数据库迁移
+**核心原则**: 新增表/字段必须向后兼容，保证现有数据不受影响
+
+**实现方式**:
+```javascript
+// 使用 IF NOT EXISTS 创建新表
+db.exec(`
+  CREATE TABLE IF NOT EXISTS comments (
+    id TEXT PRIMARY KEY,
+    taskId TEXT NOT NULL,
+    author TEXT NOT NULL,
+    content TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY (taskId) REFERENCES tasks(id) ON DELETE CASCADE
+  )
+`);
+
+// 使用 IF NOT EXISTS 添加索引
+db.exec(`CREATE INDEX IF NOT EXISTS idx_comments_taskId ON comments(taskId)`);
+
+// 新增列时使用 try-catch 处理已存在的情况
+try {
+  db.exec('ALTER TABLE settings ADD COLUMN theme TEXT DEFAULT \'dark-neon\'');
+} catch (e) {
+  // Column already exists, ignore error
+}
+```
+
+**迁移步骤**:
+1. 编写向后兼容的数据库变更代码（使用 `IF NOT EXISTS`）
+2. 本地测试验证现有数据保留
+3. 部署新版代码
+4. 重启服务器自动执行迁移
+5. 验证新功能正常
+
+**验证清单**:
+- [ ] 现有任务数据完整保留
+- [ ] 现有列配置完整保留
+- [ ] 令牌/设置完整保留
+- [ ] 新表/字段正确创建
+- [ ] 应用启动无错误
+
+**备份策略**:
+```bash
+# 迁移前备份
+cp server/data/kanban.db server/data/kanban.db.backup.$(date +%Y%m%d)
+
+# 如果迁移失败，可以回滚
+cp server/data/kanban.db.backup.xxx server/data/kanban.db
+```
+
+**经验总结**:
+- 永远使用 `IF NOT EXISTS` 创建新表和索引
+- 新增列时包装在 try-catch 中
+- 迁移前务必备份数据库
+- 避免删除或重命名现有表/字段（破坏性变更）
+- 测试时验证现有数据完整性
+
+---
+
 ## 总结
 
 这个看板系统项目展示了如何从原型开发过渡到生产环境：

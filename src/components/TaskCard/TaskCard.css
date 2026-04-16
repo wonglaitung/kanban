@@ -203,6 +203,23 @@
   gap: 6px;
 }
 
+.task-footer-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.task-comments-count {
+  font-size: 10px;
+  color: var(--neon-cyan);
+  font-family: 'SF Mono', Monaco, monospace;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .task-tags {
   display: flex;
   flex-wrap: wrap;

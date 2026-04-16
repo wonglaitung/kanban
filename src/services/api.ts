@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Column, Task, Settings } from '../types';
+import type { Column, Task, Settings, Comment } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -106,5 +106,25 @@ api.interceptors.response.use(
     throw error;
   }
 );
+
+// Comments API
+export const getComments = async (taskId: string): Promise<Comment[]> => {
+  const response = await api.get<Comment[]>(`/tasks/${taskId}/comments`);
+  return response.data;
+};
+
+export const createComment = async (taskId: string, comment: { author: string; content: string }): Promise<Comment> => {
+  const response = await api.post<Comment>(`/tasks/${taskId}/comments`, comment);
+  return response.data;
+};
+
+export const updateComment = async (id: string, updates: { content: string }): Promise<Comment> => {
+  const response = await api.put<Comment>(`/comments/${id}`, updates);
+  return response.data;
+};
+
+export const deleteComment = async (id: string): Promise<void> => {
+  await api.delete(`/comments/${id}`);
+};
 
 export default api;

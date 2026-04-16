@@ -52,6 +52,22 @@ function initSchema() {
     )
   `);
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS comments (
+      id TEXT PRIMARY KEY,
+      taskId TEXT NOT NULL,
+      author TEXT NOT NULL,
+      content TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      FOREIGN KEY (taskId) REFERENCES tasks(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Create indexes for comments table
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_comments_taskId ON comments(taskId)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_comments_createdAt ON comments(createdAt)`);
+
   // Add theme column if it doesn't exist (migration for existing databases)
   try {
     db.exec('ALTER TABLE settings ADD COLUMN theme TEXT DEFAULT \'dark-neon\'');

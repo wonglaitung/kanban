@@ -32,6 +32,15 @@ export interface DragDropContext {
   overColumnId: string | null;
 }
 
+export interface Comment {
+  id: string;
+  taskId: string;
+  author: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const PRIORITY_COLORS = {
   high: '#ef4444',
   medium: '#f59e0b',
