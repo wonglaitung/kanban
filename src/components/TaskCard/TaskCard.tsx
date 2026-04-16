@@ -1,8 +1,9 @@
-// import React from 'react';
+import { useState, useEffect } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Task } from '../../types';
 import { PRIORITY_COLORS, PRIORITY_LABELS } from '../../types';
+import { getComments } from '../../services/api';
 import './TaskCard.css';
 
 interface TaskCardProps {
@@ -39,6 +40,8 @@ export function TaskCard({ task, onEdit, onDelete, onDuplicate, isDragging: _isD
     isDragging: isSortableDragging,
   } = useSortable({ id: task.id });
 
+  const [commentCount, setCommentCount] = useState(0);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -46,6 +49,20 @@ export function TaskCard({ task, onEdit, onDelete, onDuplicate, isDragging: _isD
 
   const priorityColor = PRIORITY_COLORS[task.priority];
   const priorityLabel = PRIORITY_LABELS[task.priority];
+
+  // Load comment count
+  useEffect(() => {
+    const loadCommentCount = async () => {
+      try {
+        const comments = await getComments(task.id);
+        setCommentCount(comments.length);
+      } catch (error) {
+        // Ignore error, just show 0
+        setCommentCount(0);
+      }
+    };
+    loadCommentCount();
+  }, [task.id]);
 
   return (
     <div
@@ -120,11 +137,18 @@ export function TaskCard({ task, onEdit, onDelete, onDuplicate, isDragging: _isD
               ))}
             </div>
           )}
-          {task.updatedAt && (
-            <span className="task-updated">
-              更新于 {formatUpdateTime(task.updatedAt)}
-            </span>
-          )}
+          <div className="task-footer-meta">
+            {commentCount > 0 && (
+              <span className="task-comments-count" title={`${commentCount} 条评论`}>
+                💬 {commentCount}
+              </span>
+            )}
+            {task.updatedAt && (
+              <span className="task-updated">
+                更新于 {formatUpdateTime(task.updatedAt)}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>
