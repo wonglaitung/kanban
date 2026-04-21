@@ -26,8 +26,20 @@ function formatUpdateTime(dateString: string): string {
   if (diffMins < 60) return `${diffMins}分钟前`;
   if (diffHours < 24) return `${diffHours}小时前`;
   if (diffDays < 7) return `${diffDays}天前`;
-  
+
   return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+}
+
+function getDueDateStatus(dueDate: string): 'overdue' | 'urgent' | 'normal' {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+  const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return 'overdue';  // 已过期
+  if (diffDays <= 7) return 'urgent';   // 一周内到期
+  return 'normal';                       // 超过一周
 }
 
 export function TaskCard({ task, onEdit, onDelete, onDuplicate, isDragging: _isDragging }: TaskCardProps) {
@@ -116,7 +128,7 @@ export function TaskCard({ task, onEdit, onDelete, onDuplicate, isDragging: _isD
           {task.assignee}
         </span>
         {task.dueDate && (
-          <span className="task-due-date">
+          <span className={`task-due-date task-due-date--${getDueDateStatus(task.dueDate)}`}>
             {task.dueDate}
           </span>
         )}
