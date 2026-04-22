@@ -22,6 +22,8 @@ export interface Task {
 
 export type Theme = 'dark-neon' | 'light' | 'dark';
 
+export type StaleFilter = 'all' | '1day' | '3days' | '5days';
+
 export interface Settings {
   token: string;
   theme: Theme;

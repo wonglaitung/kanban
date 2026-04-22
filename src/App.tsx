@@ -4,11 +4,11 @@ import { TaskModal } from './components/TaskModal';
 import { ColumnModal } from './components/ColumnModal';
 import { TokenModal } from './components/TokenModal';
 import { ConfirmDialog } from './components/ConfirmDialog';
-import { ThemeSelector } from './components/ThemeSelector';
+import { SettingsMenu } from './components/SettingsMenu';
 import { useColumns } from './hooks/useColumns';
 import { useTasks } from './hooks/useTasks';
 import { getSettings, updateSettings } from './services/api';
-import type { Task, Column as ColumnType, Theme } from './types';
+import type { Task, Column as ColumnType, Theme, StaleFilter } from './types';
 import './App.css';
 
 function App() {
@@ -26,22 +26,40 @@ function App() {
   const [activeColumnId, setActiveColumnId] = useState<string>('');
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'task' | 'column'; id: string; taskCount?: number } | null>(null);
   const [filterQuery, setFilterQuery] = useState('');
+  const [staleFilter, setStaleFilter] = useState<StaleFilter>('all');
   const [showChangeToken, setShowChangeToken] = useState(false);
 
   const { columns, loading: columnsLoading, addColumn, editColumn, removeColumn } = useColumns();
   const { tasks, loading: tasksLoading, addTask, editTask, removeTask, duplicateTask, reorderTasks } = useTasks();
 
-  // Filter tasks based on search query
+  // Filter tasks based on search query and stale filter
   const filteredTasks = useMemo(() => {
-    if (!filterQuery.trim()) return tasks;
-    const query = filterQuery.toLowerCase();
-    return tasks.filter(task =>
-      task.title?.toLowerCase().includes(query) ||
-      task.description?.toLowerCase().includes(query) ||
-      task.assignee?.toLowerCase().includes(query) ||
-      task.tags?.some(tag => tag.toLowerCase().includes(query))
-    );
-  }, [tasks, filterQuery]);
+    let result = tasks;
+
+    // Apply stale filter
+    if (staleFilter !== 'all') {
+      const daysMap = { '1day': 1, '3days': 3, '5days': 5 };
+      const days = daysMap[staleFilter];
+      const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+      result = result.filter(task => {
+        if (!task.updatedAt) return true;
+        return new Date(task.updatedAt).getTime() < cutoff;
+      });
+    }
+
+    // Apply search query
+    if (filterQuery.trim()) {
+      const query = filterQuery.toLowerCase();
+      result = result.filter(task =>
+        task.title?.toLowerCase().includes(query) ||
+        task.description?.toLowerCase().includes(query) ||
+        task.assignee?.toLowerCase().includes(query) ||
+        task.tags?.some(tag => tag.toLowerCase().includes(query))
+      );
+    }
+
+    return result;
+  }, [tasks, filterQuery, staleFilter]);
 
   // Check token on mount
   useEffect(() => {
@@ -220,22 +238,19 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-content">
-          <div className="header-left">
-            <h1>📋 看板系统</h1>
-            <span className="subtitle">简单高效的任务管理</span>
-          </div>
-          <div className="header-right">
-            <ThemeSelector
-              currentTheme={currentTheme}
-              onThemeChange={handleThemeChange}
-            />
-            <button
-              className="change-token-btn"
-              onClick={() => setShowChangeToken(true)}
-              title="修改令牌"
+          <h1>📋 看板系统</h1>
+          <div className="header-center">
+            <select
+              className="stale-filter-select"
+              value={staleFilter}
+              onChange={(e) => setStaleFilter(e.target.value as StaleFilter)}
+              title="筛选未更新任务"
             >
-              🔐 修改令牌
-            </button>
+              <option value="all">全部任务</option>
+              <option value="1day">1天未更新</option>
+              <option value="3days">3天未更新</option>
+              <option value="5days">5天未更新</option>
+            </select>
             <div className="search-box">
               <span className="search-icon">🔍</span>
               <input
@@ -255,6 +270,13 @@ function App() {
                 </button>
               )}
             </div>
+          </div>
+          <div className="header-right">
+            <SettingsMenu
+              currentTheme={currentTheme}
+              onThemeChange={handleThemeChange}
+              onChangeToken={() => setShowChangeToken(true)}
+            />
           </div>
         </div>
       </header>

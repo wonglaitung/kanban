@@ -96,38 +96,51 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 20px;
 }
 
-.header-left {
+.header-content h1 {
+  flex-shrink: 0;
+}
+
+.header-center {
   flex: 1;
   display: flex;
-  align-items: baseline;
-  gap: 16px;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
 }
 
 .header-right {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
-.change-token-btn {
+.stale-filter-select {
   background: var(--dark-surface);
   border: 1px solid var(--border-color);
-  color: var(--accent-primary);
-  padding: 8px 16px;
+  color: var(--text-primary);
+  padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
+  font-family: 'Rajdhani', sans-serif;
   transition: all 0.3s ease;
-  white-space: nowrap;
+  outline: none;
 }
 
-.change-token-btn:hover {
-  background: var(--dark-card);
+.stale-filter-select:hover,
+.stale-filter-select:focus {
   border-color: var(--accent-primary);
-  box-shadow: var(--glow-cyan);
+  box-shadow: 0 0 0 2px var(--shadow-color);
+}
+
+.stale-filter-select option {
+  background: var(--dark-card);
+  color: var(--text-primary);
 }
 
 .search-box {
@@ -139,7 +152,8 @@ body {
   padding: 8px 14px;
   gap: 10px;
   transition: all 0.3s ease;
-  min-width: 280px;
+  flex: 1;
+  max-width: 500px;
 }
 
 .search-box:focus-within {
@@ -237,11 +251,20 @@ body {
   }
 
   .app-header h1 {
-    font-size: 22px;
+    font-size: 20px;
   }
 
-  .subtitle {
-    font-size: 11px;
-    letter-spacing: 2px;
+  .header-content {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .header-center {
+    order: 3;
+    width: 100%;
+  }
+
+  .search-box {
+    max-width: none;
   }
 }
