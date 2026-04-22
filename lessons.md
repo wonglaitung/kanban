@@ -550,5 +550,84 @@ cp server/data/kanban.db.backup.xxx server/data/kanban.db
 
 ---
 
-最后更新: 2026-04-13
+最后更新: 2026-04-22
+更新人: Claude Code
+
+---
+
+## 头部布局优化经验
+
+### 22. 避免增加页面头高度
+**问题背景**: 用户反馈页面头太高，不能接受增加新行
+
+**错误方案**:
+```
+┌─────────────────────────────────────┐
+│ 标题            [主题] [令牌]       │  ← 第一行
+│ [筛选] [搜索...]                    │  ← 第二行（新增）
+└─────────────────────────────────────┘
+```
+
+**正确方案**: 保持单行，优化元素排列
+```
+┌─────────────────────────────────────┐
+│ 标题 │ [筛选] [搜索] │ [设置▼]     │
+└─────────────────────────────────────┘
+```
+
+**经验总结**:
+页面垂直空间珍贵，头部应尽量紧凑。优化布局时优先考虑合并、精简，而不是增加行数。
+
+---
+
+### 23. 设置菜单合并设计
+**需求背景**: 头部控件过多，需要精简
+
+**设计方案**:
+- 将低频操作（主题切换、修改令牌）合并到设置菜单
+- 高频操作（筛选、搜索）保留在显眼位置
+- 设置菜单下拉显示所有选项
+
+**代码结构**:
+```tsx
+// SettingsMenu 包含主题选择和令牌修改
+<div className="settings-dropdown">
+  <div className="settings-dropdown-header">主题</div>
+  {themeOptions.map(...)}
+  <div className="settings-divider" />
+  <button onClick={onChangeToken}>修改令牌</button>
+</div>
+```
+
+**经验总结**:
+按使用频率对控件分类：高频操作放显眼位置，低频操作收起到菜单。减少视觉噪音，提升用户体验。
+
+---
+
+### 24. 任务筛选功能实现
+**需求背景**: 了解团队成员是否及时更新任务
+
+**实现方式**:
+1. 添加 StaleFilter 类型
+2. 基于 updatedAt 字段筛选
+3. 下拉菜单提供筛选选项
+
+**代码示例**:
+```typescript
+const filteredTasks = useMemo(() => {
+  if (staleFilter === 'all') return tasks;
+
+  const daysMap = { '1day': 1, '3days': 3, '5days': 5 };
+  const cutoff = Date.now() - daysMap[staleFilter] * 24 * 60 * 60 * 1000;
+
+  return tasks.filter(task =>
+    new Date(task.updatedAt).getTime() < cutoff
+  );
+}, [tasks, staleFilter]);
+```
+
+**经验总结**:
+筛选功能基于现有数据字段实现，无需修改数据库。使用 useMemo 优化性能，避免不必要的重新计算。
+
+---
 更新人: Claude Code
