@@ -83,6 +83,7 @@ See `src/types/index.ts` for full definitions. Key entities:
 - Tasks: `GET/POST /api/tasks`, `PUT/DELETE /api/tasks/:id`, `POST /api/tasks/batch`, `POST /api/tasks/:id/duplicate`
 - Comments: `GET/POST /api/tasks/:id/comments`, `PUT/DELETE /api/comments/:id`
 - Settings: `GET/PUT /api/settings`
+- Export: `GET /api/export/csv` - download all tasks with comments as CSV
 
 ## Critical Constraints
 
