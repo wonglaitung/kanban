@@ -7,7 +7,7 @@ import { ConfirmDialog } from './components/ConfirmDialog';
 import { SettingsMenu } from './components/SettingsMenu';
 import { useColumns } from './hooks/useColumns';
 import { useTasks } from './hooks/useTasks';
-import { getSettings, updateSettings } from './services/api';
+import { getSettings, updateSettings, exportCsv } from './services/api';
 import type { Task, Column as ColumnType, Theme, StaleFilter } from './types';
 import './App.css';
 
@@ -212,6 +212,24 @@ function App() {
     await reorderTasks(updates);
   };
 
+  // Export CSV handler
+  const handleExportCsv = async () => {
+    try {
+      const blob = await exportCsv();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kanban-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Failed to export CSV:', error);
+      alert('导出失败，请重试');
+    }
+  };
+
   // Loading state
   if (columnsLoading || tasksLoading) {
     return (
@@ -276,6 +294,7 @@ function App() {
               currentTheme={currentTheme}
               onThemeChange={handleThemeChange}
               onChangeToken={() => setShowChangeToken(true)}
+              onExportCsv={handleExportCsv}
             />
           </div>
         </div>

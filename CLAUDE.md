@@ -61,11 +61,11 @@ CREATE INDEX IF NOT EXISTS idx_name ON table(column)
 
 At start of each session:
 1. Read `progress.txt` to understand current project state
-2. Review `lessons.md` for relevant architectural patterns
+2. Review `lessons.md` for relevant architectural patterns and past decisions
 
 After feature changes:
-1. Update `progress.txt` with new functionality
-2. Add learnings to `lessons.md` if applicable
+1. Update `progress.txt` with new functionality and commit references
+2. Add learnings to `lessons.md` if applicable (especially UI/UX decisions and bug fixes)
 
 ## Data Models
 
@@ -74,6 +74,8 @@ See `src/types/index.ts` for full definitions. Key entities:
 - **Task**: id, title, description, assignee, priority, dueDate, tags, columnId, order, progress, progressText, createdAt, updatedAt
 - **Comment**: id, taskId, author, content, createdAt, updatedAt
 - **Settings**: token, theme
+- **Theme**: 'dark-neon' | 'light' | 'dark'
+- **StaleFilter**: 'all' | '1day' | '3days' | '5days'
 
 ## API Endpoints
 
@@ -84,7 +86,7 @@ See `src/types/index.ts` for full definitions. Key entities:
 
 ## Critical Constraints
 
-1. **Token protection** is simple and for internal use only
+1. **Token protection** is simple and for internal use only - default token is `123456`
 2. **Optimistic locking** on task updates - check for 409 conflicts
 3. **SQLite WAL mode** enabled for better concurrency
 4. **Database path**: `server/data/kanban.db` (dev), `/app/server/data/kanban.db` (Docker)
