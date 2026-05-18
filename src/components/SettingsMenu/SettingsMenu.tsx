@@ -18,9 +18,10 @@ interface SettingsMenuProps {
   currentTheme: Theme;
   onThemeChange: (theme: Theme) => void;
   onChangeToken: () => void;
+  onExportCsv?: () => void;
 }
 
-export function SettingsMenu({ currentTheme, onThemeChange, onChangeToken }: SettingsMenuProps) {
+export function SettingsMenu({ currentTheme, onThemeChange, onChangeToken, onExportCsv }: SettingsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -67,6 +68,18 @@ export function SettingsMenu({ currentTheme, onThemeChange, onChangeToken }: Set
             </button>
           ))}
           <div className="settings-divider" />
+          {onExportCsv && (
+            <button
+              className="settings-option"
+              onClick={() => {
+                setIsOpen(false);
+                onExportCsv();
+              }}
+            >
+              <span className="settings-option-icon">📊</span>
+              <span className="settings-option-label">导出CSV</span>
+            </button>
+          )}
           <button
             className="settings-option"
             onClick={() => {

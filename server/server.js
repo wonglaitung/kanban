@@ -269,15 +269,14 @@ app.put('/api/settings', (req, res) => {
 app.post('/api/tasks/batch', (req, res) => {
   try {
     const { updates } = req.body; // Array of { id, order, columnId? }
-    const now = new Date().toISOString();
 
     const updateStmt = db.prepare(`
-      UPDATE tasks SET "order" = ?, columnId = ?, updatedAt = ? WHERE id = ?
+      UPDATE tasks SET "order" = ?, columnId = ? WHERE id = ?
     `);
 
     const transaction = db.transaction(() => {
       for (const u of updates) {
-        updateStmt.run(u.order, u.columnId || null, now, u.id);
+        updateStmt.run(u.order, u.columnId || null, u.id);
       }
     });
 
@@ -383,6 +382,139 @@ app.delete('/api/comments/:id', (req, res) => {
 
     db.prepare('DELETE FROM comments WHERE id = ?').run(id);
     res.status(204).end();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// === Export API ===
+
+// Export all tasks with comments as CSV
+app.get('/api/export/csv', (req, res) => {
+  try {
+    // Get all tasks
+    const tasks = db.prepare('SELECT * FROM tasks ORDER BY "order"').all();
+
+    // Get all columns for mapping columnId to column title
+    const columns = db.prepare('SELECT * FROM columns').all();
+    const columnMap = new Map(columns.map(c => [c.id, c.title]));
+
+    // Get all comments
+    const comments = db.prepare('SELECT * FROM comments ORDER BY createdAt DESC').all();
+
+    // Group comments by taskId
+    const commentsByTask = new Map();
+    for (const comment of comments) {
+      if (!commentsByTask.has(comment.taskId)) {
+        commentsByTask.set(comment.taskId, []);
+      }
+      commentsByTask.get(comment.taskId).push(comment);
+    }
+
+    // CSV header
+    const csvHeaders = [
+      '任务ID',
+      '标题',
+      '描述',
+      '负责人',
+      '优先级',
+      '截止日期',
+      '进度',
+      '进度说明',
+      '状态',
+      '标签',
+      '创建时间',
+      '更新时间',
+      '评论数',
+      '评论内容'
+    ];
+
+    // Build CSV rows
+    const csvRows = [];
+
+    for (const task of tasks) {
+      // Parse tags
+      let tags = [];
+      try {
+        tags = JSON.parse(task.tags || '[]');
+      } catch {
+        tags = [];
+      }
+
+      // Get comments for this task
+      const taskComments = commentsByTask.get(task.id) || [];
+
+      // Format comments: 作者:内容@时间 (换行分隔)
+      const formattedComments = taskComments.map(c => {
+        const time = new Date(c.createdAt).toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        return `${c.author}:${c.content}@${time}`;
+      }).join('\n');
+
+      // Format dates
+      const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        try {
+          return new Date(dateStr).toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+        } catch {
+          return dateStr;
+        }
+      };
+
+      // Priority mapping
+      const priorityMap = { high: '高', medium: '中', low: '低' };
+
+      // Escape CSV field (handle quotes, commas, and newlines)
+      const escapeCsvField = (field) => {
+        if (field === null || field === undefined) return '';
+        const str = String(field);
+        // If field contains comma, quote, or newline, wrap in quotes and escape quotes
+        if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+          return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+      };
+
+      const row = [
+        escapeCsvField(task.id),
+        escapeCsvField(task.title),
+        escapeCsvField(task.description || ''),
+        escapeCsvField(task.assignee || ''),
+        escapeCsvField(priorityMap[task.priority] || task.priority),
+        escapeCsvField(task.dueDate || ''),
+        escapeCsvField(task.progress || 0),
+        escapeCsvField(task.progressText || ''),
+        escapeCsvField(columnMap.get(task.columnId) || ''),
+        escapeCsvField(tags.join(',')),
+        escapeCsvField(formatDate(task.createdAt)),
+        escapeCsvField(formatDate(task.updatedAt)),
+        escapeCsvField(taskComments.length),
+        escapeCsvField(formattedComments)
+      ];
+
+      csvRows.push(row.join(','));
+    }
+
+    // Build full CSV content with BOM for Excel UTF-8 compatibility
+    const csvContent = '\ufeff' + csvHeaders.join(',') + '\n' + csvRows.join('\n');
+
+    // Set response headers for CSV download
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="kanban-export-' + new Date().toISOString().slice(0, 10) + '.csv"');
+
+    res.send(csvContent);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

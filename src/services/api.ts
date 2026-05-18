@@ -127,4 +127,10 @@ export const deleteComment = async (id: string): Promise<void> => {
   await api.delete(`/comments/${id}`);
 };
 
+// Export CSV
+export const exportCsv = async (): Promise<Blob> => {
+  const response = await api.get('/export/csv', { responseType: 'blob' });
+  return response.data;
+};
+
 export default api;
