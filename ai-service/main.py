@@ -267,7 +267,8 @@ async def chat(request: ChatRequest):
 
     # 尝试使用 Harness SDK
     try:
-        from harness import AgentHarness
+        from harness import AgentHarness, HarnessConfig
+        from harness.memory.memory_file import MemoryScoringConfig
         from harness.tools.builtins import UpdateCoreMemoryTool
 
         # MEMORY.md 存放在 server/data/ 目录（与数据库同位置）
@@ -275,11 +276,18 @@ async def chat(request: ChatRequest):
 
         # 创建 Agent（支持第三方 OpenAI 兼容 API）
         agent = AgentHarness(
-            model=model,
-            provider="openai",
-            api_key=api_key,
-            base_url=base_url,
-            memory_md_path=memory_path,
+            config=HarnessConfig(
+                model=model,
+                provider="openai",
+                api_key=api_key,
+                base_url=base_url,
+                memory_md_path=memory_path,
+                memory_scoring=MemoryScoringConfig(
+                    enable_llm_evaluation=False, # LLM 评估需要 Anthropic API，暂不启用
+                    max_core_memory_tokens=3000,  # 容量限制（约 50 条记忆）
+                    archive_fallback="file",      # 超限时归档到 MEMORY_ARCHIVE.md
+                ),
+            ),
             tools=[
                 UpdateCoreMemoryTool(),
             ],
