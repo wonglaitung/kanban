@@ -1,0 +1,18 @@
+{
+  "id": "session_c9c7d6f1",
+  "messages": [
+    {
+      "role": "user",
+      "content": "你好，请回复'测试成功'",
+      "timestamp": "2026-06-26T22:18:47.166506"
+    },
+    {
+      "role": "assistant",
+      "content": "测试成功",
+      "timestamp": "2026-06-26T22:18:49.956556"
+    }
+  ],
+  "created_at": "2026-06-26T22:18:47.166429",
+  "updated_at": "2026-06-26T22:18:49.956696",
+  "metadata": {}
+}

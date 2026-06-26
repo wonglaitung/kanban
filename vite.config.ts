@@ -11,6 +11,10 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/api/ai': {
+        target: 'http://127.0.0.1:3002',
+        changeOrigin: true,
+      },
       '/api': {
         target: 'http://127.0.0.1:3001',
         changeOrigin: true,
@@ -19,6 +23,10 @@ export default defineConfig({
   },
   preview: {
     proxy: {
+      '/api/ai': {
+        target: 'http://127.0.0.1:3002',
+        changeOrigin: true,
+      },
       '/api': {
         target: 'http://127.0.0.1:3001',
         changeOrigin: true,

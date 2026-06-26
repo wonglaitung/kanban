@@ -1,0 +1,28 @@
+{
+  "id": "session_15441355",
+  "messages": [
+    {
+      "role": "user",
+      "content": "列出所有任务",
+      "timestamp": "2026-06-26T23:10:39.375470"
+    },
+    {
+      "role": "assistant",
+      "content": "我来帮您查询所有任务数据。",
+      "timestamp": "2026-06-26T23:10:43.032730"
+    },
+    {
+      "role": "tool",
+      "content": "{'total': 2, 'tasks': [{'id': 'task-1782483921024', 'title': '1', 'description': '1', 'assignee': '张三', 'priority': 'high', 'dueDate': '2026-06-25', 'tags': ['1'], 'columnId': 'col-2', 'order': 0, 'progress': 0, 'progressText': '', 'createdAt': '2026-06-26T14:25:21.024Z', 'updatedAt': '2026-06-26T14:49:51.386Z', 'status': '进行中', 'overdue': True}, {'id': 'task-1782483943069', 'title': '2', 'description': '2', 'assignee': '李四', 'priority': 'high', 'dueDate': '2026-06-29', 'tags': ['2'], 'columnId': 'col-2', 'order': 1, 'progress': 10, 'progressText': '', 'createdAt': '2026-06-26T14:25:43.069Z', 'updatedAt': '2026-06-26T14:50:02.325Z', 'status': '进行中', 'overdue': False}]}",
+      "timestamp": "2026-06-26T23:10:43.035970"
+    },
+    {
+      "role": "assistant",
+      "content": "根据查询结果，当前共有 **2 个任务**，详细信息如下：\n\n---\n\n### 📋 任务列表\n\n#### 1️⃣ 任务：1\n- **负责人**：张三\n- **优先级**：🔴 高优先级\n- **状态**：进行中\n- **截止日期**：2026-06-25\n- **进度**：0%\n- **标签**：1\n- **⚠️ 逾期状态**：已逾期\n\n---\n\n#### 2️⃣ 任务：2\n- **负责人**：李四\n- **优先级**：🔴 高优先级\n- **状态**：进行中\n- **截止日期**：2026-06-29\n- **进度**：10%\n- **标签**：2\n- **✅ 逾期状态**：未逾期\n\n---\n\n### 📊 概览\n- **总任务数**：2\n- **进行中**：2 个\n- **高优先级**：2 个\n- **已逾期**：1 个 ⚠️\n\n**提醒**：任务\"1\"（负责人：张三）已经逾期，建议优先处理。",
+      "timestamp": "2026-06-26T23:10:48.873142"
+    }
+  ],
+  "created_at": "2026-06-26T23:10:39.375312",
+  "updated_at": "2026-06-26T23:10:48.873197",
+  "metadata": {}
+}

@@ -10,10 +10,11 @@
 - **任务评论讨论** - 支持主管追问和负责人回复，任务卡片显示评论数量
 - **自定义列管理** - 添加、编辑、删除列
 - **令牌保护** - 简单的访问控制，保护看板数据
+- **AI 智能助手** - 自然语言查询和分析任务数据
 - **实时更新时间** - 显示每个任务的最后更新时间
 - **搜索功能** - 快速搜索任务、负责人、标签
 - **响应式设计** - 适配不同屏幕尺寸
-- **暗色主题** - 现代化的赛博朋克风格界面
+- **多主题支持** - 暗色霓虹、浅色、纯黑三种主题
 
 ## 技术栈
 
@@ -23,7 +24,9 @@
 | 构建工具 | Vite |
 | 拖拽库 | @dnd-kit/core + @dnd-kit/sortable |
 | HTTP客户端 | Axios |
+| Markdown渲染 | react-markdown + remark-gfm |
 | 后端服务 | Express + better-sqlite3 |
+| AI服务 | FastAPI + Harness SDK |
 | 数据库 | SQLite |
 | 容器化 | Docker |
 
@@ -41,11 +44,34 @@
 
 1. **安装依赖**
    ```bash
+   # 前端依赖
    npm install
+   
+   # 后端依赖
    cd server && npm install && cd ..
+   
+   # AI 服务依赖（可选，需要 AI 功能时安装）
+   cd ai-service && pip install -r requirements.txt && cd ..
+   
+   # Harness SDK（AI 服务需要）
+   pip install -e /data/harness/packages/sdk
    ```
 
-2. **启动开发服务器**
+2. **配置 AI 服务（可选）**
+   
+   创建 `.env` 文件：
+   ```bash
+   cp .env.example .env
+   ```
+   
+   编辑 `.env`，配置 API Key：
+   ```
+   API_KEY=your-api-key
+   API_BASE_URL=https://your-api-endpoint/v2
+   AI_MODEL=your-model-name
+   ```
+
+3. **启动开发服务器**
    
    终端1（前端）：
    ```bash
@@ -56,10 +82,17 @@
    ```bash
    cd server && npm start
    ```
+   
+   终端3（AI 服务，可选）：
+   ```bash
+   cd ai-service && python main.py
+   ```
 
-3. **访问应用**
+4. **访问应用**
    
    打开浏览器访问 `http://localhost:5173`
+   
+   点击右下角 AI 图标可与智能助手对话（需启动 AI 服务）
 
 ### Docker 部署
 

@@ -1,0 +1,13 @@
+{
+  "id": "session_36493a3e",
+  "messages": [
+    {
+      "role": "user",
+      "content": "你好",
+      "timestamp": "2026-06-26T22:17:11.402549"
+    }
+  ],
+  "created_at": "2026-06-26T22:17:11.402396",
+  "updated_at": "2026-06-26T22:17:14.467892",
+  "metadata": {}
+}

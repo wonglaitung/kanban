@@ -1,0 +1,19 @@
+"""Config module."""
+
+from .dictionary import (
+    ALLOWED_FILTERS,
+    PRIORITY_DISPLAY,
+    QUERY_DIMENSIONS,
+    STATUS_MAPPING,
+    STATUS_REVERSE_MAPPING,
+    TASK_FIELDS,
+)
+
+__all__ = [
+    "TASK_FIELDS",
+    "QUERY_DIMENSIONS",
+    "ALLOWED_FILTERS",
+    "PRIORITY_DISPLAY",
+    "STATUS_MAPPING",
+    "STATUS_REVERSE_MAPPING",
+]

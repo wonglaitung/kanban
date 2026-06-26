@@ -1,0 +1,28 @@
+{
+  "id": "session_a3736c87",
+  "messages": [
+    {
+      "role": "user",
+      "content": "列出所有任务",
+      "timestamp": "2026-06-26T23:12:22.893367"
+    },
+    {
+      "role": "assistant",
+      "content": "我来为您查询所有任务。",
+      "timestamp": "2026-06-26T23:12:26.577779"
+    },
+    {
+      "role": "tool",
+      "content": "{'total': 2, 'tasks': [{'id': 'task-1782483921024', 'title': '1', 'description': '1', 'assignee': '张三', 'priority': 'high', 'dueDate': '2026-06-25', 'tags': ['1'], 'columnId': 'col-2', 'order': 0, 'progress': 0, 'progressText': '', 'createdAt': '2026-06-26T14:25:21.024Z', 'updatedAt': '2026-06-26T14:49:51.386Z', 'status': '进行中', 'overdue': True}, {'id': 'task-1782483943069', 'title': '2', 'description': '2', 'assignee': '李四', 'priority': 'high', 'dueDate': '2026-06-29', 'tags': ['2'], 'columnId': 'col-2', 'order': 1, 'progress': 10, 'progressText': '', 'createdAt': '2026-06-26T14:25:43.069Z', 'updatedAt': '2026-06-26T14:50:02.325Z', 'status': '进行中', 'overdue': False}]}",
+      "timestamp": "2026-06-26T23:12:26.604026"
+    },
+    {
+      "role": "assistant",
+      "content": "## 所有任务列表\n\n共 **2** 个任务：\n\n| 任务名称 | 负责人 | 状态 | 优先级 | 截止日期 | 进度 | 备注 |\n|---------|--------|------|--------|----------|------|------|\n| 1 | 张三 | 进行中 | 高 | 2026-06-25 | 0% | ⚠️ 已逾期 |\n| 2 | 李四 | 进行中 | 高 | 2026-06-29 | 10% | - |\n\n**统计信息：**\n- 逾期任务：1 个\n- 进行中任务：2 个\n- 高优先级任务：2 个",
+      "timestamp": "2026-06-26T23:12:34.946098"
+    }
+  ],
+  "created_at": "2026-06-26T23:12:22.893041",
+  "updated_at": "2026-06-26T23:12:34.946159",
+  "metadata": {}
+}

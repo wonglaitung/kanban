@@ -1,0 +1,28 @@
+{
+  "id": "session-1782484768164",
+  "messages": [
+    {
+      "role": "user",
+      "content": "谁的工作量最多",
+      "timestamp": "2026-06-26T22:40:00.814052"
+    },
+    {
+      "role": "assistant",
+      "content": "我来帮您查询各个负责人的任务情况，分析谁的工作量最多。",
+      "timestamp": "2026-06-26T22:40:06.814030"
+    },
+    {
+      "role": "tool",
+      "content": "{'total': 2, 'tasks': [{'id': 'task-1782483921024', 'title': '1', 'description': '1', 'assignee': '1', 'priority': 'high', 'dueDate': '2026-06-25', 'tags': ['1'], 'columnId': 'col-2', 'order': 0, 'progress': 0, 'progressText': '', 'createdAt': '2026-06-26T14:25:21.024Z', 'updatedAt': '2026-06-26T14:25:26.143Z', 'status': '进行中', 'overdue': True}, {'id': 'task-1782483943069', 'title': '2', 'description': '2', 'assignee': '2', 'priority': 'high', 'dueDate': '2026-06-29', 'tags': ['2'], 'columnId': 'col-2', 'order': 1, 'progress': 10, 'progressText': '', 'createdAt': '2026-06-26T14:25:43.069Z', 'updatedAt': '2026-06-26T14:25:43.069Z', 'status': '进行中', 'overdue': False}]}",
+      "timestamp": "2026-06-26T22:40:06.816803"
+    },
+    {
+      "role": "assistant",
+      "content": "根据当前的任务数据，我可以看到：\n\n**工作量统计：**\n\n| 负责人 | 任务数量 | 任务详情 |\n|--------|----------|----------|\n| 1 | 1个 | 1个进行中的任务（已逾期） |\n| 2 | 1个 | 1个进行中的任务（未逾期） |\n\n**结论：**\n目前两位负责人的工作量相同，各有 **1个任务**。\n\n**注意事项：**\n- 负责人 \"1\" 的任务已逾期（截止日期：2026-06-25）\n- 负责人 \"2\" 的任务状态正常（截止日期：2026-06-29）\n\n建议优先处理负责人 \"1\" 的逾期任务。如果需要更详细的工作量分析（如按优先级、任务复杂度等维度），我可以进一步为您分析。",
+      "timestamp": "2026-06-26T22:40:18.379694"
+    }
+  ],
+  "created_at": "2026-06-26T22:40:00.813854",
+  "updated_at": "2026-06-26T22:40:18.379751",
+  "metadata": {}
+}
