@@ -1,6 +1,6 @@
 # 看板系统 (Kanban Board)
 
-一个简洁实用的看板系统，用于小型团队（1-5人）管理组内任务。支持拖拽交互、任务详情管理和简单的令牌保护。
+一个简洁实用的看板系统，用于小型团队（1-5人）管理组内任务。支持拖拽交互、任务详情管理、AI智能助手和简单的令牌保护。
 
 ## 功能特性
 
@@ -10,7 +10,8 @@
 - **任务评论讨论** - 支持主管追问和负责人回复，任务卡片显示评论数量
 - **自定义列管理** - 添加、编辑、删除列
 - **令牌保护** - 简单的访问控制，保护看板数据
-- **AI 智能助手** - 自然语言查询和分析任务数据
+- **AI 智能助手** - 自然语言查询和分析任务数据，自动记忆用户偏好
+- **记忆容量管理** - 自动归档低重要性记忆，支持最多约50条记忆
 - **实时更新时间** - 显示每个任务的最后更新时间
 - **搜索功能** - 快速搜索任务、负责人、标签
 - **响应式设计** - 适配不同屏幕尺寸
@@ -155,7 +156,7 @@ cp server/data/kanban-backup-20240101.db server/data/kanban.db
 │   │   ├── TaskModal/     # 任务编辑弹窗
 │   │   ├── ColumnModal/   # 列编辑弹窗
 │   │   ├── TokenModal/    # 令牌输入弹窗
-│   │   └── ConfirmDialog/ # 确认对话框
+│   │   └── AIChat/        # AI 聊天组件
 │   ├── hooks/             # 自定义 Hooks
 │   ├── services/          # API 服务
 │   ├── types/             # TypeScript 类型定义
@@ -170,6 +171,8 @@ cp server/data/kanban-backup-20240101.db server/data/kanban.db
 │       └── dictionary.py  # 任务字段字典定义
 ├── docs/                   # 文档
 ├── Dockerfile              # Docker 配置
+├── build-docker.sh         # Docker 构建脚本
+├── run-docker.sh           # Docker 运行脚本
 └── package.json            # 项目配置
 ```
 
@@ -253,6 +256,18 @@ interface Comment {
 - `GET /api/ai/query` - 查询任务数据（支持 status、priority、assignee、overdue 等参数）
 - `POST /api/ai/chat` - 多轮对话，自然语言查询和分析任务
 
+### 导出功能
+- `GET /api/export/csv` - 导出所有任务及评论为 CSV 文件
+
+## AI 记忆系统
+
+AI 服务使用 Harness SDK 的记忆系统：
+
+- **MEMORY.md** - 存储长期记忆（用户偏好、项目约定等）
+- **容量限制** - 约 3000 tokens（约 50 条记忆）
+- **自动归档** - 超限时自动归档到 `MEMORY_ARCHIVE.md`
+- **存储位置** - `server/data/MEMORY.md`（本地开发和 Docker 共用）
+
 ## 功能说明
 
 ### 令牌保护
@@ -289,11 +304,14 @@ interface Comment {
 - `npm run build` - 构建生产版本
 - `npm run preview` - 预览生产构建
 - `npm run lint` - 运行代码检查
+- `./build-docker.sh` - 构建 Docker 镜像
+- `./run-docker.sh` - 运行 Docker 容器
 
 ## 数据存储位置
 
 - 本地开发和 Docker：共用 `server/data/kanban.db`
 - 数据在两种运行方式间互通
+- AI 记忆文件 `MEMORY.md` 同样共用
 
 ## 安全说明
 
