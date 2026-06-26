@@ -271,7 +271,7 @@ async def chat(request: ChatRequest):
         from harness.tools.builtins import UpdateCoreMemoryTool
 
         # MEMORY.md 存放在 server/data/ 目录（与数据库同位置）
-        memory_path = Path(__file__).parent.parent / "server" / "data" / "MEMORY.md"
+        memory_path = Path(__file__).parent.parent / "server" / "data"
 
         # 创建 Agent（支持第三方 OpenAI 兼容 API）
         agent = AgentHarness(
