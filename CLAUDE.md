@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A Kanban board system for small teams (1-5 people) with drag-and-drop task management, SQLite persistence, and simple token-based access control.
+A Kanban board system for small teams (1-5 people) with drag-and-drop task management, SQLite persistence, AI assistant, and simple token-based access control.
 
 ## Architecture
 
@@ -20,24 +20,33 @@ A Kanban board system for small teams (1-5 people) with drag-and-drop task manag
 - **Database**: `server/db.js` - SQLite with WAL mode, auto-initializes schema
 - **Port**: 3001
 
+### AI Service (FastAPI + Harness SDK)
+- **Entry**: `ai-service/main.py`
+- **Port**: 3002
+- **SDK Path**: `/data/harness/packages/sdk` (local development)
+- **Memory**: `server/data/MEMORY.md` - shared with database for Docker compatibility
+- **Features**: Natural language task queries, automatic memory with capacity limits
+
 ### Key Design Patterns
 1. **Optimistic Locking**: Tasks use `updatedAt` for conflict detection (409 response)
 2. **Batch Updates**: Drag-and-drop uses `/api/tasks/batch` for atomic reordering
 3. **Component Structure**: `components/ComponentName/{ComponentName.tsx, ComponentName.css, index.ts}`
+4. **Memory Management**: Harness SDK with `MemoryScoringConfig` (3000 tokens limit, auto-archive to `MEMORY_ARCHIVE.md`)
 
 ## Common Commands
 
 ```bash
-# Development (requires two terminals)
-npm run dev              # Frontend dev server (port 5173)
-cd server && npm start   # Backend server (port 3001)
+# Development (requires three terminals)
+npm run dev                           # Frontend dev server (port 5173)
+cd server && npm start                # Backend server (port 3001)
+cd ai-service && python main.py       # AI service (port 3002, optional)
 
 # Build & Deploy
-npm run build            # TypeScript compile + Vite build
-docker build -t kanban-board . && docker run --name kanban -p 80:80 kanban-board
+./build-docker.sh                     # Build Docker image with Harness SDK
+./run-docker.sh                       # Run container (reads DOCKER_PORT from .env)
 
 # Code Quality
-npm run lint             # ESLint check
+npm run lint                          # ESLint check
 ```
 
 ## Database Migration Pattern
@@ -84,6 +93,7 @@ See `src/types/index.ts` for full definitions. Key entities:
 - Comments: `GET/POST /api/tasks/:id/comments`, `PUT/DELETE /api/comments/:id`
 - Settings: `GET/PUT /api/settings`
 - Export: `GET /api/export/csv` - download all tasks with comments as CSV
+- AI: `GET /api/ai/dictionary`, `GET /api/ai/query`, `POST /api/ai/chat`
 
 ## Critical Constraints
 
@@ -91,3 +101,5 @@ See `src/types/index.ts` for full definitions. Key entities:
 2. **Optimistic locking** on task updates - check for 409 conflicts
 3. **SQLite WAL mode** enabled for better concurrency
 4. **Database path**: `server/data/kanban.db` (dev), `/app/server/data/kanban.db` (Docker)
+5. **Memory path**: `server/data/MEMORY.md` - shared between local dev and Docker
+6. **Harness SDK**: Required at `/data/harness/packages/sdk` for AI service development
