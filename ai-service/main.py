@@ -268,6 +268,10 @@ async def chat(request: ChatRequest):
     # 尝试使用 Harness SDK
     try:
         from harness import AgentHarness
+        from harness.tools.builtins import UpdateCoreMemoryTool
+
+        # MEMORY.md 存放在 server/data/ 目录（与数据库同位置）
+        memory_path = Path(__file__).parent.parent / "server" / "data" / "MEMORY.md"
 
         # 创建 Agent（支持第三方 OpenAI 兼容 API）
         agent = AgentHarness(
@@ -275,6 +279,10 @@ async def chat(request: ChatRequest):
             provider="openai",
             api_key=api_key,
             base_url=base_url,
+            memory_md_path=memory_path,
+            tools=[
+                UpdateCoreMemoryTool(),
+            ],
             system_prompt="""你是一个看板任务管理助手，帮助用户查询和分析任务数据。
 
 工具有：

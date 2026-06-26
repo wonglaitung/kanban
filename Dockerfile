@@ -104,7 +104,10 @@ http { \
 }' > /etc/nginx/nginx.conf
 
 # Create startup script
+# Link ~/.harness to server/data for shared MEMORY.md
 RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'mkdir -p /root/.harness' >> /app/start.sh && \
+    echo 'ln -sf /app/server/data/MEMORY.md /root/.harness/MEMORY.md 2>/dev/null || true' >> /app/start.sh && \
     echo 'cd /app/server && node server.js &' >> /app/start.sh && \
     echo 'cd /app/ai-service && python3 main.py &' >> /app/start.sh && \
     echo 'nginx -g "daemon off;"' >> /app/start.sh && \
