@@ -15,7 +15,26 @@ COPY . .
 # Build frontend
 RUN npm run build
 
-# Stage 2: Build backend with native dependencies
+# Stage 2: Build AI service
+FROM python:3.10-alpine AS ai-builder
+
+WORKDIR /app/ai-service
+
+# Install build dependencies
+RUN apk add --no-cache gcc musl-dev
+
+# Copy AI service requirements and install first
+COPY ai-service/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy Harness SDK from build context and install
+COPY harness-sdk/ /tmp/harness-sdk/
+RUN pip install --no-cache-dir /tmp/harness-sdk && rm -rf /tmp/harness-sdk
+
+# Copy AI service code
+COPY ai-service/ ./
+
+# Stage 3: Build backend with native dependencies
 FROM node:20-alpine AS backend-builder
 
 # Install build dependencies for better-sqlite3
@@ -29,11 +48,11 @@ COPY server/package*.json ./
 # Install backend dependencies
 RUN npm ci
 
-# Stage 3: Production image
+# Stage 4: Production image
 FROM node:20-alpine
 
-# Install runtime dependencies
-RUN apk add --no-cache nginx
+# Install runtime dependencies (nginx only, Python comes from ai-builder)
+RUN apk add --no-cache nginx sqlite-libs
 
 WORKDIR /app
 
@@ -42,13 +61,17 @@ COPY --from=backend-builder /app/server/node_modules ./server/node_modules
 COPY server/*.js ./server/
 COPY server/package.json ./server/
 
+# Copy Python runtime and AI service from builder
+COPY --from=ai-builder /usr/local /usr/local
+COPY --from=ai-builder /app/ai-service ./ai-service
+
 # Copy frontend build
 COPY --from=frontend-builder /app/dist ./dist
 
-# Create data directory for SQLite
-RUN mkdir -p /app/server/data
+# Create data directories for SQLite and AI service
+RUN mkdir -p /app/server/data /app/ai-service/data
 
-# Create nginx config with proper MIME types
+# Create nginx config with proper MIME types and AI API proxy
 RUN echo 'events { worker_connections 1024; } \
 http { \
     include /etc/nginx/mime.types; \
@@ -70,12 +93,20 @@ http { \
             proxy_set_header Connection "upgrade"; \
             proxy_set_header Host $host; \
         } \
+        \
+        location /api/ai { \
+            proxy_pass http://127.0.0.1:3002; \
+            proxy_http_version 1.1; \
+            proxy_set_header Host $host; \
+            proxy_set_header X-Real-IP $remote_addr; \
+        } \
     } \
 }' > /etc/nginx/nginx.conf
 
 # Create startup script
 RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'cd /app/server && node server.js &' >> /app/start.sh && \
+    echo 'cd /app/ai-service && python3 main.py &' >> /app/start.sh && \
     echo 'nginx -g "daemon off;"' >> /app/start.sh && \
     chmod +x /app/start.sh
 

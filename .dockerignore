@@ -13,3 +13,12 @@ coverage
 .cache
 *.log
 nohup.out
+
+# AI service cache files (exclude from build)
+ai-service/.harness/
+ai-service/__pycache__/
+ai-service/config/__pycache__/
+
+# Harness SDK is copied from external path during build
+# Do NOT include local harness directory
+harness-sdk/

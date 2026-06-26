@@ -96,54 +96,51 @@
 
 ### Docker 部署
 
-1. **构建镜像**
+1. **配置环境变量**
+
+   复制并编辑 `.env` 文件：
    ```bash
-   docker build -t kanban-board .
+   cp .env.example .env
    ```
 
-2. **运行容器**
-   ```bash
-   # 基本运行（数据存储在容器内）
-   docker run --name kanban -p 80:80 kanban-board
-
-   # 数据持久化到宿主机（推荐）
-   docker run --name kanban -p 80:80 \
-     -v /path/to/kanban-data:/app/server/data \
-     kanban-board
+   编辑 `.env` 文件，配置 AI 服务和端口：
+   ```
+   DOCKER_PORT=8080
+   API_KEY=your-api-key
+   API_BASE_URL=https://your-api-endpoint/v2
+   AI_MODEL=your-model-name
    ```
 
-   参数说明：
-   - `-p 80:80` - 端口映射，格式为 `宿主机端口:容器端口`
-   - `-v /path/to/kanban-data:/app/server/data` - 数据卷挂载，将 SQLite 数据库存储到宿主机
+2. **构建镜像**
+   ```bash
+   ./build-docker.sh
+   ```
 
-3. **访问应用**
+3. **运行容器**
+   ```bash
+   ./run-docker.sh
+   ```
 
-   打开浏览器访问 `http://localhost`
+   脚本会自动：
+   - 从 `.env` 读取 `DOCKER_PORT`（默认 80）
+   - 使用项目目录 `server/data/` 作为数据库（与本地开发共用）
 
-### 数据持久化
+4. **访问应用**
 
-为了防止容器删除后数据丢失，建议将数据目录挂载到宿主机：
+   打开浏览器访问 `http://localhost:8080`（根据 `DOCKER_PORT` 配置）
+
+   点击右下角 AI 图标可与智能助手对话
+
+### 数据备份
+
+数据库文件位于 `server/data/kanban.db`，备份和恢复：
 
 ```bash
-# 创建数据目录
-mkdir -p ~/kanban-data
+# 备份
+cp server/data/kanban.db server/data/kanban-backup-$(date +%Y%m%d).db
 
-# 运行容器并挂载数据目录
-docker run --name kanban -p 80:80 \
-  -v ~/kanban-data:/app/server/data \
-  kanban-board
-```
-
-数据备份：
-```bash
-# 备份数据库文件
-cp ~/kanban-data/kanban.db ~/kanban-backup-$(date +%Y%m%d).db
-```
-
-数据恢复：
-```bash
-# 将备份文件复制到数据目录
-cp ~/kanban-backup-20240101.db ~/kanban-data/kanban.db
+# 恢复
+cp server/data/kanban-backup-20240101.db server/data/kanban.db
 ```
 
 ## 项目结构
@@ -165,7 +162,12 @@ cp ~/kanban-backup-20240101.db ~/kanban-data/kanban.db
 │   └── styles/            # 全局样式
 ├── server/                 # 后端源码
 │   ├── server.js          # Express 服务器
-│   └── db.js              # 数据库数据库初始化
+│   └── db.js              # 数据库初始化
+├── ai-service/             # AI 服务（Python FastAPI）
+│   ├── main.py            # FastAPI 主入口 + Harness SDK
+│   ├── requirements.txt   # Python 依赖
+│   └── config/
+│       └── dictionary.py  # 任务字段字典定义
 ├── docs/                   # 文档
 ├── Dockerfile              # Docker 配置
 └── package.json            # 项目配置
@@ -246,6 +248,11 @@ interface Comment {
 - `PUT /api/comments/:id` - 更新评论
 - `DELETE /api/comments/:id` - 删除评论
 
+### AI 智能助手
+- `GET /api/ai/dictionary` - 获取任务字段字典（供 AI 理解数据结构）
+- `GET /api/ai/query` - 查询任务数据（支持 status、priority、assignee、overdue 等参数）
+- `POST /api/ai/chat` - 多轮对话，自然语言查询和分析任务
+
 ## 功能说明
 
 ### 令牌保护
@@ -274,6 +281,8 @@ interface Comment {
 ### 本地开发环境要求
 - Node.js >= 18
 - npm >= 9
+- Python >= 3.10（AI 服务需要）
+- Harness SDK（位于 `/data/harness/packages/sdk`）
 
 ### 可用脚本
 - `npm run dev` - 启动开发服务器
@@ -283,8 +292,8 @@ interface Comment {
 
 ## 数据存储位置
 
-- 开发环境：`server/data/kanban.db`
-- Docker 环境：使用数据卷挂载到宿主机（参见上方说明）
+- 本地开发和 Docker：共用 `server/data/kanban.db`
+- 数据在两种运行方式间互通
 
 ## 安全说明
 
