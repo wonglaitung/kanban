@@ -11,6 +11,7 @@ API 设计:
 
 import json
 import os
+import urllib.parse
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -51,10 +52,10 @@ def call_backend_api(
     url = f"{BACKEND_URL}{path}"
 
     if params:
-        query_string = "&".join(
-            f"{k}={v}" for k, v in params.items() if v is not None
-        )
-        if query_string:
+        # 使用 urllib.parse.urlencode 正确编码查询参数（支持中文）
+        filtered_params = {k: v for k, v in params.items() if v is not None}
+        if filtered_params:
+            query_string = urllib.parse.urlencode(filtered_params, encoding='utf-8')
             url += f"?{query_string}"
 
     headers = {"Content-Type": "application/json"}

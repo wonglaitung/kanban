@@ -6,6 +6,7 @@
 
 import json
 import os
+import urllib.parse
 import urllib.request
 import urllib.error
 from datetime import datetime
@@ -16,7 +17,10 @@ from typing import Any, Optional
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:3001")
 
 # 下载目录（用于存放生成的报告文件）
-DOWNLOADS_DIR = Path(__file__).parent.parent / "server" / "data" / "downloads"
+# 在 Docker 中，server 目录与 ai-service 目录同级
+_ai_service_dir = Path(__file__).parent.parent
+_project_root = _ai_service_dir.parent
+DOWNLOADS_DIR = Path(os.environ.get("DOWNLOADS_DIR", str(_project_root / "server" / "data" / "downloads")))
 DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -38,10 +42,10 @@ def call_backend_api(
     url = f"{BACKEND_URL}{path}"
 
     if params:
-        query_string = "&".join(
-            f"{k}={v}" for k, v in params.items() if v is not None
-        )
-        if query_string:
+        # 使用 urllib.parse.urlencode 正确编码查询参数（支持中文）
+        filtered_params = {k: v for k, v in params.items() if v is not None}
+        if filtered_params:
+            query_string = urllib.parse.urlencode(filtered_params, encoding='utf-8')
             url += f"?{query_string}"
 
     headers = {"Content-Type": "application/json"}

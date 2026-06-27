@@ -240,6 +240,7 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
         </div>
 
         <div className="modal-body">
+          <div className="modal-main">
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label>标题 *</label>
@@ -358,11 +359,11 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
               </button>
             </div>
           </form>
+          </div>
 
           {/* Comments Section */}
           {task && (
-            <div className="comments-section">
-              <div className="comments-divider" />
+            <div className="comments-sidebar">
               <h3 className="comments-title">💬 讨论 ({comments.length})</h3>
 
               {/* Comment Input */}
