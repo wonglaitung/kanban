@@ -64,12 +64,12 @@
 
 .token-modal h2 {
   margin: 24px 0 12px;
-  font-family: 'SF Mono', Monaco, monospace;
+  font-family: var(--font-mono);
   font-size: 24px;
   font-weight: 700;
   color: var(--neon-cyan);
-  text-transform: uppercase;
-  letter-spacing: 3px;
+  text-transform: none;
+  letter-spacing: 0;
   text-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
 }
 
@@ -88,8 +88,8 @@
   margin: 0 0 32px;
   color: var(--text-secondary);
   font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .token-modal form {
@@ -110,7 +110,7 @@
   text-align: center;
   color: var(--text-primary);
   box-sizing: border-box;
-  font-family: 'SF Mono', Monaco, monospace;
+  font-family: var(--font-mono);
   letter-spacing: 2px;
   transition: all 0.3s ease;
 }
@@ -142,13 +142,13 @@
   border: 1px solid var(--neon-cyan);
   border-radius: 8px;
   color: var(--neon-cyan);
-  font-family: 'SF Mono', Monaco, monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  text-transform: none;
+  letter-spacing: 0;
   position: relative;
   overflow: hidden;
 }

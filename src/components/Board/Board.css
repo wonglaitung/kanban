@@ -16,9 +16,9 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: 'SF Mono', Monaco, monospace;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  font-family: var(--font-mono);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .filter-indicator::before {
@@ -58,8 +58,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   flex-shrink: 0;
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  text-transform: none;
+  letter-spacing: 0;
   position: relative;
   overflow: hidden;
 }

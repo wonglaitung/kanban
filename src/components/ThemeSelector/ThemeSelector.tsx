@@ -11,22 +11,22 @@ interface ThemeOption {
 
 const themeOptions: ThemeOption[] = [
   {
-    value: 'dark-neon',
-    label: '霓虹暗色',
-    icon: '🌌',
-    preview: ['#00f0ff', '#0099ff', '#b829ff', '#ff2d95'],
+    value: 'navy-gold',
+    label: '深蓝金',
+    icon: '💎',
+    preview: ['#1e3a5f', '#c9a227', '#2a4a73', '#d4b23a'],
   },
   {
-    value: 'light',
-    label: '明亮模式',
-    icon: '☀️',
-    preview: ['#0891b2', '#2563eb', '#7c3aed', '#db2777'],
+    value: 'tech-blue',
+    label: '科技蓝',
+    icon: '⚡',
+    preview: ['#0052cc', '#4a5568', '#3182ce', '#718096'],
   },
   {
-    value: 'dark',
-    label: '简洁暗色',
-    icon: '🌙',
-    preview: ['#3b82f6', '#64748b', '#8b5cf6', '#ec4899'],
+    value: 'forest-green',
+    label: '森林绿',
+    icon: '🌿',
+    preview: ['#0d4f3c', '#6b7280', '#34d399', '#9ca3af'],
   },
 ];
 

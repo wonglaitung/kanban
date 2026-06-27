@@ -17,7 +17,7 @@ function App() {
   const [isTokenSetup, setIsTokenSetup] = useState(false);
   const [storedToken, setStoredToken] = useState('');
   const [showTokenModal, setShowTokenModal] = useState(true);
-  const [currentTheme, setCurrentTheme] = useState<Theme>('dark-neon');
+  const [currentTheme, setCurrentTheme] = useState<Theme>('navy-gold');
 
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showColumnModal, setShowColumnModal] = useState(false);
@@ -73,7 +73,7 @@ function App() {
         setIsTokenSetup(true);
 
         // Load and apply theme
-        const theme = (settings.theme as Theme) || 'dark-neon';
+        const theme = (settings.theme as Theme) || 'navy-gold';
         setCurrentTheme(theme);
         document.documentElement.setAttribute('data-theme', theme);
 
@@ -258,7 +258,7 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-content">
-          <h1>📋 智能看板系统</h1>
+          <h1>智能看板系统</h1>
           <div className="header-center">
             <select
               className="stale-filter-select"
@@ -272,7 +272,12 @@ function App() {
               <option value="5days">5天未更新</option>
             </select>
             <div className="search-box">
-              <span className="search-icon">🔍</span>
+              <span className="search-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="m21 21-4.35-4.35"/>
+                </svg>
+              </span>
               <input
                 type="text"
                 placeholder="搜索任务、负责人、标签..."

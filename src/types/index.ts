@@ -20,7 +20,7 @@ export interface Task {
   updatedAt: string;
 }
 
-export type Theme = 'dark-neon' | 'light' | 'dark';
+export type Theme = 'navy-gold' | 'tech-blue' | 'forest-green';
 
 export type StaleFilter = 'all' | '1day' | '3days' | '5days';
 

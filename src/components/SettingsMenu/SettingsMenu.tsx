@@ -9,9 +9,9 @@ interface ThemeOption {
 }
 
 const themeOptions: ThemeOption[] = [
-  { value: 'dark-neon', label: '霓虹暗色', icon: '🌌' },
-  { value: 'light', label: '明亮模式', icon: '☀️' },
-  { value: 'dark', label: '简洁暗色', icon: '🌙' },
+  { value: 'navy-gold', label: '深蓝金', icon: '💎' },
+  { value: 'tech-blue', label: '科技蓝', icon: '⚡' },
+  { value: 'forest-green', label: '森林绿', icon: '🌿' },
 ];
 
 interface SettingsMenuProps {

@@ -85,12 +85,12 @@
 
 .modal-header h2 {
   margin: 0;
-  font-family: 'SF Mono', Monaco, monospace;
+  font-family: var(--font-mono);
   font-size: 18px;
   font-weight: 600;
   color: var(--accent-primary);
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .close-btn {
@@ -125,8 +125,8 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .form-group input,
@@ -215,8 +215,8 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .add-tag-btn:hover {
@@ -279,8 +279,8 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .cancel-btn {
@@ -327,14 +327,14 @@
   width: 80px;
   text-align: center;
   padding: 10px !important;
-  font-family: 'SF Mono', Monaco, monospace;
+  font-family: var(--font-mono);
   font-weight: 600;
 }
 
 .progress-unit {
   color: var(--neon-cyan);
   font-weight: 700;
-  font-family: 'SF Mono', Monaco, monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
 }
 
@@ -405,8 +405,8 @@
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 /* Comment Input Area */
@@ -547,7 +547,7 @@
 .comment-time {
   font-size: 11px;
   color: var(--text-muted);
-  font-family: 'SF Mono', Monaco, monospace;
+  font-family: var(--font-mono);
 }
 
 .comment-content {

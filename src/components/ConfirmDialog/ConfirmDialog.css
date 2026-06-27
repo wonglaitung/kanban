@@ -39,12 +39,12 @@
 
 .confirm-dialog h3 {
   margin: 0 0 16px;
-  font-family: 'SF Mono', Monaco, monospace;
+  font-family: var(--font-mono);
   font-size: 18px;
   font-weight: 600;
   color: var(--neon-pink);
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  text-transform: none;
+  letter-spacing: 0;
   text-shadow: 0 0 10px rgba(255, 45, 149, 0.3);
 }
 
@@ -69,8 +69,8 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .confirm-actions .cancel-btn {

@@ -1,8 +1,8 @@
 .column {
   background: var(--dark-card);
   border-radius: 12px;
-  width: 300px;
-  min-width: 300px;
+  width: 320px;
+  min-width: 280px;
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 140px);
@@ -39,7 +39,7 @@
 
 .column-title {
   margin: 0;
-  font-family: 'SF Mono', Monaco, monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
@@ -47,14 +47,17 @@
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .column-title::before {
-  content: '▸';
-  color: var(--accent-primary);
-  font-size: 12px;
+  content: '';
+  width: 3px;
+  height: 16px;
+  background: var(--accent-primary);
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 
 .task-count {
@@ -65,7 +68,7 @@
   padding: 4px 10px;
   border-radius: 12px;
   border: 1px solid var(--border-color);
-  font-family: 'SF Mono', Monaco, monospace;
+  font-family: var(--font-mono);
 }
 
 .column-actions {
@@ -149,8 +152,8 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .menu-item:hover {
@@ -202,8 +205,8 @@
 .empty-column p {
   margin: 0 0 16px;
   font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .add-task-btn-empty {
@@ -216,8 +219,8 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .add-task-btn-empty:hover {

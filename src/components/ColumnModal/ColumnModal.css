@@ -16,8 +16,8 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .column-modal .form-group input {
@@ -30,7 +30,7 @@
   color: var(--text-primary);
   transition: all 0.3s ease;
   box-sizing: border-box;
-  font-family: 'SF Mono', Monaco, monospace;
+  font-family: var(--font-mono);
   letter-spacing: 1px;
 }
 

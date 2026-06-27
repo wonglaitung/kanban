@@ -364,7 +364,7 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
           {/* Comments Section */}
           {task && (
             <div className="comments-sidebar">
-              <h3 className="comments-title">💬 讨论 ({comments.length})</h3>
+              <h3 className="comments-title">讨论 ({comments.length})</h3>
 
               {/* Comment Input */}
               <div className="comment-input-area">

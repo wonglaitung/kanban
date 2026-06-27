@@ -94,7 +94,10 @@ export function TaskCard({ task, onEdit, onDelete, onDuplicate, isDragging: _isD
             }}
             title="复制任务"
           >
-            📋
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
           </button>
           <button
             className="delete-btn"
@@ -124,7 +127,9 @@ export function TaskCard({ task, onEdit, onDelete, onDuplicate, isDragging: _isD
 
       <div className="task-meta">
         <span className="task-assignee">
-          <span className="avatar">👤</span>
+          <span className="avatar" title={task.assignee}>
+            {task.assignee?.charAt(0) || '?'}
+          </span>
           {task.assignee}
         </span>
         {task.dueDate && (
@@ -152,7 +157,10 @@ export function TaskCard({ task, onEdit, onDelete, onDuplicate, isDragging: _isD
           <div className="task-footer-meta">
             {commentCount > 0 && (
               <span className="task-comments-count" title={`${commentCount} 条评论`}>
-                💬 {commentCount}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                {commentCount}
               </span>
             )}
             {task.updatedAt && (
