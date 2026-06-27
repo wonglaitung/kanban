@@ -502,38 +502,99 @@ async def chat(request: ChatRequest):
                 doc.add_paragraph(f"生成时间：{now.strftime('%Y-%m-%d %H:%M:%S')}")
                 doc.add_paragraph()  # 空行
 
-                # 4. 将 Markdown 内容写入 Word
-                # 简单解析 Markdown
-                lines = report_content.split('\n')
-                for line in lines:
-                    line = line.strip()
-                    if not line:
-                        doc.add_paragraph()
-                        continue
+                # 4. 将 Markdown 内容写入 Word（使用 markdown + beautifulsoup4）
+                import markdown
+                from bs4 import BeautifulSoup, NavigableString
 
-                    # 二级标题 ##
-                    if line.startswith('## '):
-                        doc.add_heading(line[3:], level=1)
-                    # 三级标题 ###
-                    elif line.startswith('### '):
-                        doc.add_heading(line[4:], level=2)
-                    # 列表项
-                    elif line.startswith('- ') or line.startswith('* '):
-                        p = doc.add_paragraph(line[2:], style='List Bullet')
-                    # 加粗段落
-                    elif line.startswith('**') and line.endswith('**'):
+                # 转换 Markdown 到 HTML
+                html_content = markdown.markdown(
+                    report_content,
+                    extensions=['fenced_code', 'tables']
+                )
+                soup = BeautifulSoup(html_content, 'html.parser')
+
+                def process_element(element, doc):
+                    """递归处理 HTML 元素并写入 Word"""
+                    if isinstance(element, NavigableString):
+                        text = str(element).strip()
+                        if text:
+                            return text
+                        return None
+
+                    tag = element.name
+
+                    if tag in ['h1']:
+                        text = element.get_text()
+                        if text:
+                            doc.add_heading(text, level=1)
+                    elif tag in ['h2']:
+                        text = element.get_text()
+                        if text:
+                            doc.add_heading(text, level=2)
+                    elif tag in ['h3', 'h4']:
+                        text = element.get_text()
+                        if text:
+                            doc.add_heading(text, level=3)
+                    elif tag == 'p':
                         p = doc.add_paragraph()
-                        p.add_run(line[2:-2]).bold = True
-                    # 普通段落（处理行内加粗）
+                        process_inline(element, p)
+                    elif tag in ['ul', 'ol']:
+                        for li in element.find_all('li', recursive=False):
+                            text = li.get_text()
+                            doc.add_paragraph(text, style='List Bullet')
+                    elif tag == 'table':
+                        # 简单表格处理
+                        rows = element.find_all('tr')
+                        if rows:
+                            # 获取列数
+                            cols = len(rows[0].find_all(['th', 'td']))
+                            table = doc.add_table(rows=len(rows), cols=cols)
+                            table.style = 'Table Grid'
+                            for i, row in enumerate(rows):
+                                cells = row.find_all(['th', 'td'])
+                                for j, cell in enumerate(cells):
+                                    if j < cols:
+                                        table.rows[i].cells[j].text = cell.get_text()
+                    elif tag == 'blockquote':
+                        text = element.get_text()
+                        if text:
+                            doc.add_paragraph(text, style='Quote')
                     else:
-                        p = doc.add_paragraph()
-                        # 简单处理行内 **加粗**
-                        parts = re.split(r'(\*\*[^*]+\*\*)', line)
-                        for part in parts:
-                            if part.startswith('**') and part.endswith('**'):
-                                p.add_run(part[2:-2]).bold = True
-                            else:
-                                p.add_run(part)
+                        # 其他标签，直接处理子元素
+                        for child in element.children:
+                            process_element(child, doc)
+
+                def process_inline(element, paragraph):
+                    """处理行内元素（加粗、斜体等）"""
+                    for child in element.children:
+                        if isinstance(child, NavigableString):
+                            text = str(child)
+                            if text.strip():
+                                paragraph.add_run(text)
+                        elif child.name == 'strong' or child.name == 'b':
+                            paragraph.add_run(child.get_text()).bold = True
+                        elif child.name == 'em' or child.name == 'i':
+                            paragraph.add_run(child.get_text()).italic = True
+                        elif child.name == 'code':
+                            run = paragraph.add_run(child.get_text())
+                            run.font.name = 'Courier New'
+                        elif child.name == 'br':
+                            paragraph.add_run('\n')
+                        elif child.name == 'span':
+                            # 忽略 span 标签，只取文本
+                            process_inline(child, paragraph)
+                        else:
+                            # 其他标签，递归处理
+                            process_inline(child, paragraph)
+
+                # 处理所有顶层元素
+                for element in soup.children:
+                    if isinstance(element, NavigableString):
+                        text = str(element).strip()
+                        if text:
+                            doc.add_paragraph(text)
+                    else:
+                        process_element(element, doc)
 
                 # 5. 保存文件
                 filename = f"task_report_{now.strftime('%Y%m%d_%H%M%S')}.docx"
