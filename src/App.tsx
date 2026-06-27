@@ -258,7 +258,7 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-content">
-          <h1>📋 看板系统</h1>
+          <h1>📋 智能看板系统</h1>
           <div className="header-center">
             <select
               className="stale-filter-select"
