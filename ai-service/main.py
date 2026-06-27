@@ -405,7 +405,7 @@ async def chat(request: ChatRequest):
             tasks = query_tasks_from_db(status, priority, assignee, overdue)
             return {"total": len(tasks), "tasks": tasks}
 
-        @agent.tool(description="生成任务报告Word文档并返回下载链接。可根据用户需求灵活组织报告内容。")
+        @agent.tool(description="生成任务报告Word文档并返回下载链接。返回结果包含 download_link 字段，请直接将此 Markdown 链接展示给用户，用户点击即可下载。")
         def generate_task_report(
             title: str = "任务报告",
             content_hint: str = "",
@@ -526,10 +526,12 @@ async def chat(request: ChatRequest):
                     old_file.unlink()
 
                 # 5. 返回下载链接
+                download_url = f"/downloads/{filename}"
                 return {
                     "success": True,
                     "filename": filename,
-                    "download_url": f"/downloads/{filename}",
+                    "download_url": download_url,
+                    "download_link": f"[点击下载：{filename}]({download_url})",
                     "total_tasks": total,
                 }
 
