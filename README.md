@@ -15,7 +15,7 @@
 - **实时更新时间** - 显示每个任务的最后更新时间
 - **搜索功能** - 快速搜索任务、负责人、标签
 - **响应式设计** - 适配不同屏幕尺寸
-- **多主题支持** - 暗色霓虹、浅色、纯黑三种主题
+- **专业银行主题** - 深蓝金、科技蓝、森林绿三种专业主题，IBM Plex 字体系统
 
 ## 技术栈
 
@@ -30,6 +30,7 @@
 | AI服务 | FastAPI + Harness SDK |
 | 数据库 | SQLite |
 | 容器化 | Docker |
+| 字体系统 | IBM Plex Sans / IBM Plex Mono |
 
 ## 界面展示
 
@@ -210,6 +211,7 @@ interface Task {
 ```typescript
 interface Settings {
   token: string;  // 访问令牌
+  theme: 'navy-gold' | 'tech-blue' | 'forest-green';  // 主题
 }
 ```
 

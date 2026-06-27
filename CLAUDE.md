@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A Kanban board system for small teams (1-5 people) with drag-and-drop task management, SQLite persistence, AI assistant, and simple token-based access control.
+A Kanban board system for small teams (1-5 people) with drag-and-drop task management, SQLite persistence, AI assistant, and simple token-based access control. Designed with a professional banking aesthetic using IBM Plex fonts.
 
 ## Architecture
 
@@ -14,6 +14,7 @@ A Kanban board system for small teams (1-5 people) with drag-and-drop task manag
 - **Components**: Each component has its own directory with `.tsx`, `.css`, `index.ts`
 - **API Layer**: `src/services/api.ts` - centralized Axios client with conflict error handling
 - **Types**: `src/types/index.ts` - shared TypeScript interfaces
+- **Styling**: CSS custom properties for theming, IBM Plex font family
 
 ### Backend (Express + better-sqlite3)
 - **Entry**: `server/server.js`
@@ -26,6 +27,7 @@ A Kanban board system for small teams (1-5 people) with drag-and-drop task manag
 - **SDK Path**: `/data/harness/packages/sdk` (local development)
 - **Memory**: `server/data/MEMORY.md` - shared with database for Docker compatibility
 - **Features**: Natural language task queries, automatic memory with capacity limits
+- **URL Encoding**: Uses `urllib.parse.urlencode()` for Chinese character support in API calls
 
 ### Key Design Patterns
 1. **Optimistic Locking**: Tasks use `updatedAt` for conflict detection (409 response)
@@ -47,6 +49,7 @@ cd ai-service && python main.py       # AI service (port 3002, optional)
 
 # Code Quality
 npm run lint                          # ESLint check
+npm run build                         # Production build
 ```
 
 ## Database Migration Pattern
@@ -83,7 +86,7 @@ See `src/types/index.ts` for full definitions. Key entities:
 - **Task**: id, title, description, assignee, priority, dueDate, tags, columnId, order, progress, progressText, createdAt, updatedAt
 - **Comment**: id, taskId, author, content, createdAt, updatedAt
 - **Settings**: token, theme
-- **Theme**: 'dark-neon' | 'light' | 'dark'
+- **Theme**: 'navy-gold' | 'tech-blue' | 'forest-green'
 - **StaleFilter**: 'all' | '1day' | '3days' | '5days'
 
 ## API Endpoints
@@ -95,6 +98,17 @@ See `src/types/index.ts` for full definitions. Key entities:
 - Export: `GET /api/export/csv` - download all tasks with comments as CSV
 - AI: `GET /api/ai/dictionary`, `GET /api/ai/query`, `POST /api/ai/chat`
 
+## Theming
+
+Three professional banking themes available:
+- **Navy Gold** (default): Deep blue + gold accent - luxury wealth management feel
+- **Tech Blue**: Modern digital banking aesthetic
+- **Forest Green**: Sustainable, stable feel
+
+Font system uses IBM Plex family (enterprise standard for financial applications):
+- Display/Body: IBM Plex Sans
+- Mono/Numbers: IBM Plex Mono
+
 ## Critical Constraints
 
 1. **Token protection** is simple and for internal use only - default token is `123456`
@@ -103,3 +117,4 @@ See `src/types/index.ts` for full definitions. Key entities:
 4. **Database path**: `server/data/kanban.db` (dev), `/app/server/data/kanban.db` (Docker)
 5. **Memory path**: `server/data/MEMORY.md` - shared between local dev and Docker
 6. **Harness SDK**: Required at `/data/harness/packages/sdk` for AI service development
+7. **Chinese encoding**: Use `urllib.parse.urlencode(encoding='utf-8')` for URL parameters with Chinese characters
