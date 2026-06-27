@@ -372,17 +372,20 @@ async def chat(request: ChatRequest):
             tools=[
                 UpdateCoreMemoryTool(),
             ],
-            system_prompt="""你是一个看板任务管理助手，帮助用户查询和分析任务数据。
+            system_prompt="""你是一个看板任务管理助手，帮助用户查询、分析和管理任务数据。
 
 工具有：
 - get_task_dictionary: 获取字段描述
 - query_tasks: 查询任务（支持 status/priority/assignee/overdue 参数）
+- create_task: 创建新任务（需提供 title，可选 description/assignee/priority/dueDate/tags/status）
+- generate_task_report: 生成 Word 报告
 
 回答要求：
 1. 先调用工具获取数据再回答
 2. 使用简洁 Markdown，不用 --- 分隔线
 3. 任务列表用表格或紧凑列表
-4. 重点信息用 **加粗**""",
+4. 重点信息用 **加粗**
+5. 创建任务成功后，简要确认即可""",
         )
 
         # 注册工具
@@ -404,6 +407,86 @@ async def chat(request: ChatRequest):
             """查询任务数据。overdue=True表示查询逾期任务，overdue=False表示查询非逾期任务。"""
             tasks = query_tasks_from_db(status, priority, assignee, overdue)
             return {"total": len(tasks), "tasks": tasks}
+
+        @agent.tool(description="创建新任务到看板。可以指定标题、描述、负责人、优先级、截止日期、标签和状态。")
+        def create_task(
+            title: str,
+            description: str = "",
+            assignee: str = "",
+            priority: str = "medium",
+            dueDate: str = "",
+            tags: list[str] = None,
+            status: str = "待办",
+        ) -> dict:
+            """
+            创建新任务。
+
+            Args:
+                title: 任务标题（必填）
+                description: 任务描述
+                assignee: 负责人
+                priority: 优先级 (high/medium/low)
+                dueDate: 截止日期 (YYYY-MM-DD)
+                tags: 标签列表
+                status: 状态 (待办/进行中/审核/已完成)
+
+            Returns:
+                创建的任务信息
+            """
+            # 验证参数
+            if not title or not title.strip():
+                return {"error": "任务标题不能为空"}
+
+            if priority not in ["high", "medium", "low"]:
+                return {"error": f"不支持的优先级: {priority}，必须是 high/medium/low"}
+
+            if status not in STATUS_REVERSE_MAPPING:
+                return {"error": f"不支持的状态: {status}，必须是 待办/进行中/审核/已完成"}
+
+            # 获取列 ID
+            column_id = STATUS_REVERSE_MAPPING[status]
+
+            # 生成任务 ID
+            task_id = f"task-{int(datetime.now().timestamp() * 1000)}"
+
+            # 处理标签
+            if tags is None:
+                tags = []
+
+            # 获取当前时间
+            now = datetime.now().isoformat()
+
+            # 插入数据库
+            conn = get_db_connection()
+            try:
+                conn.execute(
+                    """INSERT INTO tasks
+                       (id, title, description, assignee, priority, dueDate, tags, columnId, "order", progress, progressText, createdAt, updatedAt)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, '', ?, ?)""",
+                    (task_id, title.strip(), description, assignee, priority, dueDate, json.dumps(tags), column_id, now, now)
+                )
+                conn.commit()
+
+                # 返回创建的任务
+                return {
+                    "success": True,
+                    "task": {
+                        "id": task_id,
+                        "title": title.strip(),
+                        "description": description,
+                        "assignee": assignee,
+                        "priority": priority,
+                        "dueDate": dueDate,
+                        "tags": tags,
+                        "status": status,
+                        "progress": 0,
+                        "createdAt": now,
+                    }
+                }
+            except Exception as e:
+                return {"error": f"创建任务失败: {str(e)}"}
+            finally:
+                conn.close()
 
         @agent.tool(description="生成任务报告Word文档并返回下载链接。AI会根据content_hint参数生成符合需求的报告内容。返回结果包含 download_link 字段，请直接将此 Markdown 链接展示给用户。")
         def generate_task_report(
