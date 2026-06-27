@@ -13,7 +13,6 @@ API 设计:
 import asyncio
 import json
 import os
-import sqlite3
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -45,10 +44,8 @@ from config.dictionary import (
     TASK_FIELDS,
 )
 
-# 数据库路径
-DB_PATH = os.environ.get(
-    "DB_PATH", str(Path(__file__).parent.parent / "server" / "data" / "kanban.db")
-)
+# 后端 API 地址
+BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:3001")
 
 # 下载目录（用于存放生成的报告文件）
 DOWNLOADS_DIR = Path(__file__).parent.parent / "server" / "data" / "downloads"
@@ -58,107 +55,45 @@ DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
 # ==================== 任务查询 ====================
 
 
-def query_tasks_from_db(
-    status: Optional[str] = None,
-    priority: Optional[str] = None,
-    assignee: Optional[str] = None,
-    overdue: Optional[bool] = None,
-    limit: int = 50,
-) -> list[dict]:
+def call_backend_api(method: str, path: str, data: Optional[dict] = None, params: Optional[dict] = None) -> dict:
     """
-    从数据库查询任务数据（公共函数）
+    调用后端 API
 
     Args:
-        status: 状态筛选
-        priority: 优先级筛选
-        assignee: 负责人筛选
-        overdue: 逾期状态筛选
-        limit: 返回数量限制
+        method: HTTP 方法 (GET/POST/PUT/DELETE)
+        path: API 路径 (如 /api/tasks)
+        data: 请求体数据
+        params: 查询参数
 
     Returns:
-        任务列表
+        API 响应数据
     """
-    conn = get_db_connection()
-    try:
-        columns_map = get_columns_mapping(conn)
-        sql = 'SELECT * FROM tasks WHERE 1=1'
-        params: list[Any] = []
+    import urllib.request
 
-        if status:
-            if status not in STATUS_REVERSE_MAPPING:
-                return []
-            sql += ' AND columnId = ?'
-            params.append(STATUS_REVERSE_MAPPING[status])
+    url = f"{BACKEND_URL}{path}"
 
-        if priority:
-            if priority not in ["high", "medium", "low"]:
-                return []
-            sql += " AND priority = ?"
-            params.append(priority)
+    if params:
+        query_string = "&".join(f"{k}={v}" for k, v in params.items() if v is not None)
+        if query_string:
+            url += f"?{query_string}"
 
-        if assignee:
-            sql += " AND assignee LIKE ?"
-            params.append(f"%{assignee}%")
+    headers = {"Content-Type": "application/json"}
 
-        sql += f' ORDER BY "order" LIMIT {limit}'
-
-        rows = conn.execute(sql, params).fetchall()
-        tasks = [parse_task(row) for row in rows]
-
-        for task in tasks:
-            task["status"] = columns_map.get(task["columnId"], task["columnId"])
-            task["overdue"] = is_overdue(task.get("dueDate"), task["status"])
-
-        if overdue is not None:
-            if isinstance(overdue, str):
-                overdue = overdue.lower() == "true"
-            tasks = [t for t in tasks if t["overdue"] == overdue]
-
-        return tasks
-    finally:
-        conn.close()
-
-
-def get_task_comments(task_id: str) -> list[dict]:
-    """获取任务的所有评论"""
-    conn = get_db_connection()
-    try:
-        rows = conn.execute(
-            "SELECT * FROM comments WHERE taskId = ? ORDER BY createdAt",
-            (task_id,)
-        ).fetchall()
-        return [dict(row) for row in rows]
-    finally:
-        conn.close()
-
-
-# ==================== 数据库操作 ====================
-
-
-def get_db_connection():
-    """获取数据库连接"""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def parse_task(row: sqlite3.Row) -> dict:
-    """解析任务行，处理 JSON 字段"""
-    task = dict(row)
-    if task.get("tags"):
-        try:
-            task["tags"] = json.loads(task["tags"])
-        except json.JSONDecodeError:
-            task["tags"] = []
+    if method == "GET":
+        req = urllib.request.Request(url, headers=headers, method="GET")
     else:
-        task["tags"] = []
-    return task
+        body = json.dumps(data).encode() if data else b""
+        req = urllib.request.Request(url, data=body, headers=headers, method=method)
 
-
-def get_columns_mapping(conn: sqlite3.Connection) -> dict:
-    """获取列 ID 到标题的映射"""
-    rows = conn.execute("SELECT id, title FROM columns").fetchall()
-    return {row["id"]: row["title"] for row in rows}
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            result = json.loads(resp.read().decode())
+            return {"success": True, "data": result}
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode()
+        return {"success": False, "error": f"API 错误 {e.code}: {error_body}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 def is_overdue(due_date: Optional[str], status: str) -> bool:
@@ -193,9 +128,13 @@ def is_overdue(due_date: Optional[str], status: str) -> bool:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-    # 启动时检查数据库
-    if not Path(DB_PATH).exists():
-        print(f"Warning: Database not found at {DB_PATH}")
+    # 启动时检查后端 API 是否可用
+    try:
+        result = call_backend_api("GET", "/api/columns")
+        if not result["success"]:
+            print(f"Warning: Backend API not available - {result['error']}")
+    except Exception as e:
+        print(f"Warning: Backend API check failed - {e}")
     yield
 
 
@@ -210,7 +149,7 @@ app = FastAPI(
 @app.get("/health")
 async def health():
     """健康检查"""
-    return {"status": "ok", "db_path": DB_PATH}
+    return {"status": "ok", "backend_url": BACKEND_URL}
 
 
 @app.get("/api/ai/dictionary")
@@ -239,71 +178,56 @@ async def query_tasks(
     """
     查询任务数据
 
-    安全措施（参考 backend_api）：
-    1. 参数白名单验证
-    2. 直接读取 SQLite 数据库
-    3. 不接受原始 SQL，防止注入
+    通过后端 API 查询，确保数据一致性。
     """
-    conn = get_db_connection()
-    try:
-        # 获取列映射
-        columns_map = get_columns_mapping(conn)
+    # 构建查询参数
+    params = {}
+    if status:
+        if status not in STATUS_REVERSE_MAPPING:
+            raise HTTPException(400, f"不支持的状态: {status}。支持的值: {list(STATUS_REVERSE_MAPPING.keys())}")
+        params["status"] = STATUS_REVERSE_MAPPING[status]
+    if priority:
+        if priority not in ["high", "medium", "low"]:
+            raise HTTPException(400, f"不支持的优先级: {priority}。支持的值: high, medium, low")
+        params["priority"] = priority
+    if assignee:
+        params["assignee"] = assignee
 
-        # 构建查询
-        sql = "SELECT * FROM tasks WHERE 1=1"
-        params: list[Any] = []
+    # 调用后端 API 获取任务
+    result = call_backend_api("GET", "/api/tasks", params=params if params else None)
+    if not result["success"]:
+        raise HTTPException(500, result["error"])
 
-        # 状态筛选
-        if status:
-            if status not in STATUS_REVERSE_MAPPING:
-                raise HTTPException(400, f"不支持的状态: {status}。支持的值: {list(STATUS_REVERSE_MAPPING.keys())}")
-            column_id = STATUS_REVERSE_MAPPING[status]
-            sql += ' AND columnId = ?'
-            params.append(column_id)
+    tasks = result["data"]
 
-        # 优先级筛选
-        if priority:
-            if priority not in ["high", "medium", "low"]:
-                raise HTTPException(400, f"不支持的优先级: {priority}。支持的值: high, medium, low")
-            sql += " AND priority = ?"
-            params.append(priority)
+    # 获取列映射
+    columns_map = {}
+    columns_result = call_backend_api("GET", "/api/columns")
+    if columns_result["success"]:
+        for col in columns_result["data"]:
+            columns_map[col["id"]] = col["title"]
 
-        # 负责人筛选
-        if assignee:
-            sql += " AND assignee LIKE ?"
-            params.append(f"%{assignee}%")
+    # 添加状态名称和逾期标记
+    for task in tasks:
+        task["status"] = columns_map.get(task["columnId"], task["columnId"])
+        task["overdue"] = is_overdue(task.get("dueDate"), task["status"])
 
-        # 标签筛选
-        if tags:
-            sql += " AND tags LIKE ?"
-            params.append(f'%"{tags}"%')
+    # 标签筛选（在 Python 中处理）
+    if tags:
+        tasks = [t for t in tasks if tags in t.get("tags", [])]
 
-        # 排序
-        sql += ' ORDER BY "order"'
+    # 逾期筛选（在 Python 中处理）
+    if overdue is not None:
+        tasks = [t for t in tasks if t["overdue"] == overdue]
 
-        # 执行查询
-        rows = conn.execute(sql, params).fetchall()
-        tasks = [parse_task(row) for row in rows]
+    # 限制返回数量
+    tasks = tasks[:limit]
 
-        # 添加状态名称和逾期标记
-        for task in tasks:
-            task["status"] = columns_map.get(task["columnId"], task["columnId"])
-            task["overdue"] = is_overdue(task.get("dueDate"), task["status"])
-
-        # 逾期筛选（在 Python 中处理，因为需要计算）
-        if overdue is not None:
-            tasks = [t for t in tasks if t["overdue"] == overdue]
-
-        # 限制返回数量
-        tasks = tasks[:limit]
-
-        return {
-            "total": len(tasks),
-            "tasks": tasks,
-            "query_time": datetime.now(timezone.utc).isoformat(),
-        }
-    finally:
-        conn.close()
+    return {
+        "total": len(tasks),
+        "tasks": tasks,
+        "query_time": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 # ==================== 对话接口 ====================
@@ -406,7 +330,7 @@ async def chat(request: ChatRequest):
                 "dimensions": QUERY_DIMENSIONS,
             }
 
-        @agent.tool(description="查询任务数据，支持按状态、优先级、负责人、逾期状态筛选。查询逾期任务时，overdue参数必须为true。")
+        @agent.tool(description="查询任务数据，支持按状态、优先级、负责人筛选。查询逾期任务时，overdue参数必须为true。")
         def query_tasks_tool(
             status: Optional[str] = None,
             priority: Optional[str] = None,
@@ -414,7 +338,40 @@ async def chat(request: ChatRequest):
             overdue: Optional[bool] = None,
         ) -> dict:
             """查询任务数据。overdue=True表示查询逾期任务，overdue=False表示查询非逾期任务。"""
-            tasks = query_tasks_from_db(status, priority, assignee, overdue)
+            # 构建查询参数
+            params = {}
+            if status and status in STATUS_REVERSE_MAPPING:
+                params["status"] = STATUS_REVERSE_MAPPING[status]
+            if priority:
+                params["priority"] = priority
+            if assignee:
+                params["assignee"] = assignee
+
+            # 调用后端 API 查询任务
+            result = call_backend_api("GET", "/api/tasks", params=params if params else None)
+
+            if not result["success"]:
+                return {"error": result["error"]}
+
+            tasks = result["data"]
+
+            # 添加状态名称映射
+            columns_map = {}
+            columns_result = call_backend_api("GET", "/api/columns")
+            if columns_result["success"]:
+                for col in columns_result["data"]:
+                    columns_map[col["id"]] = col["title"]
+
+            for task in tasks:
+                task["status"] = columns_map.get(task["columnId"], task["columnId"])
+                task["overdue"] = is_overdue(task.get("dueDate"), task["status"])
+
+            # 逾期筛选（在 Python 中处理）
+            if overdue is not None:
+                if isinstance(overdue, str):
+                    overdue = overdue.lower() == "true"
+                tasks = [t for t in tasks if t["overdue"] == overdue]
+
             return {"total": len(tasks), "tasks": tasks}
 
         @agent.tool(description="管理任务。action='create'创建新任务，action='update'更新任务。title是任务标题关键词（不是ID），用于匹配任务。更新时：assignee改负责人，status改状态，priority改优先级。示例：action='update', title='登录', status='进行中'")
@@ -467,127 +424,107 @@ async def chat(request: ChatRequest):
                     tags = []
 
                 # 调用后端 API 创建任务（触发 WebSocket 广播）
-                try:
-                    import urllib.request
-                    backend_url = "http://localhost:3001/api/tasks"
-                    task_data = {
-                        "title": title.strip(),
-                        "description": description,
-                        "assignee": assignee,
-                        "priority": priority,
-                        "dueDate": dueDate,
-                        "tags": tags,
-                        "columnId": column_id,
-                    }
-                    req = urllib.request.Request(
-                        backend_url,
-                        data=json.dumps(task_data).encode(),
-                        headers={"Content-Type": "application/json"},
-                        method="POST"
-                    )
-                    with urllib.request.urlopen(req, timeout=10) as resp:
-                        result = json.loads(resp.read().decode())
+                task_data = {
+                    "title": title.strip(),
+                    "description": description,
+                    "assignee": assignee,
+                    "priority": priority,
+                    "dueDate": dueDate,
+                    "tags": tags,
+                    "columnId": column_id,
+                }
+                result = call_backend_api("POST", "/api/tasks", data=task_data)
 
-                    return {
-                        "success": True,
-                        "action": "create",
-                        "task": result
-                    }
-                except Exception as e:
-                    return {"error": f"创建任务失败: {str(e)}"}
+                if not result["success"]:
+                    return {"error": result["error"]}
+
+                return {
+                    "success": True,
+                    "action": "create",
+                    "task": result["data"]
+                }
 
             elif action == "update":
                 # 更新任务逻辑 - 通过标题关键词匹配
                 if not title or not title.strip():
                     return {"error": "更新任务需要提供 title 关键词"}
 
-                conn = get_db_connection()
-                try:
-                    columns_map = get_columns_mapping(conn)
+                search_title = title.strip()
 
-                    # 通过标题关键词查找任务
-                    search_title = title.strip()
-                    rows = conn.execute(
-                        'SELECT * FROM tasks WHERE title LIKE ?',
-                        (f"%{search_title}%",)
-                    ).fetchall()
+                # 通过后端 API 搜索任务
+                result = call_backend_api("GET", "/api/tasks/search", params={"title": search_title})
 
-                    # 如果找不到，尝试去掉常见前缀再搜索
-                    if len(rows) == 0:
-                        # 去掉"任务"、"task"等前缀
-                        import re
-                        cleaned_title = re.sub(r'^(任务|task|Task)\s*', '', search_title, flags=re.IGNORECASE)
-                        if cleaned_title and cleaned_title != search_title:
-                            rows = conn.execute(
-                                'SELECT * FROM tasks WHERE title LIKE ?',
-                                (f"%{cleaned_title}%",)
-                            ).fetchall()
+                if not result["success"]:
+                    return {"error": result["error"]}
 
-                    if len(rows) == 0:
-                        return {"error": f"未找到标题包含 '{search_title}' 的任务"}
+                rows = result["data"]
 
-                    if len(rows) > 1:
-                        tasks_info = []
-                        for r in rows:
-                            task_status = columns_map.get(r["columnId"], r["columnId"])
-                            tasks_info.append(f"- {r['title']} (状态: {task_status})")
-                        return {
-                            "error": f"找到 {len(rows)} 个匹配的任务，请提供更精确的标题：\n" + "\n".join(tasks_info)
-                        }
+                # 如果找不到，尝试去掉常见前缀再搜索
+                if len(rows) == 0:
+                    import re
+                    cleaned_title = re.sub(r'^(任务|task|Task)\s*', '', search_title, flags=re.IGNORECASE)
+                    if cleaned_title and cleaned_title != search_title:
+                        result = call_backend_api("GET", "/api/tasks/search", params={"title": cleaned_title})
+                        if result["success"]:
+                            rows = result["data"]
 
-                    # 找到唯一匹配，通过后端 API 更新（触发 WebSocket 广播）
-                    existing = parse_task(rows[0])
-                    task_id = existing["id"]
+                if len(rows) == 0:
+                    return {"error": f"未找到标题包含 '{search_title}' 的任务"}
 
-                    # 构建更新数据
-                    update_data = {}
-                    if new_title and new_title.strip():
-                        update_data["title"] = new_title.strip()
-                    if description:
-                        update_data["description"] = description
-                    if assignee:
-                        update_data["assignee"] = assignee
-                    if priority and priority in ["high", "medium", "low"]:
-                        update_data["priority"] = priority
-                    if dueDate:
-                        update_data["dueDate"] = dueDate
-                    if tags is not None:
-                        update_data["tags"] = tags
-                    if status and status in STATUS_REVERSE_MAPPING:
-                        update_data["columnId"] = STATUS_REVERSE_MAPPING[status]
-                    if progress is not None and 0 <= progress <= 100:
-                        update_data["progress"] = progress
-                    if progressText:
-                        update_data["progressText"] = progressText
+                # 获取列映射
+                columns_result = call_backend_api("GET", "/api/columns")
+                columns_map = {}
+                if columns_result["success"]:
+                    for col in columns_result["data"]:
+                        columns_map[col["id"]] = col["title"]
 
-                    if not update_data:
-                        return {"error": "没有提供要更新的字段"}
+                if len(rows) > 1:
+                    tasks_info = []
+                    for r in rows:
+                        task_status = columns_map.get(r["columnId"], r["columnId"])
+                        tasks_info.append(f"- {r['title']} (状态: {task_status})")
+                    return {
+                        "error": f"找到 {len(rows)} 个匹配的任务，请提供更精确的标题：\n" + "\n".join(tasks_info)
+                    }
 
-                    # 调用后端 API 更新任务
-                    try:
-                        import urllib.request
-                        backend_url = f"http://localhost:3001/api/tasks/{task_id}"
-                        req = urllib.request.Request(
-                            backend_url,
-                            data=json.dumps(update_data).encode(),
-                            headers={"Content-Type": "application/json"},
-                            method="PUT"
-                        )
-                        with urllib.request.urlopen(req, timeout=10) as resp:
-                            result = json.loads(resp.read().decode())
+                # 找到唯一匹配，通过后端 API 更新
+                task_id = rows[0]["id"]
 
-                        return {
-                            "success": True,
-                            "action": "update",
-                            "task": result
-                        }
-                    except urllib.error.HTTPError as e:
-                        error_body = e.read().decode()
-                        return {"error": f"更新任务失败: {error_body}"}
-                    except Exception as e:
-                        return {"error": f"更新任务失败: {str(e)}"}
-                finally:
-                    conn.close()
+                # 构建更新数据
+                update_data = {}
+                if new_title and new_title.strip():
+                    update_data["title"] = new_title.strip()
+                if description:
+                    update_data["description"] = description
+                if assignee:
+                    update_data["assignee"] = assignee
+                if priority and priority in ["high", "medium", "low"]:
+                    update_data["priority"] = priority
+                if dueDate:
+                    update_data["dueDate"] = dueDate
+                if tags is not None:
+                    update_data["tags"] = tags
+                if status and status in STATUS_REVERSE_MAPPING:
+                    update_data["columnId"] = STATUS_REVERSE_MAPPING[status]
+                if progress is not None and 0 <= progress <= 100:
+                    update_data["progress"] = progress
+                if progressText:
+                    update_data["progressText"] = progressText
+
+                if not update_data:
+                    return {"error": "没有提供要更新的字段"}
+
+                # 调用后端 API 更新任务
+                result = call_backend_api("PUT", f"/api/tasks/{task_id}", data=update_data)
+
+                if not result["success"]:
+                    return {"error": result["error"]}
+
+                return {
+                    "success": True,
+                    "action": "update",
+                    "task": result["data"]
+                }
 
             else:
                 return {"error": f"不支持的操作: {action}，必须是 create/update"}
@@ -619,12 +556,32 @@ async def chat(request: ChatRequest):
                 from docx.enum.text import WD_ALIGN_PARAGRAPH
                 import re
 
-                # 1. 查询任务数据
-                tasks = query_tasks_from_db(status, priority, assignee, limit=1000)
+                # 1. 通过后端 API 查询任务数据
+                params = {}
+                if status and status in STATUS_REVERSE_MAPPING:
+                    params["status"] = STATUS_REVERSE_MAPPING[status]
+                if priority:
+                    params["priority"] = priority
+                if assignee:
+                    params["assignee"] = assignee
+
+                tasks_result = call_backend_api("GET", "/api/tasks", params=params if params else None)
+                if not tasks_result["success"]:
+                    return {"error": tasks_result["error"]}
+                tasks = tasks_result["data"][:1000]  # 限制数量
+
+                # 获取列映射
+                columns_map = {}
+                columns_result = call_backend_api("GET", "/api/columns")
+                if columns_result["success"]:
+                    for col in columns_result["data"]:
+                        columns_map[col["id"]] = col["title"]
 
                 # 获取评论
                 for task in tasks:
-                    task["comments"] = get_task_comments(task["id"])
+                    task["status"] = columns_map.get(task["columnId"], task["columnId"])
+                    comments_result = call_backend_api("GET", f"/api/tasks/{task['id']}/comments")
+                    task["comments"] = comments_result["data"] if comments_result["success"] else []
 
                 # 2. 让 AI 生成报告内容
                 # 构建任务数据摘要

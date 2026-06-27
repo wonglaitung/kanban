@@ -115,6 +115,43 @@ app.get('/api/tasks', (req, res) => {
   }
 });
 
+// Search tasks by title
+app.get('/api/tasks/search', (req, res) => {
+  try {
+    const { title, status, priority, assignee } = req.query;
+
+    let sql = 'SELECT * FROM tasks WHERE 1=1';
+    const params = [];
+
+    if (title) {
+      sql += ' AND title LIKE ?';
+      params.push(`%${title}%`);
+    }
+
+    if (status) {
+      sql += ' AND columnId = ?';
+      params.push(status);
+    }
+
+    if (priority) {
+      sql += ' AND priority = ?';
+      params.push(priority);
+    }
+
+    if (assignee) {
+      sql += ' AND assignee LIKE ?';
+      params.push(`%${assignee}%`);
+    }
+
+    sql += ' ORDER BY "order"';
+
+    const tasks = db.prepare(sql).all(...params);
+    res.json(tasks.map(parseTask));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get single task
 app.get('/api/tasks/:id', (req, res) => {
   try {
