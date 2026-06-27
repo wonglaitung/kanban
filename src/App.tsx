@@ -32,7 +32,7 @@ function App() {
   const [showAIChat, setShowAIChat] = useState(false);
 
   const { columns, loading: columnsLoading, addColumn, editColumn, removeColumn } = useColumns();
-  const { tasks, loading: tasksLoading, addTask, editTask, removeTask, duplicateTask, reorderTasks } = useTasks();
+  const { tasks, loading: tasksLoading, addTask, editTask, removeTask, duplicateTask, reorderTasks, refreshTasks } = useTasks();
 
   // Filter tasks based on search query and stale filter
   const filteredTasks = useMemo(() => {
@@ -381,7 +381,7 @@ function App() {
       {/* AI Chat */}
       {showAIChat && (
         <div className="ai-chat-fab-open">
-          <AIChat onClose={() => setShowAIChat(false)} />
+          <AIChat onClose={() => setShowAIChat(false)} onTaskChange={refreshTasks} />
         </div>
       )}
       {!showAIChat && (

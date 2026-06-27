@@ -13,14 +13,15 @@ interface Message {
 
 interface AIChatProps {
   onClose?: () => void;
+  onTaskChange?: () => void; // 任务数据变化时的回调
 }
 
-export default function AIChat({ onClose }: AIChatProps) {
+export default function AIChat({ onClose, onTaskChange }: AIChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
       role: 'assistant',
-      content: '你好！我是看板智能助手。我可以帮你分析任务、查询数据、提供建议。有什么我可以帮你的吗？',
+      content: '你好！我是你的数字分身。我可以帮你分析任务、查询数据、提供建议。有什么我可以帮你的吗？',
       timestamp: new Date(),
     },
   ]);
@@ -29,9 +30,12 @@ export default function AIChat({ onClose }: AIChatProps) {
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [sessionId] = useState(`session-${Date.now()}`);
   const [height, setHeight] = useState(() => {
-    // 从 localStorage 读取保存的高度
+    // 从 localStorage 读取保存的高度，但不超过视口可用空间
     const saved = localStorage.getItem('ai-chat-height');
-    return saved ? parseInt(saved, 10) : 600;
+    const preferred = saved ? parseInt(saved, 10) : 600;
+    // 预留底部 60px 给 FAB 按钮区域
+    const maxHeight = window.innerHeight - 60;
+    return Math.min(preferred, maxHeight);
   });
   const [isResizing, setIsResizing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -78,6 +82,18 @@ export default function AIChat({ onClose }: AIChatProps) {
     };
   }, [isResizing, handleResizeMove, handleResizeEnd]);
 
+  // 窗口大小变化时，确保对话框不超出视口
+  useEffect(() => {
+    const handleWindowResize = () => {
+      const maxHeight = window.innerHeight - 60;
+      if (height > maxHeight) {
+        setHeight(maxHeight);
+      }
+    };
+    window.addEventListener('resize', handleWindowResize);
+    return () => window.removeEventListener('resize', handleWindowResize);
+  }, [height]);
+
   // 滚动到底部
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -121,6 +137,8 @@ export default function AIChat({ onClose }: AIChatProps) {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
+      // AI 可能创建了任务，刷新任务列表
+      onTaskChange?.();
     } catch (error) {
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
@@ -177,7 +195,7 @@ export default function AIChat({ onClose }: AIChatProps) {
       <div className="ai-chat-header">
         <h3>
           <img src="/icon.svg" alt="AI" width="24" height="28" style={{ marginRight: '8px' }} />
-          <span>智能助手</span>
+          <span>数字分身</span>
         </h3>
         <div className="ai-chat-header-actions">
           <button
