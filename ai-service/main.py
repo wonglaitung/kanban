@@ -543,18 +543,27 @@ async def chat(request: ChatRequest):
                             text = li.get_text()
                             doc.add_paragraph(text, style='List Bullet')
                     elif tag == 'table':
-                        # 简单表格处理
+                        # 表格处理
                         rows = element.find_all('tr')
                         if rows:
-                            # 获取列数
-                            cols = len(rows[0].find_all(['th', 'td']))
-                            table = doc.add_table(rows=len(rows), cols=cols)
+                            # 获取最大列数
+                            max_cols = max(len(row.find_all(['th', 'td'])) for row in rows)
+                            table = doc.add_table(rows=len(rows), cols=max_cols)
                             table.style = 'Table Grid'
+
                             for i, row in enumerate(rows):
                                 cells = row.find_all(['th', 'td'])
                                 for j, cell in enumerate(cells):
-                                    if j < cols:
-                                        table.rows[i].cells[j].text = cell.get_text()
+                                    if j < max_cols:
+                                        cell_para = table.rows[i].cells[j].paragraphs[0]
+                                        # 清空默认段落
+                                        cell_para.clear()
+                                        # 处理单元格内的格式
+                                        process_inline(cell, cell_para)
+                                        # 表头加粗
+                                        if cell.name == 'th':
+                                            for run in cell_para.runs:
+                                                run.bold = True
                     elif tag == 'blockquote':
                         text = element.get_text()
                         if text:
