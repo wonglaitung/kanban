@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { chat } from '../../services/aiApi';
-import robotIcon from '../../assets/icon.svg';
 import './AIChat.css';
 
 interface Message {
@@ -177,7 +176,7 @@ export default function AIChat({ onClose }: AIChatProps) {
 
       <div className="ai-chat-header">
         <h3>
-          <img src={robotIcon} alt="AI" width="24" height="28" style={{ marginRight: '8px' }} />
+          <img src="/icon.svg" alt="AI" width="24" height="28" style={{ marginRight: '8px' }} />
           <span>智能助手</span>
         </h3>
         <div className="ai-chat-header-actions">

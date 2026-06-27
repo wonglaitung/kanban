@@ -10,7 +10,6 @@ import { useColumns } from './hooks/useColumns';
 import { useTasks } from './hooks/useTasks';
 import { getSettings, updateSettings, exportCsv } from './services/api';
 import type { Task, Column as ColumnType, Theme, StaleFilter } from './types';
-import robotIcon from './assets/icon.svg';
 import './App.css';
 
 function App() {
@@ -391,7 +390,7 @@ function App() {
           onClick={() => setShowAIChat(true)}
           title="智能助手"
         >
-          <img src={robotIcon} alt="AI" width="40" height="48" />
+          <img src="/icon.svg" alt="AI" width="40" height="48" />
         </button>
       )}
     </div>
