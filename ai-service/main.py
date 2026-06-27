@@ -405,7 +405,7 @@ async def chat(request: ChatRequest):
             tasks = query_tasks_from_db(status, priority, assignee, overdue)
             return {"total": len(tasks), "tasks": tasks}
 
-        @agent.tool(description="生成任务报告Word文档并返回下载链接。返回结果包含 download_link 字段，请直接将此 Markdown 链接展示给用户，用户点击即可下载。")
+        @agent.tool(description="生成任务报告Word文档并返回下载链接。AI会根据content_hint参数生成符合需求的报告内容。返回结果包含 download_link 字段，请直接将此 Markdown 链接展示给用户。")
         def generate_task_report(
             title: str = "任务报告",
             content_hint: str = "",
@@ -418,7 +418,7 @@ async def chat(request: ChatRequest):
 
             Args:
                 title: 报告标题
-                content_hint: 内容提示，描述报告要包含什么内容
+                content_hint: 内容提示，描述报告要包含什么内容（如"工作汇报，要有工作内容和进度"）
                 status: 筛选状态
                 priority: 筛选优先级
                 assignee: 筛选负责人
@@ -430,16 +430,67 @@ async def chat(request: ChatRequest):
                 from docx import Document
                 from docx.shared import Pt, Inches
                 from docx.enum.text import WD_ALIGN_PARAGRAPH
+                import re
 
                 # 1. 查询任务数据
                 tasks = query_tasks_from_db(status, priority, assignee, limit=1000)
 
                 # 获取评论
-                task_comments: dict[str, list] = {}
                 for task in tasks:
-                    task_comments[task["id"]] = get_task_comments(task["id"])
+                    task["comments"] = get_task_comments(task["id"])
 
-                # 2. 创建 Word 文档
+                # 2. 让 AI 生成报告内容
+                # 构建任务数据摘要
+                tasks_summary = []
+                priority_map = {"high": "高", "medium": "中", "low": "低"}
+                for task in tasks:
+                    task_info = {
+                        "标题": task.get("title", ""),
+                        "状态": task.get("status", ""),
+                        "负责人": task.get("assignee", ""),
+                        "优先级": priority_map.get(task.get("priority", ""), task.get("priority", "")),
+                        "截止日期": task.get("dueDate", ""),
+                        "进度": f"{task.get('progress', 0)}%",
+                        "进度说明": task.get("progressText", ""),
+                        "描述": task.get("description", ""),
+                        "评论数": len(task.get("comments", [])),
+                    }
+                    tasks_summary.append(task_info)
+
+                # 调用 LLM 生成报告内容
+                report_prompt = f"""请根据以下任务数据生成一份报告，报告格式为 Markdown。
+
+报告标题：{title}
+用户需求：{content_hint or "标准任务报告"}
+
+任务数据：
+{json.dumps(tasks_summary, ensure_ascii=False, indent=2)}
+
+要求：
+1. 根据 "{content_hint}" 的需求组织报告内容
+2. 使用 Markdown 格式
+3. 标题用 ##，小标题用 ###
+4. 重点内容用 **加粗**
+5. 列表用 - 开头
+6. 不要写"根据任务数据"之类的开场白，直接输出报告内容
+7. 报告要有实质性内容，不要空洞"""
+
+                # 使用 OpenAI API 生成报告
+                import openai
+                client = openai.OpenAI(
+                    api_key=api_key,
+                    base_url=base_url,
+                )
+
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": report_prompt}],
+                    max_tokens=4000,
+                )
+
+                report_content = response.choices[0].message.content
+
+                # 3. 创建 Word 文档
                 doc = Document()
 
                 # 标题
@@ -449,78 +500,47 @@ async def chat(request: ChatRequest):
                 # 生成时间
                 now = datetime.now()
                 doc.add_paragraph(f"生成时间：{now.strftime('%Y-%m-%d %H:%M:%S')}")
+                doc.add_paragraph()  # 空行
 
-                # 统计摘要
-                doc.add_heading("摘要", level=1)
-                total = len(tasks)
-                status_count: dict[str, int] = {}
-                overdue_count = 0
-                for t in tasks:
-                    s = t["status"]
-                    status_count[s] = status_count.get(s, 0) + 1
-                    if t["overdue"]:
-                        overdue_count += 1
-
-                summary = doc.add_paragraph()
-                summary.add_run(f"总任务数：{total}\n")
-                for s, c in status_count.items():
-                    summary.add_run(f"  {s}：{c} 个\n")
-                if overdue_count > 0:
-                    summary.add_run(f"逾期任务：{overdue_count} 个")
-
-                # 任务列表（详细卡片形式）
-                if tasks:
-                    doc.add_heading("工作内容", level=1)
-
-                    priority_map = {"high": "高", "medium": "中", "low": "低"}
-                    for i, task in enumerate(tasks, 1):
-                        # 任务标题
-                        task_title = doc.add_heading(f"{i}. {task.get('title', '无标题')}", level=2)
-
-                        # 任务基本信息
-                        info = doc.add_paragraph()
-                        info.add_run("状态：").bold = True
-                        info.add_run(f"{task.get('status', '')}  |  ")
-                        info.add_run("负责人：").bold = True
-                        info.add_run(f"{task.get('assignee', '无')}  |  ")
-                        info.add_run("优先级：").bold = True
-                        info.add_run(f"{priority_map.get(task.get('priority', ''), task.get('priority', ''))}  |  ")
-                        info.add_run("截止日期：").bold = True
-                        info.add_run(f"{task.get('dueDate', '无') or '无'}")
-
-                        # 工作内容（描述）
-                        desc = task.get("description", "")
-                        if desc:
-                            p = doc.add_paragraph()
-                            p.add_run("工作内容：").bold = True
-                            doc.add_paragraph(desc)
-
-                        # 进度
-                        progress = task.get("progress", 0)
-                        progress_text = task.get("progressText", "")
-                        p = doc.add_paragraph()
-                        p.add_run("进度：").bold = True
-                        p.add_run(f"{progress}%")
-                        if progress_text:
-                            p.add_run(f"（{progress_text}）")
-
-                        # 评论
-                        comments = task_comments.get(task["id"], [])
-                        if comments:
-                            p = doc.add_paragraph()
-                            p.add_run(f"评论（{len(comments)}条）：").bold = True
-                            for c in comments:
-                                doc.add_paragraph(f"• {c['author']}：{c['content']}", style='List Bullet')
-
-                        # 任务间隔
+                # 4. 将 Markdown 内容写入 Word
+                # 简单解析 Markdown
+                lines = report_content.split('\n')
+                for line in lines:
+                    line = line.strip()
+                    if not line:
                         doc.add_paragraph()
+                        continue
 
-                # 3. 保存文件
+                    # 二级标题 ##
+                    if line.startswith('## '):
+                        doc.add_heading(line[3:], level=1)
+                    # 三级标题 ###
+                    elif line.startswith('### '):
+                        doc.add_heading(line[4:], level=2)
+                    # 列表项
+                    elif line.startswith('- ') or line.startswith('* '):
+                        p = doc.add_paragraph(line[2:], style='List Bullet')
+                    # 加粗段落
+                    elif line.startswith('**') and line.endswith('**'):
+                        p = doc.add_paragraph()
+                        p.add_run(line[2:-2]).bold = True
+                    # 普通段落（处理行内加粗）
+                    else:
+                        p = doc.add_paragraph()
+                        # 简单处理行内 **加粗**
+                        parts = re.split(r'(\*\*[^*]+\*\*)', line)
+                        for part in parts:
+                            if part.startswith('**') and part.endswith('**'):
+                                p.add_run(part[2:-2]).bold = True
+                            else:
+                                p.add_run(part)
+
+                # 5. 保存文件
                 filename = f"task_report_{now.strftime('%Y%m%d_%H%M%S')}.docx"
                 filepath = DOWNLOADS_DIR / filename
                 doc.save(str(filepath))
 
-                # 4. 清理旧文件（保留最近10个）
+                # 6. 清理旧文件（保留最近10个）
                 report_files = sorted(
                     DOWNLOADS_DIR.glob("task_report_*.docx"),
                     key=lambda f: f.stat().st_mtime,
@@ -529,18 +549,18 @@ async def chat(request: ChatRequest):
                 for old_file in report_files[10:]:
                     old_file.unlink()
 
-                # 5. 返回下载链接
+                # 7. 返回下载链接
                 download_url = f"/downloads/{filename}"
                 return {
                     "success": True,
                     "filename": filename,
                     "download_url": download_url,
                     "download_link": f"[点击下载：{filename}]({download_url})",
-                    "total_tasks": total,
+                    "total_tasks": len(tasks),
                 }
 
-            except ImportError:
-                return {"error": "python-docx 未安装，无法生成 Word 文档"}
+            except ImportError as e:
+                return {"error": f"依赖未安装: {str(e)}"}
             except Exception as e:
                 return {"error": f"生成报告失败: {str(e)}"}
 
