@@ -36,11 +36,7 @@ if SDK_PATH.exists():
     sys.path.insert(0, str(SDK_PATH))
 
 from config.dictionary import (
-    ALLOWED_FILTERS,
-    PRIORITY_DISPLAY,
     QUERY_DIMENSIONS,
-    STATUS_MAPPING,
-    STATUS_REVERSE_MAPPING,
     TASK_FIELDS,
 )
 
@@ -94,6 +90,24 @@ def call_backend_api(method: str, path: str, data: Optional[dict] = None, params
         return {"success": False, "error": f"API 错误 {e.code}: {error_body}"}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+def get_columns_mapping() -> tuple[dict, dict]:
+    """
+    动态获取列映射
+
+    Returns:
+        (title_to_id, id_to_title) 两个映射字典
+    """
+    result = call_backend_api("GET", "/api/columns")
+    if not result["success"]:
+        # 如果获取失败，返回空映射
+        return {}, {}
+
+    columns = result["data"]
+    title_to_id = {col["title"]: col["id"] for col in columns}
+    id_to_title = {col["id"]: col["title"] for col in columns}
+    return title_to_id, id_to_title
 
 
 def is_overdue(due_date: Optional[str], status: str) -> bool:
@@ -210,10 +224,12 @@ async def query_tasks(
     """
     # 构建查询参数
     params = {}
+    title_to_id, _ = get_columns_mapping()
+
     if status:
-        if status not in STATUS_REVERSE_MAPPING:
-            raise HTTPException(400, f"不支持的状态: {status}。支持的值: {list(STATUS_REVERSE_MAPPING.keys())}")
-        params["status"] = STATUS_REVERSE_MAPPING[status]
+        if status not in title_to_id:
+            raise HTTPException(400, f"不支持的状态: {status}。支持的值: {list(title_to_id.keys())}")
+        params["status"] = title_to_id[status]
     if priority:
         if priority not in ["high", "medium", "low"]:
             raise HTTPException(400, f"不支持的优先级: {priority}。支持的值: high, medium, low")
@@ -384,8 +400,9 @@ async def chat(request: ChatRequest):
             """查询任务数据。overdue=True表示查询逾期任务，overdue=False表示查询非逾期任务。"""
             # 构建查询参数
             params = {}
-            if status and status in STATUS_REVERSE_MAPPING:
-                params["status"] = STATUS_REVERSE_MAPPING[status]
+            title_to_id, _ = get_columns_mapping()
+            if status and status in title_to_id:
+                params["status"] = title_to_id[status]
             if priority:
                 params["priority"] = priority
             if assignee:
@@ -459,10 +476,11 @@ async def chat(request: ChatRequest):
                 if priority not in ["high", "medium", "low"]:
                     return {"error": f"不支持的优先级: {priority}，必须是 high/medium/low"}
 
-                if status not in STATUS_REVERSE_MAPPING:
-                    return {"error": f"不支持的状态: {status}，必须是 待办/进行中/审核/已完成"}
+                title_to_id, _ = get_columns_mapping()
+                if status not in title_to_id:
+                    return {"error": f"不支持的状态: {status}，必须是 {list(title_to_id.keys())}"}
 
-                column_id = STATUS_REVERSE_MAPPING[status]
+                column_id = title_to_id[status]
 
                 if tags is None:
                     tags = []
@@ -548,8 +566,9 @@ async def chat(request: ChatRequest):
                     update_data["dueDate"] = dueDate
                 if tags is not None:
                     update_data["tags"] = tags
-                if status and status in STATUS_REVERSE_MAPPING:
-                    update_data["columnId"] = STATUS_REVERSE_MAPPING[status]
+                title_to_id, _ = get_columns_mapping()
+                if status and status in title_to_id:
+                    update_data["columnId"] = title_to_id[status]
                 if progress is not None and 0 <= progress <= 100:
                     update_data["progress"] = progress
                 if progressText:
@@ -602,8 +621,9 @@ async def chat(request: ChatRequest):
 
                 # 1. 通过后端 API 查询任务数据
                 params = {}
-                if status and status in STATUS_REVERSE_MAPPING:
-                    params["status"] = STATUS_REVERSE_MAPPING[status]
+                title_to_id, _ = get_columns_mapping()
+                if status and status in title_to_id:
+                    params["status"] = title_to_id[status]
                 if priority:
                     params["priority"] = priority
                 if assignee:
