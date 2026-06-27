@@ -380,18 +380,21 @@ async def chat(request: ChatRequest):
 - manage_task: 管理任务（action='create'创建，action='update'更新。更新时用title匹配任务，assignee改负责人，status改状态，priority改优先级，progress改进度）
 - generate_task_report: 生成 Word 报告
 
-**重要**：更新任务时，title参数是任务的**实际标题**，不是任务ID。
-- 用户说"任务xxx改状态"，title应该是"xxx"
-- 用户说"把登录功能改为进行中"，title应该是"登录功能"
-- 用户说"任务'1'改负责人"，title应该是"1"
-- 不要把"任务"二字作为标题的一部分
+**操作流程**：
+1. 用户要求更新/修改任务时，先调用 query_tasks 查询任务列表
+2. 根据用户描述和任务列表，判断用户指的是哪个任务
+3. 用任务的**实际标题**调用 manage_task 进行更新
+
+示例：
+- 用户说"任务1改负责人为王五"，先查询任务，发现标题为"1"的任务，然后用 title="1" 调用 manage_task
+- 用户说"把登录功能改为进行中"，先查询任务，发现标题包含"登录"，然后用 title="登录" 调用 manage_task
 
 回答要求：
 1. 先调用工具获取数据再回答
 2. 使用简洁 Markdown，不用 --- 分隔线
 3. 任务列表用表格或紧凑列表
 4. 重点信息用 **加粗**
-5. 创建任务成功后，简要确认即可""",
+5. 操作成功后，简要确认即可""",
         )
 
         # 注册工具
@@ -507,13 +510,25 @@ async def chat(request: ChatRequest):
                     columns_map = get_columns_mapping(conn)
 
                     # 通过标题关键词查找任务
+                    search_title = title.strip()
                     rows = conn.execute(
                         'SELECT * FROM tasks WHERE title LIKE ?',
-                        (f"%{title}%",)
+                        (f"%{search_title}%",)
                     ).fetchall()
 
+                    # 如果找不到，尝试去掉常见前缀再搜索
                     if len(rows) == 0:
-                        return {"error": f"未找到标题包含 '{title}' 的任务"}
+                        # 去掉"任务"、"task"等前缀
+                        import re
+                        cleaned_title = re.sub(r'^(任务|task|Task)\s*', '', search_title, flags=re.IGNORECASE)
+                        if cleaned_title and cleaned_title != search_title:
+                            rows = conn.execute(
+                                'SELECT * FROM tasks WHERE title LIKE ?',
+                                (f"%{cleaned_title}%",)
+                            ).fetchall()
+
+                    if len(rows) == 0:
+                        return {"error": f"未找到标题包含 '{search_title}' 的任务"}
 
                     if len(rows) > 1:
                         tasks_info = []
