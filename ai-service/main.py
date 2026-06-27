@@ -380,6 +380,12 @@ async def chat(request: ChatRequest):
 - manage_task: 管理任务（action='create'创建，action='update'更新。更新时用title匹配任务，assignee改负责人，status改状态，priority改优先级，progress改进度）
 - generate_task_report: 生成 Word 报告
 
+**重要**：更新任务时，title参数是任务的**实际标题**，不是任务ID。
+- 用户说"任务xxx改状态"，title应该是"xxx"
+- 用户说"把登录功能改为进行中"，title应该是"登录功能"
+- 用户说"任务'1'改负责人"，title应该是"1"
+- 不要把"任务"二字作为标题的一部分
+
 回答要求：
 1. 先调用工具获取数据再回答
 2. 使用简洁 Markdown，不用 --- 分隔线
