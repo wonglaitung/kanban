@@ -50,6 +50,87 @@ DB_PATH = os.environ.get(
     "DB_PATH", str(Path(__file__).parent.parent / "server" / "data" / "kanban.db")
 )
 
+# 下载目录（用于存放生成的报告文件）
+DOWNLOADS_DIR = Path(__file__).parent.parent / "server" / "data" / "downloads"
+DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+# ==================== 任务查询 ====================
+
+
+def query_tasks_from_db(
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    assignee: Optional[str] = None,
+    overdue: Optional[bool] = None,
+    limit: int = 50,
+) -> list[dict]:
+    """
+    从数据库查询任务数据（公共函数）
+
+    Args:
+        status: 状态筛选
+        priority: 优先级筛选
+        assignee: 负责人筛选
+        overdue: 逾期状态筛选
+        limit: 返回数量限制
+
+    Returns:
+        任务列表
+    """
+    conn = get_db_connection()
+    try:
+        columns_map = get_columns_mapping(conn)
+        sql = 'SELECT * FROM tasks WHERE 1=1'
+        params: list[Any] = []
+
+        if status:
+            if status not in STATUS_REVERSE_MAPPING:
+                return []
+            sql += ' AND columnId = ?'
+            params.append(STATUS_REVERSE_MAPPING[status])
+
+        if priority:
+            if priority not in ["high", "medium", "low"]:
+                return []
+            sql += " AND priority = ?"
+            params.append(priority)
+
+        if assignee:
+            sql += " AND assignee LIKE ?"
+            params.append(f"%{assignee}%")
+
+        sql += f' ORDER BY "order" LIMIT {limit}'
+
+        rows = conn.execute(sql, params).fetchall()
+        tasks = [parse_task(row) for row in rows]
+
+        for task in tasks:
+            task["status"] = columns_map.get(task["columnId"], task["columnId"])
+            task["overdue"] = is_overdue(task.get("dueDate"), task["status"])
+
+        if overdue is not None:
+            if isinstance(overdue, str):
+                overdue = overdue.lower() == "true"
+            tasks = [t for t in tasks if t["overdue"] == overdue]
+
+        return tasks
+    finally:
+        conn.close()
+
+
+def get_task_comments(task_id: str) -> list[dict]:
+    """获取任务的所有评论"""
+    conn = get_db_connection()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM comments WHERE taskId = ? ORDER BY createdAt",
+            (task_id,)
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
 
 # ==================== 数据库操作 ====================
 
@@ -321,47 +402,141 @@ async def chat(request: ChatRequest):
             overdue: Optional[bool] = None,
         ) -> dict:
             """查询任务数据。overdue=True表示查询逾期任务，overdue=False表示查询非逾期任务。"""
-            # 同步方式调用数据库
-            conn = get_db_connection()
+            tasks = query_tasks_from_db(status, priority, assignee, overdue)
+            return {"total": len(tasks), "tasks": tasks}
+
+        @agent.tool(description="生成任务报告Word文档并返回下载链接。可根据用户需求灵活组织报告内容。")
+        def generate_task_report(
+            title: str = "任务报告",
+            content_hint: str = "",
+            status: Optional[str] = None,
+            priority: Optional[str] = None,
+            assignee: Optional[str] = None,
+        ) -> dict:
+            """
+            生成任务报告Word文档。
+
+            Args:
+                title: 报告标题
+                content_hint: 内容提示，描述报告要包含什么内容
+                status: 筛选状态
+                priority: 筛选优先级
+                assignee: 筛选负责人
+
+            Returns:
+                包含下载链接的字典
+            """
             try:
-                columns_map = get_columns_mapping(conn)
-                sql = 'SELECT * FROM tasks WHERE 1=1'
-                params: list[Any] = []
+                from docx import Document
+                from docx.shared import Pt, Inches
+                from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-                if status:
-                    if status not in STATUS_REVERSE_MAPPING:
-                        return {"error": f"不支持的状态: {status}"}
-                    sql += ' AND columnId = ?'
-                    params.append(STATUS_REVERSE_MAPPING[status])
+                # 1. 查询任务数据
+                tasks = query_tasks_from_db(status, priority, assignee, limit=1000)
 
-                if priority:
-                    if priority not in ["high", "medium", "low"]:
-                        return {"error": f"不支持的优先级: {priority}"}
-                    sql += " AND priority = ?"
-                    params.append(priority)
-
-                if assignee:
-                    sql += " AND assignee LIKE ?"
-                    params.append(f"%{assignee}%")
-
-                sql += ' ORDER BY "order" LIMIT 50'
-
-                rows = conn.execute(sql, params).fetchall()
-                tasks = [parse_task(row) for row in rows]
-
+                # 获取评论
+                task_comments: dict[str, list] = {}
                 for task in tasks:
-                    task["status"] = columns_map.get(task["columnId"], task["columnId"])
-                    task["overdue"] = is_overdue(task.get("dueDate"), task["status"])
+                    task_comments[task["id"]] = get_task_comments(task["id"])
 
-                if overdue is not None:
-                    # 处理字符串类型的 overdue 参数（AI 可能传递字符串 "true"）
-                    if isinstance(overdue, str):
-                        overdue = overdue.lower() == "true"
-                    tasks = [t for t in tasks if t["overdue"] == overdue]
+                # 2. 创建 Word 文档
+                doc = Document()
 
-                return {"total": len(tasks), "tasks": tasks}
-            finally:
-                conn.close()
+                # 标题
+                heading = doc.add_heading(title, 0)
+                heading.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+                # 生成时间
+                now = datetime.now()
+                doc.add_paragraph(f"生成时间：{now.strftime('%Y-%m-%d %H:%M:%S')}")
+
+                # 统计摘要
+                doc.add_heading("摘要", level=1)
+                total = len(tasks)
+                status_count: dict[str, int] = {}
+                overdue_count = 0
+                for t in tasks:
+                    s = t["status"]
+                    status_count[s] = status_count.get(s, 0) + 1
+                    if t["overdue"]:
+                        overdue_count += 1
+
+                summary = doc.add_paragraph()
+                summary.add_run(f"总任务数：{total}\n")
+                for s, c in status_count.items():
+                    summary.add_run(f"  {s}：{c} 个\n")
+                if overdue_count > 0:
+                    summary.add_run(f"逾期任务：{overdue_count} 个")
+
+                # 任务列表
+                if tasks:
+                    doc.add_heading("任务列表", level=1)
+
+                    # 创建表格
+                    table = doc.add_table(rows=1, cols=6)
+                    table.style = 'Table Grid'
+
+                    # 表头
+                    header_cells = table.rows[0].cells
+                    headers = ["标题", "状态", "负责人", "优先级", "截止日期", "进度"]
+                    for i, h in enumerate(headers):
+                        header_cells[i].text = h
+
+                    # 任务数据
+                    priority_map = {"high": "高", "medium": "中", "low": "低"}
+                    for task in tasks:
+                        row_cells = table.add_row().cells
+                        row_cells[0].text = task.get("title", "")
+                        row_cells[1].text = task.get("status", "")
+                        row_cells[2].text = task.get("assignee", "")
+                        row_cells[3].text = priority_map.get(task.get("priority", ""), task.get("priority", ""))
+                        row_cells[4].text = task.get("dueDate", "") or "无"
+                        row_cells[5].text = f"{task.get('progress', 0)}%"
+
+                        # 添加评论（如果有）
+                        comments = task_comments.get(task["id"], [])
+                        if comments:
+                            row_cells[0].text += f" ({len(comments)}条评论)"
+
+                    # 评论详情
+                    has_comments = any(task_comments.values())
+                    if has_comments:
+                        doc.add_heading("评论详情", level=1)
+                        for task in tasks:
+                            comments = task_comments.get(task["id"], [])
+                            if comments:
+                                doc.add_heading(f"任务：{task['title']}", level=2)
+                                for c in comments:
+                                    p = doc.add_paragraph()
+                                    p.add_run(f"{c['author']}").bold = True
+                                    p.add_run(f" ({c['createdAt']}): {c['content']}")
+
+                # 3. 保存文件
+                filename = f"task_report_{now.strftime('%Y%m%d_%H%M%S')}.docx"
+                filepath = DOWNLOADS_DIR / filename
+                doc.save(str(filepath))
+
+                # 4. 清理旧文件（保留最近10个）
+                report_files = sorted(
+                    DOWNLOADS_DIR.glob("task_report_*.docx"),
+                    key=lambda f: f.stat().st_mtime,
+                    reverse=True
+                )
+                for old_file in report_files[10:]:
+                    old_file.unlink()
+
+                # 5. 返回下载链接
+                return {
+                    "success": True,
+                    "filename": filename,
+                    "download_url": f"/downloads/{filename}",
+                    "total_tasks": total,
+                }
+
+            except ImportError:
+                return {"error": "python-docx 未安装，无法生成 Word 文档"}
+            except Exception as e:
+                return {"error": f"生成报告失败: {str(e)}"}
 
         # 运行对话
         result = await agent.run(

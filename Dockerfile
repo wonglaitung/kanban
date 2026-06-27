@@ -69,7 +69,7 @@ COPY --from=ai-builder /app/ai-service ./ai-service
 COPY --from=frontend-builder /app/dist ./dist
 
 # Create data directories for SQLite and AI service
-RUN mkdir -p /app/server/data /app/ai-service/data
+RUN mkdir -p /app/server/data /app/server/data/downloads /app/ai-service/data
 
 # Create nginx config with proper MIME types and AI API proxy
 RUN echo 'events { worker_connections 1024; } \
@@ -99,6 +99,11 @@ http { \
             proxy_http_version 1.1; \
             proxy_set_header Host $host; \
             proxy_set_header X-Real-IP $remote_addr; \
+        } \
+        \
+        location /downloads/ { \
+            alias /app/server/data/downloads/; \
+            autoindex on; \
         } \
     } \
 }' > /etc/nginx/nginx.conf
