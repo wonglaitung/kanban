@@ -98,7 +98,7 @@ class ManageTaskTool(Tool):
         priority = arguments.get("priority", "medium")
         due_date = arguments.get("dueDate", "")
         tags = arguments.get("tags")
-        status = arguments.get("status", "待办")
+        status = arguments.get("status", "")  # 空字符串表示不更新状态
         progress = arguments.get("progress")
         progress_text = arguments.get("progressText", "")
 
@@ -155,13 +155,12 @@ class ManageTaskTool(Tool):
             )
 
         title_to_id, _ = get_columns_mapping()
-        if status not in title_to_id:
-            return ToolResult(
-                tool_call_id="",
-                success=False,
-                content="",
-                error=f"不支持的状态: {status}，必须是 {list(title_to_id.keys())}",
-            )
+        # 创建任务时，如果未指定状态，默认为"待办"
+        if not status or status not in title_to_id:
+            status = "待办"
+            if "待办" not in title_to_id:
+                # 回退到第一个可用的状态
+                status = list(title_to_id.keys())[0]
 
         column_id = title_to_id[status]
 
