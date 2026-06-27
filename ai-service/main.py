@@ -468,48 +468,52 @@ async def chat(request: ChatRequest):
                 if overdue_count > 0:
                     summary.add_run(f"逾期任务：{overdue_count} 个")
 
-                # 任务列表
+                # 任务列表（详细卡片形式）
                 if tasks:
-                    doc.add_heading("任务列表", level=1)
+                    doc.add_heading("工作内容", level=1)
 
-                    # 创建表格
-                    table = doc.add_table(rows=1, cols=6)
-                    table.style = 'Table Grid'
-
-                    # 表头
-                    header_cells = table.rows[0].cells
-                    headers = ["标题", "状态", "负责人", "优先级", "截止日期", "进度"]
-                    for i, h in enumerate(headers):
-                        header_cells[i].text = h
-
-                    # 任务数据
                     priority_map = {"high": "高", "medium": "中", "low": "低"}
-                    for task in tasks:
-                        row_cells = table.add_row().cells
-                        row_cells[0].text = task.get("title", "")
-                        row_cells[1].text = task.get("status", "")
-                        row_cells[2].text = task.get("assignee", "")
-                        row_cells[3].text = priority_map.get(task.get("priority", ""), task.get("priority", ""))
-                        row_cells[4].text = task.get("dueDate", "") or "无"
-                        row_cells[5].text = f"{task.get('progress', 0)}%"
+                    for i, task in enumerate(tasks, 1):
+                        # 任务标题
+                        task_title = doc.add_heading(f"{i}. {task.get('title', '无标题')}", level=2)
 
-                        # 添加评论（如果有）
+                        # 任务基本信息
+                        info = doc.add_paragraph()
+                        info.add_run("状态：").bold = True
+                        info.add_run(f"{task.get('status', '')}  |  ")
+                        info.add_run("负责人：").bold = True
+                        info.add_run(f"{task.get('assignee', '无')}  |  ")
+                        info.add_run("优先级：").bold = True
+                        info.add_run(f"{priority_map.get(task.get('priority', ''), task.get('priority', ''))}  |  ")
+                        info.add_run("截止日期：").bold = True
+                        info.add_run(f"{task.get('dueDate', '无') or '无'}")
+
+                        # 工作内容（描述）
+                        desc = task.get("description", "")
+                        if desc:
+                            p = doc.add_paragraph()
+                            p.add_run("工作内容：").bold = True
+                            doc.add_paragraph(desc)
+
+                        # 进度
+                        progress = task.get("progress", 0)
+                        progress_text = task.get("progressText", "")
+                        p = doc.add_paragraph()
+                        p.add_run("进度：").bold = True
+                        p.add_run(f"{progress}%")
+                        if progress_text:
+                            p.add_run(f"（{progress_text}）")
+
+                        # 评论
                         comments = task_comments.get(task["id"], [])
                         if comments:
-                            row_cells[0].text += f" ({len(comments)}条评论)"
+                            p = doc.add_paragraph()
+                            p.add_run(f"评论（{len(comments)}条）：").bold = True
+                            for c in comments:
+                                doc.add_paragraph(f"• {c['author']}：{c['content']}", style='List Bullet')
 
-                    # 评论详情
-                    has_comments = any(task_comments.values())
-                    if has_comments:
-                        doc.add_heading("评论详情", level=1)
-                        for task in tasks:
-                            comments = task_comments.get(task["id"], [])
-                            if comments:
-                                doc.add_heading(f"任务：{task['title']}", level=2)
-                                for c in comments:
-                                    p = doc.add_paragraph()
-                                    p.add_run(f"{c['author']}").bold = True
-                                    p.add_run(f" ({c['createdAt']}): {c['content']}")
+                        # 任务间隔
+                        doc.add_paragraph()
 
                 # 3. 保存文件
                 filename = f"task_report_{now.strftime('%Y%m%d_%H%M%S')}.docx"
