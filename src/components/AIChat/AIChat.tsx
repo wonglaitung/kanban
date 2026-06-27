@@ -13,10 +13,9 @@ interface Message {
 
 interface AIChatProps {
   onClose?: () => void;
-  onTaskChange?: () => void; // 任务数据变化时的回调
 }
 
-export default function AIChat({ onClose, onTaskChange }: AIChatProps) {
+export default function AIChat({ onClose }: AIChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -30,12 +29,9 @@ export default function AIChat({ onClose, onTaskChange }: AIChatProps) {
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [sessionId] = useState(`session-${Date.now()}`);
   const [height, setHeight] = useState(() => {
-    // 从 localStorage 读取保存的高度，但不超过视口可用空间
+    // 从 localStorage 读取保存的高度
     const saved = localStorage.getItem('ai-chat-height');
-    const preferred = saved ? parseInt(saved, 10) : 600;
-    // 预留底部 60px 给 FAB 按钮区域
-    const maxHeight = window.innerHeight - 60;
-    return Math.min(preferred, maxHeight);
+    return saved ? parseInt(saved, 10) : 600;
   });
   const [isResizing, setIsResizing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -82,18 +78,6 @@ export default function AIChat({ onClose, onTaskChange }: AIChatProps) {
     };
   }, [isResizing, handleResizeMove, handleResizeEnd]);
 
-  // 窗口大小变化时，确保对话框不超出视口
-  useEffect(() => {
-    const handleWindowResize = () => {
-      const maxHeight = window.innerHeight - 60;
-      if (height > maxHeight) {
-        setHeight(maxHeight);
-      }
-    };
-    window.addEventListener('resize', handleWindowResize);
-    return () => window.removeEventListener('resize', handleWindowResize);
-  }, [height]);
-
   // 滚动到底部
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -137,8 +121,6 @@ export default function AIChat({ onClose, onTaskChange }: AIChatProps) {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
-      // AI 可能创建了任务，刷新任务列表
-      onTaskChange?.();
     } catch (error) {
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
@@ -176,7 +158,7 @@ export default function AIChat({ onClose, onTaskChange }: AIChatProps) {
   // 快捷问题
   const quickQuestions = [
     '有哪些高优先级任务？',
-    '创建任务：完成用户登录功能',
+    '新增"完成用户登录功能" 任务',
     '生成任务报告',
   ];
 
