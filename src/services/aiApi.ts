@@ -94,18 +94,45 @@ export async function queryTasks(params: {
  * AI 对话
  */
 export async function chat(message: string, sessionId?: string): Promise<ChatResponse> {
-  const response = await fetch(`${API_BASE}/chat`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      message,
-      session_id: sessionId,
-    } as ChatRequest),
-  });
-  if (!response.ok) {
-    throw new Error(`对话失败: ${response.statusText}`);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
+
+  try {
+    const response = await fetch(`${API_BASE}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message,
+        session_id: sessionId,
+      } as ChatRequest),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`对话失败: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // 检查返回内容
+    if (!data || !data.content) {
+      throw new Error('AI 服务返回空内容');
+    }
+
+    return data;
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new Error('请求超时，请稍后重试');
+      }
+      throw error;
+    }
+    throw new Error('未知错误');
   }
-  return response.json();
 }
