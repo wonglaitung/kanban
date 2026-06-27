@@ -158,10 +158,38 @@ async def get_task_dictionary():
     获取任务数据字典
 
     返回任务字段描述、可筛选维度，供 AI 理解数据结构。
+    状态值从后端动态获取，支持用户自定义列。
     """
+    # 动态获取列配置
+    status_values = []
+    columns_result = call_backend_api("GET", "/api/columns")
+    if columns_result["success"]:
+        status_values = [col["title"] for col in columns_result["data"]]
+
+    # 构建动态字段定义
+    dynamic_fields = []
+    for field in TASK_FIELDS:
+        if field["name"] == "status":
+            # 动态设置状态值
+            dynamic_field = dict(field)
+            dynamic_field["values"] = status_values
+            dynamic_fields.append(dynamic_field)
+        else:
+            dynamic_fields.append(field)
+
+    # 构建动态维度定义
+    dynamic_dimensions = []
+    for dim in QUERY_DIMENSIONS:
+        if dim["name"] == "status":
+            dynamic_dim = dict(dim)
+            dynamic_dim["values"] = status_values
+            dynamic_dimensions.append(dynamic_dim)
+        else:
+            dynamic_dimensions.append(dim)
+
     return {
-        "fields": TASK_FIELDS,
-        "dimensions": QUERY_DIMENSIONS,
+        "fields": dynamic_fields,
+        "dimensions": dynamic_dimensions,
         "query_time": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -324,9 +352,25 @@ async def chat(request: ChatRequest):
         # 注册工具
         @agent.tool(description="获取任务字段字典，了解可查询的字段和维度")
         def get_task_dictionary_tool() -> dict:
-            """返回任务字段描述"""
+            """返回任务字段描述（动态获取状态值）"""
+            # 动态获取列配置
+            status_values = []
+            columns_result = call_backend_api("GET", "/api/columns")
+            if columns_result["success"]:
+                status_values = [col["title"] for col in columns_result["data"]]
+
+            # 构建动态字段定义
+            dynamic_fields = []
+            for field in TASK_FIELDS:
+                if field["name"] == "status":
+                    dynamic_field = dict(field)
+                    dynamic_field["values"] = status_values
+                    dynamic_fields.append(dynamic_field)
+                else:
+                    dynamic_fields.append(field)
+
             return {
-                "fields": TASK_FIELDS,
+                "fields": dynamic_fields,
                 "dimensions": QUERY_DIMENSIONS,
             }
 
