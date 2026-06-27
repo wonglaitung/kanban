@@ -377,7 +377,7 @@ async def chat(request: ChatRequest):
 工具有：
 - get_task_dictionary: 获取字段描述
 - query_tasks: 查询任务（支持 status/priority/assignee/overdue 参数）
-- create_task: 创建新任务（需提供 title，可选 description/assignee/priority/dueDate/tags/status）
+- manage_task: 管理任务（action=create创建，action=update更新，更新时通过title关键词匹配任务）
 - generate_task_report: 生成 Word 报告
 
 回答要求：
@@ -408,85 +408,191 @@ async def chat(request: ChatRequest):
             tasks = query_tasks_from_db(status, priority, assignee, overdue)
             return {"total": len(tasks), "tasks": tasks}
 
-        @agent.tool(description="创建新任务到看板。可以指定标题、描述、负责人、优先级、截止日期、标签和状态。")
-        def create_task(
-            title: str,
-            description: str = "",
-            assignee: str = "",
-            priority: str = "medium",
-            dueDate: str = "",
-            tags: list[str] = None,
-            status: str = "待办",
+        @agent.tool(description="管理任务，支持创建、更新操作。action参数：create创建新任务，update更新任务。更新时通过title关键词匹配任务。")
+        def manage_task(
+            action: str,
+            title: Optional[str] = None,
+            new_title: Optional[str] = None,
+            description: Optional[str] = "",
+            assignee: Optional[str] = "",
+            priority: Optional[str] = "medium",
+            dueDate: Optional[str] = "",
+            tags: Optional[list[str]] = None,
+            status: Optional[str] = "待办",
+            progress: Optional[int] = None,
+            progressText: Optional[str] = "",
         ) -> dict:
             """
-            创建新任务。
+            任务管理工具。
 
             Args:
-                title: 任务标题（必填）
+                action: 操作类型 (create/update)
+                title: 创建时为任务标题；更新时为匹配关键词
+                new_title: 更新时的新标题（可选）
                 description: 任务描述
                 assignee: 负责人
                 priority: 优先级 (high/medium/low)
                 dueDate: 截止日期 (YYYY-MM-DD)
                 tags: 标签列表
                 status: 状态 (待办/进行中/审核/已完成)
+                progress: 进度 (0-100)
+                progressText: 进度说明
 
             Returns:
-                创建的任务信息
+                操作结果
             """
-            # 验证参数
-            if not title or not title.strip():
-                return {"error": "任务标题不能为空"}
+            if action == "create":
+                # 创建任务逻辑
+                if not title or not title.strip():
+                    return {"error": "创建任务需要提供 title"}
 
-            if priority not in ["high", "medium", "low"]:
-                return {"error": f"不支持的优先级: {priority}，必须是 high/medium/low"}
+                if priority not in ["high", "medium", "low"]:
+                    return {"error": f"不支持的优先级: {priority}，必须是 high/medium/low"}
 
-            if status not in STATUS_REVERSE_MAPPING:
-                return {"error": f"不支持的状态: {status}，必须是 待办/进行中/审核/已完成"}
+                if status not in STATUS_REVERSE_MAPPING:
+                    return {"error": f"不支持的状态: {status}，必须是 待办/进行中/审核/已完成"}
 
-            # 获取列 ID
-            column_id = STATUS_REVERSE_MAPPING[status]
+                column_id = STATUS_REVERSE_MAPPING[status]
+                task_id = f"task-{int(datetime.now().timestamp() * 1000)}"
 
-            # 生成任务 ID
-            task_id = f"task-{int(datetime.now().timestamp() * 1000)}"
+                if tags is None:
+                    tags = []
 
-            # 处理标签
-            if tags is None:
-                tags = []
+                now = datetime.now().isoformat()
 
-            # 获取当前时间
-            now = datetime.now().isoformat()
+                conn = get_db_connection()
+                try:
+                    conn.execute(
+                        """INSERT INTO tasks
+                           (id, title, description, assignee, priority, dueDate, tags, columnId, "order", progress, progressText, createdAt, updatedAt)
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, '', ?, ?)""",
+                        (task_id, title.strip(), description, assignee, priority, dueDate, json.dumps(tags), column_id, now, now)
+                    )
+                    conn.commit()
 
-            # 插入数据库
-            conn = get_db_connection()
-            try:
-                conn.execute(
-                    """INSERT INTO tasks
-                       (id, title, description, assignee, priority, dueDate, tags, columnId, "order", progress, progressText, createdAt, updatedAt)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, '', ?, ?)""",
-                    (task_id, title.strip(), description, assignee, priority, dueDate, json.dumps(tags), column_id, now, now)
-                )
-                conn.commit()
-
-                # 返回创建的任务
-                return {
-                    "success": True,
-                    "task": {
-                        "id": task_id,
-                        "title": title.strip(),
-                        "description": description,
-                        "assignee": assignee,
-                        "priority": priority,
-                        "dueDate": dueDate,
-                        "tags": tags,
-                        "status": status,
-                        "progress": 0,
-                        "createdAt": now,
+                    return {
+                        "success": True,
+                        "action": "create",
+                        "task": {
+                            "id": task_id,
+                            "title": title.strip(),
+                            "description": description,
+                            "assignee": assignee,
+                            "priority": priority,
+                            "dueDate": dueDate,
+                            "tags": tags,
+                            "status": status,
+                            "progress": 0,
+                            "createdAt": now,
+                        }
                     }
-                }
-            except Exception as e:
-                return {"error": f"创建任务失败: {str(e)}"}
-            finally:
-                conn.close()
+                except Exception as e:
+                    return {"error": f"创建任务失败: {str(e)}"}
+                finally:
+                    conn.close()
+
+            elif action == "update":
+                # 更新任务逻辑 - 通过标题关键词匹配
+                if not title or not title.strip():
+                    return {"error": "更新任务需要提供 title 关键词"}
+
+                conn = get_db_connection()
+                try:
+                    columns_map = get_columns_mapping(conn)
+
+                    # 通过标题关键词查找任务
+                    rows = conn.execute(
+                        'SELECT * FROM tasks WHERE title LIKE ?',
+                        (f"%{title}%",)
+                    ).fetchall()
+
+                    if len(rows) == 0:
+                        return {"error": f"未找到标题包含 '{title}' 的任务"}
+
+                    if len(rows) > 1:
+                        tasks_info = []
+                        for r in rows:
+                            task_status = columns_map.get(r["columnId"], r["columnId"])
+                            tasks_info.append(f"- {r['title']} (状态: {task_status})")
+                        return {
+                            "error": f"找到 {len(rows)} 个匹配的任务，请提供更精确的标题：\n" + "\n".join(tasks_info)
+                        }
+
+                    # 找到唯一匹配，执行更新
+                    existing = parse_task(rows[0])
+                    task_id = existing["id"]
+                    now = datetime.now().isoformat()
+
+                    # 构建更新字段
+                    update_fields = []
+                    update_values = []
+
+                    if new_title and new_title.strip():
+                        update_fields.append("title = ?")
+                        update_values.append(new_title.strip())
+
+                    if description:
+                        update_fields.append("description = ?")
+                        update_values.append(description)
+
+                    if assignee:
+                        update_fields.append("assignee = ?")
+                        update_values.append(assignee)
+
+                    if priority and priority in ["high", "medium", "low"]:
+                        update_fields.append("priority = ?")
+                        update_values.append(priority)
+
+                    if dueDate:
+                        update_fields.append("dueDate = ?")
+                        update_values.append(dueDate)
+
+                    if tags is not None:
+                        update_fields.append("tags = ?")
+                        update_values.append(json.dumps(tags))
+
+                    if status and status in STATUS_REVERSE_MAPPING:
+                        update_fields.append("columnId = ?")
+                        update_values.append(STATUS_REVERSE_MAPPING[status])
+
+                    if progress is not None and 0 <= progress <= 100:
+                        update_fields.append("progress = ?")
+                        update_values.append(progress)
+
+                    if progressText:
+                        update_fields.append("progressText = ?")
+                        update_values.append(progressText)
+
+                    if not update_fields:
+                        return {"error": "没有提供要更新的字段"}
+
+                    update_fields.append("updatedAt = ?")
+                    update_values.append(now)
+                    update_values.append(task_id)
+
+                    conn.execute(
+                        f"UPDATE tasks SET {', '.join(update_fields)} WHERE id = ?",
+                        update_values
+                    )
+                    conn.commit()
+
+                    # 获取更新后的任务
+                    updated_row = conn.execute('SELECT * FROM tasks WHERE id = ?', (task_id,)).fetchone()
+                    updated_task = parse_task(updated_row)
+                    updated_task["status"] = columns_map.get(updated_task["columnId"], updated_task["columnId"])
+
+                    return {
+                        "success": True,
+                        "action": "update",
+                        "task": updated_task
+                    }
+                except Exception as e:
+                    return {"error": f"更新任务失败: {str(e)}"}
+                finally:
+                    conn.close()
+
+            else:
+                return {"error": f"不支持的操作: {action}，必须是 create/update"}
 
         @agent.tool(description="生成任务报告Word文档并返回下载链接。AI会根据content_hint参数生成符合需求的报告内容。返回结果包含 download_link 字段，请直接将此 Markdown 链接展示给用户。")
         def generate_task_report(
