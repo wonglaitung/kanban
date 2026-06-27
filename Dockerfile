@@ -101,6 +101,14 @@ http { \
             proxy_set_header X-Real-IP $remote_addr; \
         } \
         \
+        location /ws { \
+            proxy_pass http://127.0.0.1:3003; \
+            proxy_http_version 1.1; \
+            proxy_set_header Upgrade $http_upgrade; \
+            proxy_set_header Connection "upgrade"; \
+            proxy_set_header Host $host; \
+        } \
+        \
         location /downloads/ { \
             alias /app/server/data/downloads/; \
             autoindex on; \

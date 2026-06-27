@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Task } from '../types';
 import { getTasks, createTask, updateTask, deleteTask as deleteTaskApi, duplicateTask as duplicateTaskApi } from '../services/api';
+import { useWebSocket } from './useWebSocket';
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -125,6 +126,25 @@ export function useTasks() {
       throw err;
     }
   }, []);
+
+  // WebSocket 消息处理 - 增量更新任务列表
+  const handleWSMessage = useCallback((data: { type: string; task: any }) => {
+    if (data.type === 'create') {
+      setTasks(prev => {
+        // 避免重复添加
+        if (prev.some(t => t.id === data.task.id)) {
+          return prev;
+        }
+        return [...prev, data.task].sort((a, b) => a.order - b.order);
+      });
+    } else if (data.type === 'update') {
+      setTasks(prev => prev.map(t => t.id === data.task.id ? data.task : t));
+    } else if (data.type === 'delete') {
+      setTasks(prev => prev.filter(t => t.id !== data.task.id));
+    }
+  }, []);
+
+  useWebSocket(handleWSMessage);
 
   return {
     tasks,

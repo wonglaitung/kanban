@@ -1,12 +1,29 @@
 const express = require('express');
 const cors = require('cors');
+const WebSocket = require('ws');
 const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const WS_PORT = process.env.WS_PORT || 3003;
 
 app.use(cors());
 app.use(express.json());
+
+// WebSocket 服务器
+const wss = new WebSocket.Server({ port: WS_PORT });
+
+// 广播任务变更
+function broadcastTaskChange(type, task) {
+  const message = JSON.stringify({ type, task });
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
+}
+
+console.log(`WebSocket server running on port ${WS_PORT}`);
 
 // Helper: parse tags JSON
 const parseTask = (task) => {
@@ -125,7 +142,9 @@ app.post('/api/tasks', (req, res) => {
     stmt.run(id, title, description || '', assignee || '', priority || 'medium', dueDate || '', JSON.stringify(tags || []), columnId, order || 0, progress || 0, progressText || '', now, now);
     
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
-    res.status(201).json(parseTask(task));
+    const parsedTask = parseTask(task);
+    broadcastTaskChange('create', parsedTask);
+    res.status(201).json(parsedTask);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -173,7 +192,9 @@ app.put('/api/tasks/:id', (req, res) => {
     );
     
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
-    res.json(parseTask(task));
+    const parsedTask = parseTask(task);
+    broadcastTaskChange('update', parsedTask);
+    res.json(parsedTask);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -182,7 +203,9 @@ app.put('/api/tasks/:id', (req, res) => {
 // Delete task
 app.delete('/api/tasks/:id', (req, res) => {
   try {
-    db.prepare('DELETE FROM tasks WHERE id = ?').run(req.params.id);
+    const { id } = req.params;
+    db.prepare('DELETE FROM tasks WHERE id = ?').run(id);
+    broadcastTaskChange('delete', { id });
     res.status(204).end();
   } catch (err) {
     res.status(500).json({ error: err.message });

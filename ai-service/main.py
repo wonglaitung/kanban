@@ -451,7 +451,7 @@ async def chat(request: ChatRequest):
                 操作结果
             """
             if action == "create":
-                # 创建任务逻辑
+                # 创建任务逻辑 - 通过后端 API
                 if not title or not title.strip():
                     return {"error": "创建任务需要提供 title"}
 
@@ -462,43 +462,39 @@ async def chat(request: ChatRequest):
                     return {"error": f"不支持的状态: {status}，必须是 待办/进行中/审核/已完成"}
 
                 column_id = STATUS_REVERSE_MAPPING[status]
-                task_id = f"task-{int(datetime.now().timestamp() * 1000)}"
 
                 if tags is None:
                     tags = []
 
-                now = datetime.now().isoformat()
-
-                conn = get_db_connection()
+                # 调用后端 API 创建任务（触发 WebSocket 广播）
                 try:
-                    conn.execute(
-                        """INSERT INTO tasks
-                           (id, title, description, assignee, priority, dueDate, tags, columnId, "order", progress, progressText, createdAt, updatedAt)
-                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, '', ?, ?)""",
-                        (task_id, title.strip(), description, assignee, priority, dueDate, json.dumps(tags), column_id, now, now)
+                    import urllib.request
+                    backend_url = "http://localhost:3001/api/tasks"
+                    task_data = {
+                        "title": title.strip(),
+                        "description": description,
+                        "assignee": assignee,
+                        "priority": priority,
+                        "dueDate": dueDate,
+                        "tags": tags,
+                        "columnId": column_id,
+                    }
+                    req = urllib.request.Request(
+                        backend_url,
+                        data=json.dumps(task_data).encode(),
+                        headers={"Content-Type": "application/json"},
+                        method="POST"
                     )
-                    conn.commit()
+                    with urllib.request.urlopen(req, timeout=10) as resp:
+                        result = json.loads(resp.read().decode())
 
                     return {
                         "success": True,
                         "action": "create",
-                        "task": {
-                            "id": task_id,
-                            "title": title.strip(),
-                            "description": description,
-                            "assignee": assignee,
-                            "priority": priority,
-                            "dueDate": dueDate,
-                            "tags": tags,
-                            "status": status,
-                            "progress": 0,
-                            "createdAt": now,
-                        }
+                        "task": result
                     }
                 except Exception as e:
                     return {"error": f"创建任务失败: {str(e)}"}
-                finally:
-                    conn.close()
 
             elif action == "update":
                 # 更新任务逻辑 - 通过标题关键词匹配
@@ -539,76 +535,57 @@ async def chat(request: ChatRequest):
                             "error": f"找到 {len(rows)} 个匹配的任务，请提供更精确的标题：\n" + "\n".join(tasks_info)
                         }
 
-                    # 找到唯一匹配，执行更新
+                    # 找到唯一匹配，通过后端 API 更新（触发 WebSocket 广播）
                     existing = parse_task(rows[0])
                     task_id = existing["id"]
-                    now = datetime.now().isoformat()
 
-                    # 构建更新字段
-                    update_fields = []
-                    update_values = []
-
+                    # 构建更新数据
+                    update_data = {}
                     if new_title and new_title.strip():
-                        update_fields.append("title = ?")
-                        update_values.append(new_title.strip())
-
+                        update_data["title"] = new_title.strip()
                     if description:
-                        update_fields.append("description = ?")
-                        update_values.append(description)
-
+                        update_data["description"] = description
                     if assignee:
-                        update_fields.append("assignee = ?")
-                        update_values.append(assignee)
-
+                        update_data["assignee"] = assignee
                     if priority and priority in ["high", "medium", "low"]:
-                        update_fields.append("priority = ?")
-                        update_values.append(priority)
-
+                        update_data["priority"] = priority
                     if dueDate:
-                        update_fields.append("dueDate = ?")
-                        update_values.append(dueDate)
-
+                        update_data["dueDate"] = dueDate
                     if tags is not None:
-                        update_fields.append("tags = ?")
-                        update_values.append(json.dumps(tags))
-
+                        update_data["tags"] = tags
                     if status and status in STATUS_REVERSE_MAPPING:
-                        update_fields.append("columnId = ?")
-                        update_values.append(STATUS_REVERSE_MAPPING[status])
-
+                        update_data["columnId"] = STATUS_REVERSE_MAPPING[status]
                     if progress is not None and 0 <= progress <= 100:
-                        update_fields.append("progress = ?")
-                        update_values.append(progress)
-
+                        update_data["progress"] = progress
                     if progressText:
-                        update_fields.append("progressText = ?")
-                        update_values.append(progressText)
+                        update_data["progressText"] = progressText
 
-                    if not update_fields:
+                    if not update_data:
                         return {"error": "没有提供要更新的字段"}
 
-                    update_fields.append("updatedAt = ?")
-                    update_values.append(now)
-                    update_values.append(task_id)
+                    # 调用后端 API 更新任务
+                    try:
+                        import urllib.request
+                        backend_url = f"http://localhost:3001/api/tasks/{task_id}"
+                        req = urllib.request.Request(
+                            backend_url,
+                            data=json.dumps(update_data).encode(),
+                            headers={"Content-Type": "application/json"},
+                            method="PUT"
+                        )
+                        with urllib.request.urlopen(req, timeout=10) as resp:
+                            result = json.loads(resp.read().decode())
 
-                    conn.execute(
-                        f"UPDATE tasks SET {', '.join(update_fields)} WHERE id = ?",
-                        update_values
-                    )
-                    conn.commit()
-
-                    # 获取更新后的任务
-                    updated_row = conn.execute('SELECT * FROM tasks WHERE id = ?', (task_id,)).fetchone()
-                    updated_task = parse_task(updated_row)
-                    updated_task["status"] = columns_map.get(updated_task["columnId"], updated_task["columnId"])
-
-                    return {
-                        "success": True,
-                        "action": "update",
-                        "task": updated_task
-                    }
-                except Exception as e:
-                    return {"error": f"更新任务失败: {str(e)}"}
+                        return {
+                            "success": True,
+                            "action": "update",
+                            "task": result
+                        }
+                    except urllib.error.HTTPError as e:
+                        error_body = e.read().decode()
+                        return {"error": f"更新任务失败: {error_body}"}
+                    except Exception as e:
+                        return {"error": f"更新任务失败: {str(e)}"}
                 finally:
                     conn.close()
 
