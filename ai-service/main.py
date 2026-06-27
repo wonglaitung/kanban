@@ -377,7 +377,7 @@ async def chat(request: ChatRequest):
 工具有：
 - get_task_dictionary: 获取字段描述
 - query_tasks: 查询任务（支持 status/priority/assignee/overdue 参数）
-- manage_task: 管理任务（action=create创建，action=update更新，更新时通过title关键词匹配任务）
+- manage_task: 管理任务（action='create'创建，action='update'更新。更新时用title匹配任务，assignee改负责人，status改状态，priority改优先级，progress改进度）
 - generate_task_report: 生成 Word 报告
 
 回答要求：
@@ -408,7 +408,7 @@ async def chat(request: ChatRequest):
             tasks = query_tasks_from_db(status, priority, assignee, overdue)
             return {"total": len(tasks), "tasks": tasks}
 
-        @agent.tool(description="管理任务，支持创建、更新操作。action参数：create创建新任务，update更新任务。更新时通过title关键词匹配任务。")
+        @agent.tool(description="管理任务。action='create'创建新任务，action='update'更新任务。title是任务标题关键词（不是ID），用于匹配任务。更新时：assignee改负责人，status改状态，priority改优先级。示例：action='update', title='登录', status='进行中'")
         def manage_task(
             action: str,
             title: Optional[str] = None,
@@ -426,8 +426,8 @@ async def chat(request: ChatRequest):
             任务管理工具。
 
             Args:
-                action: 操作类型 (create/update)
-                title: 创建时为任务标题；更新时为匹配关键词
+                action: 操作类型 ('create' 或 'update')
+                title: 任务标题关键词（不是ID）。创建时是完整标题；更新时用于模糊匹配
                 new_title: 更新时的新标题（可选）
                 description: 任务描述
                 assignee: 负责人
