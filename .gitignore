@@ -33,5 +33,8 @@ nohup.out
 # iFlow CLI config
 .iflow/
 
+# Claude Code local settings
+.claude/settings.local.json
+
 # Database (runtime data)
 server/data/
