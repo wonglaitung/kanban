@@ -159,8 +159,8 @@ export default function AIChat({ onClose }: AIChatProps) {
   // 快捷问题
   const quickQuestions = [
     '有哪些高优先级任务？',
-    '查看逾期任务',
-    '帮我分析任务状态',
+    '创建任务：完成用户登录功能',
+    '生成任务报告',
   ];
 
   return (
