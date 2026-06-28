@@ -38,3 +38,12 @@ nohup.out
 
 # Database (runtime data)
 server/data/
+
+# AI service session memory
+ai-service/.harness/memory/sessions/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
