@@ -229,6 +229,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     content: str
     session_id: str
+    navigate: Optional[dict] = None
 
 
 @app.post("/api/ai/chat", response_model=ChatResponse)
@@ -258,6 +259,7 @@ async def chat(request: ChatRequest):
             GenerateReportTool,
             GetTaskDictionaryTool,
             ManageTaskTool,
+            NavigateToPageTool,
             QueryTasksTool,
         )
 
@@ -269,6 +271,7 @@ async def chat(request: ChatRequest):
             QueryTasksTool(),
             ManageTaskTool(),
             GenerateReportTool(api_key=api_key, base_url=base_url, model=model),
+            NavigateToPageTool(),
             UpdateCoreMemoryTool(),
         ]
 
@@ -300,9 +303,36 @@ async def chat(request: ChatRequest):
             session_id=request.session_id,
         )
 
+        # 检查是否有导航工具调用
+        navigate_action = None
+        for msg in result.messages:
+            content = msg.content
+            # 检查消息内容是否包含导航指令
+            if isinstance(content, str):
+                try:
+                    parsed = json.loads(content)
+                    if isinstance(parsed, dict) and parsed.get("action") == "navigate":
+                        navigate_action = parsed
+                        break
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            elif isinstance(content, list):
+                # 工具调用结果可能是列表格式
+                for item in content:
+                    if isinstance(item, dict):
+                        try:
+                            if item.get("action") == "navigate":
+                                navigate_action = item
+                                break
+                        except (AttributeError, TypeError):
+                            pass
+                if navigate_action:
+                    break
+
         return ChatResponse(
             content=result.content,
             session_id=request.session_id or "default",
+            navigate=navigate_action,
         )
 
     except ImportError as e:

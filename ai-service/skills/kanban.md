@@ -13,12 +13,17 @@ triggers:
     - 更新
     - 查询
     - 逾期
+    - 打开
+    - 设置
+    - 导航
+    - 页面
 tools:
   allowed:
     - get_task_dictionary
     - query_tasks
     - manage_task
     - generate_task_report
+    - navigate_to_page
     - update_core_memory
 ---
 
@@ -30,6 +35,15 @@ tools:
 - **query_tasks**: 查询任务（支持 status/priority/assignee/overdue 参数）
 - **manage_task**: 管理任务（action='create'创建，action='update'更新）
 - **generate_task_report**: 生成 Word 报告
+- **navigate_to_page**: 导航到指定页面（settings 设置页面、board 看板主页、task 任务详情）
+
+## 导航操作
+
+当用户要求打开页面时，**必须**调用 navigate_to_page 工具：
+
+- 用户说"打开设置"、"修改令牌"、"切换主题" → 调用 navigate_to_page(page="settings")
+- 用户说"返回看板"、"回到主页" → 调用 navigate_to_page(page="board")
+- 用户说"查看任务XXX"、"打开任务详情" → 先查询任务获取 ID，再调用 navigate_to_page(page="task", taskId="...")
 
 ## 操作流程
 
@@ -48,6 +62,13 @@ tools:
   1. 调用 query_tasks 查询任务
   2. 发现标题包含"登录"的任务
   3. 用 title="登录" 调用 manage_task
+
+- 用户说"打开设置"：
+  1. 调用 navigate_to_page(page="settings")
+
+- 用户说"查看登录任务详情"：
+  1. 调用 query_tasks 查询包含"登录"的任务
+  2. 调用 navigate_to_page(page="task", taskId="任务ID")
 
 ## 回答要求
 

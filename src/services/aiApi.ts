@@ -13,6 +13,12 @@ export interface ChatRequest {
 export interface ChatResponse {
   content: string;
   session_id: string;
+  navigate?: {
+    action: string;
+    page: string;
+    taskId?: string;
+    taskTitle?: string;
+  };
 }
 
 export interface TaskDictionary {

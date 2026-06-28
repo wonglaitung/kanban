@@ -13,9 +13,10 @@ interface Message {
 
 interface AIChatProps {
   onClose?: () => void;
+  onNavigate?: (page: string, params?: Record<string, unknown>) => void;
 }
 
-export default function AIChat({ onClose }: AIChatProps) {
+export default function AIChat({ onClose, onNavigate }: AIChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -114,6 +115,12 @@ export default function AIChat({ onClose }: AIChatProps) {
 
     try {
       const response = await chat(userMessage.content, sessionId);
+
+      // 检测导航指令
+      if (response.navigate && onNavigate) {
+        onNavigate(response.navigate.page, response.navigate);
+      }
+
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
@@ -159,6 +166,7 @@ export default function AIChat({ onClose }: AIChatProps) {
   const quickQuestions = [
     '有哪些高优先级任务？',
     '新增"完成用户登录功能" 任务',
+    '查看"用户登录"这个任务',
     '生成任务报告',
   ];
 

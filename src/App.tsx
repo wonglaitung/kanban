@@ -232,6 +232,38 @@ function App() {
     }
   };
 
+  // AI 导航处理
+  const handleNavigate = (page: string, params?: Record<string, unknown>) => {
+    if (page === 'settings') {
+      setShowChangeToken(true);
+    } else if (page === 'board') {
+      // 关闭所有弹窗，返回看板
+      setShowTaskModal(false);
+      setShowColumnModal(false);
+      setShowChangeToken(false);
+      setSelectedTask(null);
+      setSelectedColumn(null);
+    } else if (page === 'task') {
+      // 导航到任务详情
+      let task: Task | null = null;
+
+      if (params?.taskId) {
+        // 通过 ID 精确匹配
+        task = tasks.find(t => t.id === params.taskId) || null;
+      } else if (params?.taskTitle) {
+        // 通过标题模糊匹配
+        const title = String(params.taskTitle).toLowerCase();
+        task = tasks.find(t => t.title?.toLowerCase().includes(title)) || null;
+      }
+
+      if (task) {
+        setSelectedTask(task);
+        setActiveColumnId(task.columnId);
+        setShowTaskModal(true);
+      }
+    }
+  };
+
   // Loading state
   if (columnsLoading || tasksLoading) {
     return (
@@ -386,7 +418,7 @@ function App() {
       {/* AI Chat */}
       {showAIChat && (
         <div className="ai-chat-fab-open">
-          <AIChat onClose={() => setShowAIChat(false)} />
+          <AIChat onClose={() => setShowAIChat(false)} onNavigate={handleNavigate} />
         </div>
       )}
       {!showAIChat && (
