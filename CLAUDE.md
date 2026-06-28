@@ -26,8 +26,10 @@ A Kanban board system for small teams (1-5 people) with drag-and-drop task manag
 - **Port**: 3002
 - **SDK Path**: `/data/harness/packages/sdk` (local development)
 - **Memory**: `server/data/MEMORY.md` - shared with database for Docker compatibility
-- **Features**: Natural language task queries, automatic memory with capacity limits
+- **Features**: Natural language task queries, automatic memory with capacity limits, page navigation
 - **URL Encoding**: Uses `urllib.parse.urlencode()` for Chinese character support in API calls
+- **Tools**: `GetTaskDictionaryTool`, `QueryTasksTool`, `ManageTaskTool`, `GenerateReportTool`, `NavigateToPageTool`
+- **Skill**: `ai-service/skills/kanban.md` - defines available tools and interaction patterns
 
 ### Key Design Patterns
 1. **Optimistic Locking**: Tasks use `updatedAt` for conflict detection (409 response)
@@ -118,3 +120,31 @@ Font system uses IBM Plex family (enterprise standard for financial applications
 5. **Memory path**: `server/data/MEMORY.md` - shared between local dev and Docker
 6. **Harness SDK**: Required at `/data/harness/packages/sdk` for AI service development
 7. **Chinese encoding**: Use `urllib.parse.urlencode(encoding='utf-8')` for URL parameters with Chinese characters
+
+## AI Response Structure
+
+The `/api/ai/chat` endpoint returns `ChatResponse` with optional `navigate` field:
+
+```typescript
+interface ChatResponse {
+  content: string;      // AI text response
+  session_id: string;
+  navigate?: {          // Optional navigation action
+    action: "navigate";
+    page: "settings" | "board" | "task";
+    taskId?: string;    // Only for task navigation
+  };
+}
+```
+
+Frontend `AIChat` component calls `onNavigate(page, params)` when `navigate` field is present.
+
+## Docker Development
+
+```bash
+# Clear build cache if changes aren't reflected
+docker builder prune -af
+
+# Force rebuild without cache
+docker rmi kanban-board && ./build-docker.sh
+```
