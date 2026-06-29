@@ -48,7 +48,7 @@ function App() {
 
   const handleResizeMove = useCallback((e: MouseEvent) => {
     if (!isResizing) return;
-    const deltaX = resizeStartXRef.current - e.clientX;
+    const deltaX = e.clientX - resizeStartXRef.current;
     const newWidth = Math.min(Math.max(resizeStartWidthRef.current + deltaX, 280), 600);
     setCopilotWidth(newWidth);
   }, [isResizing]);
