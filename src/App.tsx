@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Board } from './components/Board';
 import { TaskModal } from './components/TaskModal';
 import { ColumnModal } from './components/ColumnModal';
@@ -30,9 +30,53 @@ function App() {
   const [staleFilter, setStaleFilter] = useState<StaleFilter>('all');
   const [showChangeToken, setShowChangeToken] = useState(false);
   const [copilotExpanded, setCopilotExpanded] = useState(false);
+  const [copilotWidth, setCopilotWidth] = useState(() => {
+    const saved = localStorage.getItem('copilot-width');
+    return saved ? parseInt(saved, 10) : 400;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartXRef = useRef(0);
+  const resizeStartWidthRef = useRef(0);
 
   const { columns, loading: columnsLoading, addColumn, editColumn, removeColumn } = useColumns();
   const { tasks, loading: tasksLoading, addTask, editTask, removeTask, duplicateTask, reorderTasks } = useTasks();
+
+  // Sidebar resize handlers
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    resizeStartXRef.current = e.clientX;
+    resizeStartWidthRef.current = copilotWidth;
+  }, [copilotWidth]);
+
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (!isResizing) return;
+    const deltaX = resizeStartXRef.current - e.clientX;
+    const newWidth = Math.min(Math.max(resizeStartWidthRef.current + deltaX, 280), 600);
+    setCopilotWidth(newWidth);
+  }, [isResizing]);
+
+  const handleResizeEnd = useCallback(() => {
+    if (isResizing) {
+      setIsResizing(false);
+      localStorage.setItem('copilot-width', String(copilotWidth));
+    }
+  }, [isResizing, copilotWidth]);
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleResizeMove);
+      document.removeEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing, handleResizeMove, handleResizeEnd]);
 
   // Filter tasks based on search query and stale filter
   const filteredTasks = useMemo(() => {
@@ -358,16 +402,25 @@ function App() {
         </main>
 
         {/* AI Copilot Sidebar */}
-        <aside className={`copilot-sidebar ${copilotExpanded ? 'expanded' : 'collapsed'}`}>
+        <aside
+          className={`copilot-sidebar ${copilotExpanded ? 'expanded' : 'collapsed'}`}
+          style={copilotExpanded ? { width: `${copilotWidth}px` } : undefined}
+        >
           {copilotExpanded ? (
-            <AIChat onClose={() => setCopilotExpanded(false)} onNavigate={handleNavigate} />
+            <>
+              <div
+                className="copilot-resize-handle"
+                onMouseDown={handleResizeStart}
+              />
+              <AIChat onClose={() => setCopilotExpanded(false)} onNavigate={handleNavigate} />
+            </>
           ) : (
             <button
               className="copilot-toggle-btn"
               onClick={() => setCopilotExpanded(true)}
               title="展开智能助手"
             >
-              <img src="/icon.svg" alt="AI" width="24" height="28" />
+              <img src="/icon.svg" alt="AI" width="18" height="21" />
             </button>
           )}
         </aside>
