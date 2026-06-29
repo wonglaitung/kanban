@@ -251,14 +251,14 @@ body {
 }
 
 .copilot-sidebar.collapsed {
-  width: 56px;
+  width: 38px;
   align-items: center;
   padding-top: 16px;
 }
 
 .copilot-toggle-btn {
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--accent-primary), var(--primary));
   border: none;
@@ -271,8 +271,13 @@ body {
 }
 
 .copilot-toggle-btn:hover {
-  transform: scale(1.08);
+  transform: scale(1.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.copilot-toggle-btn img {
+  width: 18px;
+  height: 21px;
 }
 
 /* Tech decorative elements */
