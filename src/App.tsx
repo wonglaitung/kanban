@@ -29,7 +29,7 @@ function App() {
   const [filterQuery, setFilterQuery] = useState('');
   const [staleFilter, setStaleFilter] = useState<StaleFilter>('all');
   const [showChangeToken, setShowChangeToken] = useState(false);
-  const [copilotExpanded, setCopilotExpanded] = useState(true);
+  const [copilotExpanded, setCopilotExpanded] = useState(false);
 
   const { columns, loading: columnsLoading, addColumn, editColumn, removeColumn } = useColumns();
   const { tasks, loading: tasksLoading, addTask, editTask, removeTask, duplicateTask, reorderTasks } = useTasks();
