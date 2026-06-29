@@ -29,7 +29,7 @@ function App() {
   const [filterQuery, setFilterQuery] = useState('');
   const [staleFilter, setStaleFilter] = useState<StaleFilter>('all');
   const [showChangeToken, setShowChangeToken] = useState(false);
-  const [showAIChat, setShowAIChat] = useState(false);
+  const [copilotExpanded, setCopilotExpanded] = useState(true);
 
   const { columns, loading: columnsLoading, addColumn, editColumn, removeColumn } = useColumns();
   const { tasks, loading: tasksLoading, addTask, editTask, removeTask, duplicateTask, reorderTasks } = useTasks();
@@ -339,22 +339,39 @@ function App() {
         </div>
       </header>
 
-      <main className="app-main">
-        <Board
-          columns={columns}
-          tasks={filteredTasks}
-          totalTasks={tasks.length}
-          onAddTask={handleAddTask}
-          onEditTask={handleEditTask}
-          onDeleteTask={handleDeleteTask}
-          onDuplicateTask={handleDuplicateTask}
-          onEditColumn={handleEditColumn}
-          onDeleteColumn={handleDeleteColumn}
-          onAddColumn={handleAddColumn}
-          onTaskMove={async () => {}}
-          onReorder={handleReorder}
-        />
-      </main>
+      <div className="app-content">
+        <main className="app-main">
+          <Board
+            columns={columns}
+            tasks={filteredTasks}
+            totalTasks={tasks.length}
+            onAddTask={handleAddTask}
+            onEditTask={handleEditTask}
+            onDeleteTask={handleDeleteTask}
+            onDuplicateTask={handleDuplicateTask}
+            onEditColumn={handleEditColumn}
+            onDeleteColumn={handleDeleteColumn}
+            onAddColumn={handleAddColumn}
+            onTaskMove={async () => {}}
+            onReorder={handleReorder}
+          />
+        </main>
+
+        {/* AI Copilot Sidebar */}
+        <aside className={`copilot-sidebar ${copilotExpanded ? 'expanded' : 'collapsed'}`}>
+          {copilotExpanded ? (
+            <AIChat onClose={() => setCopilotExpanded(false)} onNavigate={handleNavigate} />
+          ) : (
+            <button
+              className="copilot-toggle-btn"
+              onClick={() => setCopilotExpanded(true)}
+              title="展开智能助手"
+            >
+              <img src="/icon.svg" alt="AI" width="24" height="28" />
+            </button>
+          )}
+        </aside>
+      </div>
 
       {/* Task Modal */}
       {showTaskModal && (
@@ -413,22 +430,6 @@ function App() {
           onSetToken={handleSetToken}
           onClose={() => setShowChangeToken(false)}
         />
-      )}
-
-      {/* AI Chat */}
-      {showAIChat && (
-        <div className="ai-chat-fab-open">
-          <AIChat onClose={() => setShowAIChat(false)} onNavigate={handleNavigate} />
-        </div>
-      )}
-      {!showAIChat && (
-        <button
-          className="ai-chat-fab"
-          onClick={() => setShowAIChat(true)}
-          title="智能助手"
-        >
-          <img src="/icon.svg" alt="AI" width="40" height="48" />
-        </button>
       )}
     </div>
   );

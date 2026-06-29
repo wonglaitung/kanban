@@ -1,45 +1,12 @@
-/* AI Chat Component - 银行主题 */
+/* AI Chat Component - Copilot Sidebar Style */
 
 .ai-chat-container {
   display: flex;
   flex-direction: column;
-  width: 400px;
+  width: 100%;
+  height: 100%;
   background: var(--dark-card);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   overflow: hidden;
-  border: 1px solid var(--border-color);
-  position: relative;
-}
-
-/* 拖拽调整条 */
-.ai-chat-resize-handle {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 6px;
-  cursor: ns-resize;
-  z-index: 20;
-  background: transparent;
-}
-
-.ai-chat-resize-handle:hover::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 2px;
-  background: var(--text-muted);
-  border-radius: 1px;
-  opacity: 0.5;
-}
-
-.ai-chat-resize-handle:active::after {
-  background: var(--accent-primary);
-  opacity: 1;
 }
 
 .ai-chat-header {
@@ -448,45 +415,6 @@
 
 .ai-chat-messages::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
-}
-
-/* 悬浮按钮 */
-.ai-chat-fab {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-primary), var(--primary));
-  border: none;
-  color: white;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  transition: all 0.2s;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.ai-chat-fab:hover {
-  transform: scale(1.08);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-}
-
-.ai-chat-fab svg {
-  width: 26px;
-  height: 26px;
-  fill: currentColor;
-}
-
-.ai-chat-fab-open {
-  position: fixed;
-  bottom: 45px;
-  right: 24px;
-  z-index: 1001;
 }
 
 /* 滚动到底部按钮 */

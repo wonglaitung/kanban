@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { chat } from '../../services/aiApi';
@@ -29,55 +29,9 @@ export default function AIChat({ onClose, onNavigate }: AIChatProps) {
   const [loading, setLoading] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [sessionId] = useState(`session-${Date.now()}`);
-  const [height, setHeight] = useState(() => {
-    // 从 localStorage 读取保存的高度
-    const saved = localStorage.getItem('ai-chat-height');
-    return saved ? parseInt(saved, 10) : 600;
-  });
-  const [isResizing, setIsResizing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const startYRef = useRef(0);
-  const startHeightRef = useRef(0);
-
-  // 拖拽调整高度
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-    startYRef.current = e.clientY;
-    startHeightRef.current = height;
-  }, [height]);
-
-  const handleResizeMove = useCallback((e: MouseEvent) => {
-    if (!isResizing) return;
-    const deltaY = startYRef.current - e.clientY;
-    const newHeight = Math.min(Math.max(startHeightRef.current + deltaY, 400), window.innerHeight - 100);
-    setHeight(newHeight);
-  }, [isResizing]);
-
-  const handleResizeEnd = useCallback(() => {
-    if (isResizing) {
-      setIsResizing(false);
-      localStorage.setItem('ai-chat-height', String(height));
-    }
-  }, [isResizing, height]);
-
-  useEffect(() => {
-    if (isResizing) {
-      document.addEventListener('mousemove', handleResizeMove);
-      document.addEventListener('mouseup', handleResizeEnd);
-      document.body.style.cursor = 'ns-resize';
-      document.body.style.userSelect = 'none';
-    }
-    return () => {
-      document.removeEventListener('mousemove', handleResizeMove);
-      document.removeEventListener('mouseup', handleResizeEnd);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-  }, [isResizing, handleResizeMove, handleResizeEnd]);
 
   // 滚动到底部
   const scrollToBottom = () => {
@@ -171,17 +125,7 @@ export default function AIChat({ onClose, onNavigate }: AIChatProps) {
   ];
 
   return (
-    <div
-      className="ai-chat-container"
-      ref={containerRef}
-      style={{ height: `${height}px` }}
-    >
-      {/* 拖拽调整条 */}
-      <div
-        className="ai-chat-resize-handle"
-        onMouseDown={handleResizeStart}
-      />
-
+    <div className="ai-chat-container">
       <div className="ai-chat-header">
         <h3>
           <img src="/icon.svg" alt="AI" width="24" height="28" style={{ marginRight: '8px' }} />

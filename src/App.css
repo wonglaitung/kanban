@@ -226,6 +226,53 @@ body {
   display: flex;
   flex-direction: column;
   padding: 20px;
+  overflow: auto;
+  min-width: 0; /* Allow shrinking */
+}
+
+/* Copilot Sidebar Layout */
+.app-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.copilot-sidebar {
+  border-left: 1px solid var(--border-color);
+  background: var(--dark-card);
+  transition: width 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.copilot-sidebar.expanded {
+  width: 400px;
+}
+
+.copilot-sidebar.collapsed {
+  width: 56px;
+  align-items: center;
+  padding-top: 16px;
+}
+
+.copilot-toggle-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary), var(--primary));
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s;
+}
+
+.copilot-toggle-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Tech decorative elements */
@@ -272,5 +319,19 @@ body {
 
   .search-box {
     max-width: none;
+  }
+
+  .copilot-sidebar {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .copilot-sidebar.expanded {
+    width: 100%;
+    max-width: 400px;
   }
 }
