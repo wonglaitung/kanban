@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Board } from './components/Board';
 import { TaskModal } from './components/TaskModal';
 import { ColumnModal } from './components/ColumnModal';
@@ -29,51 +29,7 @@ function App() {
   const [filterQuery, setFilterQuery] = useState('');
   const [staleFilter, setStaleFilter] = useState<StaleFilter>('all');
   const [showChangeToken, setShowChangeToken] = useState(false);
-  const [copilotExpanded, setCopilotExpanded] = useState(false);
-  const [copilotWidth, setCopilotWidth] = useState(() => {
-    const saved = localStorage.getItem('copilot-width');
-    return saved ? parseInt(saved, 10) : 400;
-  });
-  const [isResizing, setIsResizing] = useState(false);
-  const resizeStartXRef = useRef(0);
-  const resizeStartWidthRef = useRef(0);
-
-  // Handle sidebar resize
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-    resizeStartXRef.current = e.clientX;
-    resizeStartWidthRef.current = copilotWidth;
-  }, [copilotWidth]);
-
-  const handleResizeMove = useCallback((e: MouseEvent) => {
-    if (!isResizing) return;
-    const deltaX = e.clientX - resizeStartXRef.current;
-    const newWidth = Math.min(Math.max(resizeStartWidthRef.current + deltaX, 280), 600);
-    setCopilotWidth(newWidth);
-  }, [isResizing]);
-
-  const handleResizeEnd = useCallback(() => {
-    if (isResizing) {
-      setIsResizing(false);
-      localStorage.setItem('copilot-width', String(copilotWidth));
-    }
-  }, [isResizing, copilotWidth]);
-
-  useEffect(() => {
-    if (isResizing) {
-      document.addEventListener('mousemove', handleResizeMove);
-      document.addEventListener('mouseup', handleResizeEnd);
-      document.body.style.cursor = 'ew-resize';
-      document.body.style.userSelect = 'none';
-    }
-    return () => {
-      document.removeEventListener('mousemove', handleResizeMove);
-      document.removeEventListener('mouseup', handleResizeEnd);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-  }, [isResizing, handleResizeMove, handleResizeEnd]);
+  const [copilotExpanded, setCopilotExpanded] = useState(true);
 
   const { columns, loading: columnsLoading, addColumn, editColumn, removeColumn } = useColumns();
   const { tasks, loading: tasksLoading, addTask, editTask, removeTask, duplicateTask, reorderTasks } = useTasks();
@@ -332,82 +288,58 @@ function App() {
 
   return (
     <div className="app">
-      {/* AI Copilot Sidebar - Left Side, Full Height */}
-      <aside
-        className={`copilot-sidebar ${copilotExpanded ? 'expanded' : 'collapsed'}`}
-        style={copilotExpanded ? { width: `${copilotWidth}px` } : undefined}
-      >
-        {copilotExpanded ? (
-          <>
-            <div
-              className="copilot-resize-handle"
-              onMouseDown={handleResizeStart}
-            />
-            <AIChat onClose={() => setCopilotExpanded(false)} onNavigate={handleNavigate} />
-          </>
-        ) : (
-          <button
-            className="copilot-toggle-btn"
-            onClick={() => setCopilotExpanded(true)}
-            title="展开智能助手"
-          >
-            <img src="/icon.svg" alt="AI" width="24" height="28" />
-          </button>
-        )}
-      </aside>
-
-      <div className="app-content">
-        <header className="app-header">
-          <div className="header-content">
-            <h1>智能看板系统</h1>
-            <div className="header-center">
-              <select
-                className="stale-filter-select"
-                value={staleFilter}
-                onChange={(e) => setStaleFilter(e.target.value as StaleFilter)}
-                title="筛选未更新任务"
-              >
-                <option value="all">全部任务</option>
-                <option value="1day">1天未更新</option>
-                <option value="3days">3天未更新</option>
-                <option value="5days">5天未更新</option>
-              </select>
-              <div className="search-box">
-                <span className="search-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="8"/>
-                    <path d="m21 21-4.35-4.35"/>
-                  </svg>
-                </span>
-                <input
-                  type="text"
-                  placeholder="搜索任务、负责人、标签..."
-                  value={filterQuery}
-                  onChange={(e) => setFilterQuery(e.target.value)}
-                  className="search-input"
-                />
-                {filterQuery && (
-                  <button
-                    className="clear-search"
-                    onClick={() => setFilterQuery('')}
-                    title="清除搜索"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="header-right">
-              <SettingsMenu
-                currentTheme={currentTheme}
-                onThemeChange={handleThemeChange}
-                onChangeToken={() => setShowChangeToken(true)}
-                onExportCsv={handleExportCsv}
+      <header className="app-header">
+        <div className="header-content">
+          <h1>智能看板系统</h1>
+          <div className="header-center">
+            <select
+              className="stale-filter-select"
+              value={staleFilter}
+              onChange={(e) => setStaleFilter(e.target.value as StaleFilter)}
+              title="筛选未更新任务"
+            >
+              <option value="all">全部任务</option>
+              <option value="1day">1天未更新</option>
+              <option value="3days">3天未更新</option>
+              <option value="5days">5天未更新</option>
+            </select>
+            <div className="search-box">
+              <span className="search-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="m21 21-4.35-4.35"/>
+                </svg>
+              </span>
+              <input
+                type="text"
+                placeholder="搜索任务、负责人、标签..."
+                value={filterQuery}
+                onChange={(e) => setFilterQuery(e.target.value)}
+                className="search-input"
               />
+              {filterQuery && (
+                <button
+                  className="clear-search"
+                  onClick={() => setFilterQuery('')}
+                  title="清除搜索"
+                >
+                  ×
+                </button>
+              )}
             </div>
           </div>
-        </header>
+          <div className="header-right">
+            <SettingsMenu
+              currentTheme={currentTheme}
+              onThemeChange={handleThemeChange}
+              onChangeToken={() => setShowChangeToken(true)}
+              onExportCsv={handleExportCsv}
+            />
+          </div>
+        </div>
+      </header>
 
+      <div className="app-content">
         <main className="app-main">
           <Board
             columns={columns}
@@ -424,6 +356,21 @@ function App() {
             onReorder={handleReorder}
           />
         </main>
+
+        {/* AI Copilot Sidebar */}
+        <aside className={`copilot-sidebar ${copilotExpanded ? 'expanded' : 'collapsed'}`}>
+          {copilotExpanded ? (
+            <AIChat onClose={() => setCopilotExpanded(false)} onNavigate={handleNavigate} />
+          ) : (
+            <button
+              className="copilot-toggle-btn"
+              onClick={() => setCopilotExpanded(true)}
+              title="展开智能助手"
+            >
+              <img src="/icon.svg" alt="AI" width="24" height="28" />
+            </button>
+          )}
+        </aside>
       </div>
 
       {/* Task Modal */}
