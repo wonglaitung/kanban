@@ -23,6 +23,9 @@ WORKDIR /app/ai-service
 # Install build dependencies
 RUN apk add --no-cache gcc musl-dev
 
+# Set fixed tiktoken cache directory (must match final image path)
+ENV TIKTOKEN_CACHE_DIR=/app/tiktoken_cache
+
 # Copy AI service requirements and install first
 COPY ai-service/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
@@ -30,6 +33,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy Harness SDK from build context and install
 COPY harness-sdk/ /tmp/harness-sdk/
 RUN pip install --no-cache-dir /tmp/harness-sdk && rm -rf /tmp/harness-sdk
+
+# Pre-download tiktoken encoding files for offline environments
+RUN mkdir -p /app/tiktoken_cache && \
+    python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
 
 # Copy AI service code
 COPY ai-service/ ./
@@ -65,11 +72,16 @@ COPY server/package.json ./server/
 COPY --from=ai-builder /usr/local /usr/local
 COPY --from=ai-builder /app/ai-service ./ai-service
 
+# Copy tiktoken cache for offline environments
+COPY --from=ai-builder /app/tiktoken_cache /app/tiktoken_cache
+ENV TIKTOKEN_CACHE_DIR=/app/tiktoken_cache
+
 # Copy frontend build
 COPY --from=frontend-builder /app/dist ./dist
 
-# Create data directories for SQLite and AI service
-RUN mkdir -p /app/server/data /app/server/data/downloads /app/ai-service/data
+# Create data directories for SQLite and AI service with proper permissions
+RUN mkdir -p /app/server/data /app/server/data/downloads /app/ai-service/data && \
+    chmod -R 755 /app/server/data /app/ai-service/data
 
 # Create nginx config with proper MIME types and AI API proxy
 RUN echo 'events { worker_connections 1024; } \
@@ -92,6 +104,8 @@ http { \
             proxy_set_header Upgrade $http_upgrade; \
             proxy_set_header Connection "upgrade"; \
             proxy_set_header Host $host; \
+            proxy_read_timeout 60s; \
+            proxy_connect_timeout 30s; \
         } \
         \
         location /api/ai { \
@@ -99,6 +113,9 @@ http { \
             proxy_http_version 1.1; \
             proxy_set_header Host $host; \
             proxy_set_header X-Real-IP $remote_addr; \
+            proxy_read_timeout 300s; \
+            proxy_connect_timeout 60s; \
+            proxy_send_timeout 300s; \
         } \
         \
         location /ws { \
@@ -107,6 +124,7 @@ http { \
             proxy_set_header Upgrade $http_upgrade; \
             proxy_set_header Connection "upgrade"; \
             proxy_set_header Host $host; \
+            proxy_read_timeout 3600s; \
         } \
         \
         location /downloads/ { \
@@ -115,6 +133,9 @@ http { \
         } \
     } \
 }' > /etc/nginx/nginx.conf
+
+# Ensure downloads directory has proper permissions for file generation
+RUN chmod -R 777 /app/server/data/downloads
 
 # Create startup script
 RUN echo '#!/bin/sh' > /app/start.sh && \
