@@ -216,6 +216,10 @@ class GenerateReportTool(Tool):
         filepath = DOWNLOADS_DIR / filename
         doc.save(str(filepath))
 
+        # 设置文件权限，让 nginx 可以读取
+        import os
+        os.chmod(filepath, 0o644)
+
         # 6. 清理旧文件（保留最近10个）
         report_files = sorted(
             DOWNLOADS_DIR.glob("task_report_*.docx"),

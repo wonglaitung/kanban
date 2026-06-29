@@ -817,3 +817,43 @@ ENV TIKTOKEN_CACHE_DIR=/app/tiktoken_cache
 - 其他需要网络下载的库（如 sentence-transformers）也有类似问题
 
 ---
+
+### 34. nginx 403 forbidden 与 volume 挂载权限问题
+**问题背景**: Docker 容器内 AI 生成的报告文件无法下载，nginx 返回 403 forbidden
+
+**根本原因**:
+1. nginx 默认以 `nginx` 用户运行（非 root）
+2. bind mount 挂载的目录继承宿主机权限，容器内 nginx 用户可能无法读取
+3. 即便容器内创建的目录，文件默认权限 `rw-r--r--` (644) 对 group/other 可读，但目录需要 `rwx` 才能进入
+
+**解决方案**:
+```dockerfile
+# 方案一：使用不挂载的临时目录（推荐）
+# 启动脚本中创建目录并设置权限
+RUN echo 'mkdir -p /tmp/downloads && chmod 755 /tmp/downloads' >> /app/start.sh
+
+# Python 代码中设置文件权限
+import os
+filepath = DOWNLOADS_DIR / filename
+doc.save(str(filepath))
+os.chmod(filepath, 0o644)  # 让 nginx 用户可读
+```
+
+```dockerfile
+# 方案二：让 nginx 以 root 运行（简单但不安全）
+# 在 nginx.conf 最前面添加
+user root;
+```
+
+**nginx 用户权限要点**:
+- nginx 默认以 `nginx` 用户 (UID 101) 运行
+- 目录权限需要 `755` (rwxr-xr-x) 才能让 nginx 进入并读取
+- 文件权限需要 `644` (rw-r--r--) 才能让 nginx 读取
+- bind mount 目录继承宿主机权限，需要宿主机 `chmod 755`
+
+**经验总结**:
+- 涉及文件下载的目录不要挂载到宿主机，使用容器内临时目录
+- 启动脚本中创建目录并设置 `chmod 755`
+- Python 生成文件后调用 `os.chmod(filepath, 0o644)` 确保可读
+
+---

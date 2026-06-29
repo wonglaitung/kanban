@@ -134,8 +134,9 @@ http { \
     } \
 }' > /etc/nginx/nginx.conf
 
-# Create startup script
+# Create startup script (create downloads dir with proper permissions for nginx)
 RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'mkdir -p /tmp/downloads && chmod 755 /tmp/downloads' >> /app/start.sh && \
     echo 'cd /app/server && node server.js &' >> /app/start.sh && \
     echo 'cd /app/ai-service && python3 main.py &' >> /app/start.sh && \
     echo 'nginx -g "daemon off;"' >> /app/start.sh && \

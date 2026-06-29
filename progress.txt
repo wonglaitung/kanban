@@ -219,5 +219,30 @@ interface Settings {
 
 ---
 
-最后更新: 2026-06-28
+最后更新: 2026-06-29
 更新人: Claude Code
+
+---
+
+## 2026-06-29 Docker 离线环境修复
+
+### 完成的工作
+
+1. **tiktoken 离线缓存修复**
+   - 设置 `TIKTOKEN_CACHE_DIR=/app/tiktoken_cache` 环境变量
+   - 构建阶段预下载编码文件到固定目录
+   - 复制缓存到最终镜像，确保内网环境可用
+
+2. **nginx 代理超时配置**
+   - `/api` 后端 API: 60s read timeout
+   - `/api/ai` AI 服务: 300s read/send timeout
+   - `/ws` WebSocket: 3600s read timeout
+
+3. **报告下载权限修复**
+   - 下载目录改为 `/tmp/downloads`，避免 volume 挂载权限问题
+   - 启动脚本创建目录并设置 `chmod 755`
+   - Python 生成文件后调用 `os.chmod(filepath, 0o644)`
+
+### 提交记录
+- `9a676ab` Fix: Docker offline environment issues - tiktoken cache and nginx timeouts
+- `df67507` Fix: move downloads directory to /tmp to avoid volume mount permission issues
