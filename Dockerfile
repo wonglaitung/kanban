@@ -79,8 +79,8 @@ ENV TIKTOKEN_CACHE_DIR=/app/tiktoken_cache
 # Copy frontend build
 COPY --from=frontend-builder /app/dist ./dist
 
-# Create data directories for SQLite and AI service with proper permissions
-RUN mkdir -p /app/server/data /app/server/data/downloads /app/ai-service/data && \
+# Create data directories for SQLite (downloads use /tmp/downloads to avoid mount permission issues)
+RUN mkdir -p /app/server/data /app/ai-service/data && \
     chmod -R 755 /app/server/data /app/ai-service/data
 
 # Create nginx config with proper MIME types and AI API proxy
@@ -128,14 +128,11 @@ http { \
         } \
         \
         location /downloads/ { \
-            alias /app/server/data/downloads/; \
+            alias /tmp/downloads/; \
             autoindex on; \
         } \
     } \
 }' > /etc/nginx/nginx.conf
-
-# Ensure downloads directory has proper permissions for file generation
-RUN chmod -R 777 /app/server/data/downloads
 
 # Create startup script
 RUN echo '#!/bin/sh' > /app/start.sh && \

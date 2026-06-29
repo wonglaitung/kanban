@@ -17,10 +17,8 @@ from typing import Any, Optional
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:3001")
 
 # 下载目录（用于存放生成的报告文件）
-# 在 Docker 中，server 目录与 ai-service 目录同级
-_ai_service_dir = Path(__file__).parent.parent
-_project_root = _ai_service_dir.parent
-DOWNLOADS_DIR = Path(os.environ.get("DOWNLOADS_DIR", str(_project_root / "server" / "data" / "downloads")))
+# Docker 中使用 /tmp/downloads，不挂载到宿主机，避免权限问题
+DOWNLOADS_DIR = Path(os.environ.get("DOWNLOADS_DIR", "/tmp/downloads"))
 DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 
