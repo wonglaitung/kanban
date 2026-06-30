@@ -73,8 +73,8 @@ export default function AIChat({ onClose, onNavigate }: AIChatProps) {
     try {
       const response = await chat(userMessage.content, sessionId);
 
-      // 检测导航指令
-      if (response.navigate && onNavigate) {
+      // 检测导航指令 - 只有当前会话才执行导航
+      if (response.navigate && response.session_id === sessionId && onNavigate) {
         onNavigate(response.navigate.page, response.navigate);
       }
 
