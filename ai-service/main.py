@@ -235,6 +235,9 @@ class ChatResponse(BaseModel):
 @app.post("/api/ai/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """AI 对话接口"""
+    # 记录请求的 session_id
+    print(f"[AI Service] Chat request - session_id: {request.session_id}")
+
     api_key = (
         os.environ.get("API_KEY")
         or os.environ.get("OPENAI_API_KEY")
@@ -328,6 +331,10 @@ async def chat(request: ChatRequest):
                             pass
                 if navigate_action:
                     break
+
+        # 记录导航操作
+        if navigate_action:
+            print(f"[AI Service] Navigate action detected - session_id: {request.session_id}, navigate: {navigate_action}")
 
         return ChatResponse(
             content=result.content,

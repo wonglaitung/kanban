@@ -31,7 +31,8 @@ export default function AIChat({ onClose, onNavigate }: AIChatProps) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
-  const [sessionId] = useState(`session-${Date.now()}`);
+  // 生成唯一会话ID - 使用时间戳 + 随机数确保唯一性
+  const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -74,8 +75,18 @@ export default function AIChat({ onClose, onNavigate }: AIChatProps) {
       const response = await chat(userMessage.content, sessionId);
 
       // 检测导航指令 - 只有当前会话才执行导航
-      if (response.navigate && response.session_id === sessionId && onNavigate) {
-        onNavigate(response.navigate.page, response.navigate);
+      if (response.navigate) {
+        console.log('[AIChat] Navigate response received:', {
+          responseSessionId: response.session_id,
+          currentSessionId: sessionId,
+          match: response.session_id === sessionId
+        });
+        if (response.session_id === sessionId && onNavigate) {
+          console.log('[AIChat] Executing navigation for current session');
+          onNavigate(response.navigate.page, response.navigate);
+        } else {
+          console.log('[AIChat] Navigation blocked - session mismatch');
+        }
       }
 
       const assistantMessage: Message = {

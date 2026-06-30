@@ -857,3 +857,51 @@ user root;
 - Python 生成文件后调用 `os.chmod(filepath, 0o644)` 确保可读
 
 ---
+
+### 35. AI 导航影响其他用户的问题
+**问题背景**: Docker 多用户环境下，一个用户通过 AI 打开任务卡时，其他用户的页面也会打开任务卡
+
+**根本原因**:
+1. `sessionId` 使用 `Date.now()` 生成，理论上每个用户不同
+2. 但在极端情况下（同一毫秒内打开页面），可能产生相同的 sessionId
+3. 更常见的原因：Docker 镜像没有重新构建，或浏览器缓存了旧的 JavaScript
+
+**修复方案**:
+```tsx
+// 增强会话ID唯一性 - 时间戳 + 随机数
+const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
+
+// 添加调试日志
+if (response.navigate) {
+  console.log('[AIChat] Navigate response:', {
+    responseSessionId: response.session_id,
+    currentSessionId: sessionId,
+    match: response.session_id === sessionId
+  });
+  if (response.session_id === sessionId && onNavigate) {
+    onNavigate(response.navigate.page, response.navigate);
+  }
+}
+```
+
+**后端日志**:
+```python
+# 记录请求和响应
+print(f"[AI Service] Chat request - session_id: {request.session_id}")
+if navigate_action:
+    print(f"[AI Service] Navigate action - session_id: {request.session_id}")
+```
+
+**验证步骤**:
+1. 重新构建 Docker 镜像：`./build-docker.sh`
+2. 清除浏览器缓存或使用无痕模式测试
+3. 检查浏览器控制台日志，确认每个用户的 sessionId 不同
+4. 检查后端日志，确认 session_id 正确传递和返回
+
+**经验总结**:
+- 涉及多用户隔离的功能，必须确保 session ID 的唯一性
+- 使用 `时间戳 + 随机数` 组合生成唯一标识
+- 添加调试日志帮助定位问题
+- Docker 部署时确保镜像已更新
+
+---
