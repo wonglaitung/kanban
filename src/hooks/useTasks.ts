@@ -40,7 +40,13 @@ export function useTasks() {
         ...task,
         order: maxOrder + 1,
       });
-      setTasks(prev => [...prev, newTask].sort((a, b) => a.order - b.order));
+      setTasks(prev => {
+        // 避免 WebSocket 已添加过导致的重复
+        if (prev.some(t => t.id === newTask.id)) {
+          return prev;
+        }
+        return [...prev, newTask].sort((a, b) => a.order - b.order);
+      });
       return newTask;
     } catch (err) {
       setError('添加任务失败');
