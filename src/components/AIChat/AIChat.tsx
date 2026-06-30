@@ -11,6 +11,9 @@ interface Message {
   timestamp: Date;
 }
 
+// 最大保留消息数量
+const MAX_MESSAGES = 50;
+
 interface AIChatProps {
   onClose?: () => void;
   onNavigate?: (page: string, params?: Record<string, unknown>) => void;
@@ -81,7 +84,14 @@ export default function AIChat({ onClose, onNavigate }: AIChatProps) {
         content: response.content,
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => {
+        const newMessages = [...prev, assistantMessage];
+        // 限制消息数量，保留最新的 MAX_MESSAGES 条
+        if (newMessages.length > MAX_MESSAGES) {
+          return newMessages.slice(-MAX_MESSAGES);
+        }
+        return newMessages;
+      });
     } catch (error) {
       const errorMessage: Message = {
         id: `error-${Date.now()}`,

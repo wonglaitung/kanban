@@ -245,6 +245,8 @@ body {
   flex-direction: column;
   flex-shrink: 0;
   position: relative;
+  height: 100%;
+  overflow: hidden;
 }
 
 .copilot-sidebar.expanded {
