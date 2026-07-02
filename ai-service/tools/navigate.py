@@ -66,13 +66,17 @@ class NavigateToPageTool(Tool):
         result = {
             "action": "navigate",
             "page": page,
+            "success": True,
+            "message": f"已成功打开{page}页面",
         }
 
         if page == "task":
             if task_id:
                 result["taskId"] = task_id
+                result["message"] = f"已成功打开任务详情页面（taskId: {task_id}）"
             elif task_title:
                 result["taskTitle"] = task_title
+                result["message"] = f"已成功打开任务详情页面（关键词: {task_title}）"
             else:
                 return ToolResult(
                     tool_call_id="",
