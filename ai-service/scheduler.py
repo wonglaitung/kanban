@@ -9,6 +9,7 @@ from pathlib import Path
 
 from harness.triggers.cron import CronTrigger
 from harness.triggers.manager import TriggerManager
+from harness.triggers.types import TriggerAction
 
 
 def setup_scheduler(agent) -> TriggerManager:
@@ -35,16 +36,24 @@ def setup_scheduler(agent) -> TriggerManager:
         schedule = "0 17 * * *"
         print("✅ 生产模式：定时任务每天17:00触发")
 
-    daily_reminder = CronTrigger(
-        name="daily-task-reminder",
-        schedule=schedule,
-        timezone="Asia/Shanghai",
-        task="检查所有进行中的任务，分析进度和潜在风险，提供优先级建议，生成HTML格式的邮件并发送提醒",
+    # 创建 TriggerAction
+    action = TriggerAction(
+        goal="检查所有进行中的任务，分析进度和潜在风险，提供优先级建议，生成HTML格式的邮件并发送提醒",
+        workspace_dir=str(Path(__file__).parent.parent / "server" / "data"),
         skills=["kanban-assistant"],
+        max_iterations=50,
+        timeout_seconds=300,
+    )
+
+    daily_reminder = CronTrigger(
+        schedule=schedule,
+        action=action,
+        timezone="Asia/Shanghai",
+        trigger_id="daily-task-reminder",
     )
 
     manager.register(daily_reminder)
-    print(f"📅 定时任务已注册: {daily_reminder.name} ({schedule})")
+    print(f"📅 定时任务已注册: {daily_reminder.id} ({schedule})")
 
     return manager
 
