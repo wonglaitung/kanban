@@ -142,8 +142,8 @@ export default function AIChat({ onClose, onNavigate }: AIChatProps) {
   const quickQuestions = [
     '有哪些高优先级任务？',
     '新增"完成用户登录功能" 任务',
-    '查看"用户登录"这个任务',
-    '生成任务报告',
+    '打开"用户登录"这个任务',
+    '生成进行中任务的报告',
   ];
 
   return (
