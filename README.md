@@ -277,6 +277,92 @@ AI 服务使用 Harness SDK 的记忆系统：
 - **自动归档** - 超限时自动归档到 `MEMORY_ARCHIVE.md`
 - **存储位置** - `server/data/MEMORY.md`（本地开发和 Docker 共用）
 
+## 定时任务提醒
+
+AI 服务支持定时任务提醒功能，每天 17:00 自动检查进行中的任务并发送邮件。
+
+### 功能说明
+
+- 自动查询所有进行中的任务
+- 分析任务进度和潜在风险
+- 提供优先级建议
+- 发送 HTML 格式邮件提醒
+
+### 配置邮件服务
+
+在 `.env` 文件中添加 SMTP 配置：
+
+```bash
+# SMTP 配置
+SMTP_SERVER=smtp.163.com      # 163邮箱用 smtp.163.com
+SMTP_PORT=465                 # 163邮箱用 465(SSL)，Gmail用 587(TLS)
+SMTP_USER=your-email@163.com  # SMTP 用户名
+SMTP_PASSWORD=your-auth-code  # 163邮箱需要授权码（不是登录密码）
+RECIPIENTS=user1@example.com,user2@example.com  # 收件人列表
+
+# 定时任务配置
+TEST_MODE=false               # true=每1分钟触发（测试），false=每天17:00（生产）
+```
+
+**注意**：不同邮箱服务商配置不同：
+- **163邮箱**：端口 465，使用 SSL，需要邮箱授权码
+- **Gmail**：端口 587，使用 TLS，需要应用专用密码
+- **Yahoo**：端口 587，使用 TLS
+
+### Docker 测试定时任务
+
+#### 方法一：测试模式
+
+```bash
+# 1. 构建镜像
+./build-docker.sh
+
+# 2. 启动容器（测试模式，每1分钟触发）
+docker run -d --name kanban-test \
+  -p 80:80 \
+  -e TEST_MODE=true \
+  --env-file .env \
+  -v $(pwd)/server/data:/app/server/data \
+  kanban-board
+
+# 3. 查看日志验证
+docker logs -f kanban-test
+
+# 4. 验证邮件收到后，停止测试容器
+docker stop kanban-test && docker rm kanban-test
+
+# 5. 生产部署（每天17:00触发）
+./run-docker.sh
+```
+
+#### 方法二：手动触发测试
+
+```bash
+# 进入容器
+docker exec -it kanban bash
+
+# 调用测试接口手动触发
+curl -X POST http://localhost:3002/api/ai/test-reminder
+```
+
+#### 方法三：本地开发测试
+
+```bash
+# 启动 AI 服务（测试模式）
+TEST_MODE=true python ai-service/main.py
+
+# 或手动触发测试接口
+curl -X POST http://localhost:3002/api/ai/test-reminder
+```
+
+### 163邮箱授权码获取
+
+1. 登录 163 箱网页版
+2. 进入「设置」→「POP3/SMTP/IMAP」
+3. 开启「SMTP服务」
+4. 获取授权码（不是邮箱登录密码）
+5. 将授权码填入 `.env` 的 `SMTP_PASSWORD`
+
 ## 功能说明
 
 ### 令牌保护

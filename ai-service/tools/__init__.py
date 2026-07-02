@@ -9,6 +9,7 @@ from .query_tasks import QueryTasksTool
 from .manage_task import ManageTaskTool
 from .generate_report import GenerateReportTool
 from .navigate import NavigateToPageTool
+from .send_email import SendEmailTool
 
 __all__ = [
     "GetTaskDictionaryTool",
@@ -16,4 +17,5 @@ __all__ = [
     "ManageTaskTool",
     "GenerateReportTool",
     "NavigateToPageTool",
+    "SendEmailTool",
 ]

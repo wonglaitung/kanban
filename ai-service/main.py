@@ -109,13 +109,24 @@ def is_overdue(due_date: Optional[str], status: str) -> bool:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
+    # 检查后端 API
     try:
         result = call_backend_api("GET", "/api/columns")
         if not result["success"]:
             print(f"Warning: Backend API not available - {result['error']}")
     except Exception as e:
         print(f"Warning: Backend API check failed - {e}")
+
+    # 启动定时任务调度器
+    await start_scheduler_on_startup()
+
     yield
+
+    # 停止调度器（如果有）
+    global _scheduler_manager
+    if _scheduler_manager:
+        await _scheduler_manager.stop()
+        print("🛑 定时任务调度器已停止")
 
 
 app = FastAPI(
@@ -264,6 +275,7 @@ async def chat(request: ChatRequest):
             ManageTaskTool,
             NavigateToPageTool,
             QueryTasksTool,
+            SendEmailTool,
         )
 
         memory_path = Path(__file__).parent.parent / "server" / "data"
@@ -275,6 +287,7 @@ async def chat(request: ChatRequest):
             ManageTaskTool(),
             GenerateReportTool(api_key=api_key, base_url=base_url, model=model),
             NavigateToPageTool(),
+            SendEmailTool(),
             UpdateCoreMemoryTool(),
         ]
 
@@ -355,6 +368,169 @@ async def chat(request: ChatRequest):
 
 
 # ==================== 启动服务 ====================
+
+# 全局变量：调度器管理器
+_scheduler_manager = None
+
+
+async def start_scheduler_on_startup():
+    """启动定时任务调度器"""
+    global _scheduler_manager
+
+    api_key = (
+        os.environ.get("API_KEY")
+        or os.environ.get("OPENAI_API_KEY")
+        or os.environ.get("ANTHROPIC_API_KEY")
+    )
+    base_url = os.environ.get("API_BASE_URL") or os.environ.get("OPENAI_BASE_URL")
+    model = os.environ.get("AI_MODEL", "astron-code-latest")
+
+    if not api_key:
+        print("⚠️ 未配置 API Key，定时任务调度器不会启动")
+        return None
+
+    try:
+        from harness import AgentHarness, HarnessConfig
+        from harness.memory.memory_file import MemoryScoringConfig
+        from harness.tools.builtins import UpdateCoreMemoryTool
+
+        from tools import (
+            GenerateReportTool,
+            GetTaskDictionaryTool,
+            ManageTaskTool,
+            NavigateToPageTool,
+            QueryTasksTool,
+            SendEmailTool,
+        )
+        from scheduler import setup_scheduler
+
+        memory_path = Path(__file__).parent.parent / "server" / "data"
+
+        # 创建工具实例
+        tools = [
+            GetTaskDictionaryTool(),
+            QueryTasksTool(),
+            ManageTaskTool(),
+            GenerateReportTool(api_key=api_key, base_url=base_url, model=model),
+            NavigateToPageTool(),
+            SendEmailTool(),
+            UpdateCoreMemoryTool(),
+        ]
+
+        # 创建 Agent
+        agent = AgentHarness(
+            config=HarnessConfig(
+                model=model,
+                provider="openai",
+                api_key=api_key,
+                base_url=base_url,
+                memory_md_path=memory_path,
+                memory_scoring=MemoryScoringConfig(
+                    enable_llm_evaluation=False,
+                    max_core_memory_tokens=3000,
+                    archive_fallback="file",
+                ),
+            ),
+            tools=tools,
+        )
+
+        # 加载并激活 Skill
+        skill_dir = Path(__file__).parent / "skills"
+        agent.load_skills_from_dir(skill_dir)
+        agent.activate_skill("kanban-assistant")
+
+        # 设置并启动调度器
+        _scheduler_manager = setup_scheduler(agent)
+        await _scheduler_manager.start()
+
+        return _scheduler_manager
+
+    except Exception as e:
+        print(f"❌ 启动定时任务调度器失败: {e}")
+        return None
+
+
+@app.post("/api/ai/test-reminder")
+async def test_reminder():
+    """
+    手动触发任务提醒测试（仅用于测试）
+
+    用于测试定时任务逻辑，无需等待 Cron 触发。
+    """
+    api_key = (
+        os.environ.get("API_KEY")
+        or os.environ.get("OPENAI_API_KEY")
+        or os.environ.get("ANTHROPIC_API_KEY")
+    )
+    base_url = os.environ.get("API_BASE_URL") or os.environ.get("OPENAI_BASE_URL")
+    model = os.environ.get("AI_MODEL", "astron-code-latest")
+
+    if not api_key:
+        return {"error": "AI 服务未配置 API Key"}
+
+    try:
+        from harness import AgentHarness, HarnessConfig
+        from harness.memory.memory_file import MemoryScoringConfig
+        from harness.tools.builtins import UpdateCoreMemoryTool
+
+        from tools import (
+            GenerateReportTool,
+            GetTaskDictionaryTool,
+            ManageTaskTool,
+            NavigateToPageTool,
+            QueryTasksTool,
+            SendEmailTool,
+        )
+
+        memory_path = Path(__file__).parent.parent / "server" / "data"
+
+        # 创建工具实例
+        tools = [
+            GetTaskDictionaryTool(),
+            QueryTasksTool(),
+            ManageTaskTool(),
+            GenerateReportTool(api_key=api_key, base_url=base_url, model=model),
+            NavigateToPageTool(),
+            SendEmailTool(),
+            UpdateCoreMemoryTool(),
+        ]
+
+        # 创建 Agent
+        agent = AgentHarness(
+            config=HarnessConfig(
+                model=model,
+                provider="openai",
+                api_key=api_key,
+                base_url=base_url,
+                memory_md_path=memory_path,
+                memory_scoring=MemoryScoringConfig(
+                    enable_llm_evaluation=False,
+                    max_core_memory_tokens=3000,
+                    archive_fallback="file",
+                ),
+            ),
+            tools=tools,
+        )
+
+        # 加载并激活 Skill
+        skill_dir = Path(__file__).parent / "skills"
+        agent.load_skills_from_dir(skill_dir)
+        agent.activate_skill("kanban-assistant")
+
+        # 执行任务分析
+        result = await agent.run(
+            "检查所有进行中的任务，分析进度和潜在风险，提供优先级建议，生成HTML格式的邮件并发送提醒",
+            session_id="test-reminder",
+        )
+
+        return {
+            "success": True,
+            "content": result.content,
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+
 
 if __name__ == "__main__":
     import uvicorn
