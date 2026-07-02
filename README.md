@@ -1,22 +1,116 @@
 # 智能看板系统 (Kanban Board)
 
-一个简洁实用的智能看板系统，用于小型团队（1-5人）管理组内任务。支持拖拽交互、任务详情管理、AI智能助手和简单的令牌保护。
+一个简洁实用的智能看板系统，用于小型团队（1-5人）管理组内任务。核心特色是**数字分身**——一个理解自然语言的 AI 助手，让用户通过对话完成所有任务管理操作。
 
-## 功能特性
+---
+
+## 数字分身
+
+数字分身是本系统的核心特色，它不仅是一个聊天机器人，而是一个真正理解你意图并执行操作的智能助手。
+
+### 核心能力
+
+| 能力 | 说明 | 示例 |
+|------|------|------|
+| **自然语言查询** | 用日常语言查询任务，无需记忆复杂命令 | "有哪些高优先级任务？"、"张三负责哪些任务？" |
+| **智能任务管理** | 创建和更新任务，自动填充默认值 | "新增任务：完成用户登录功能"、"把登录任务改为进行中" |
+| **报告生成** | 一键生成专业 Word 报告 | "生成进行中任务的报告" |
+| **页面导航** | 通过对话打开页面，无缝跳转 | "打开设置页面"、"查看用户登录这个任务" |
+| **邮件提醒** | 发送任务状态邮件 | "发送邮件提醒给团队" |
+| **定时提醒** | 每天 17:00 自动分析任务并发送邮件 | 无需手动操作 |
+
+### 技术架构
+
+数字分身基于 **Harness SDK** 构建，采用 Agent + Skill + Tool 三层架构：
+
+```
+用户输入
+    ↓
+┌─────────────────────────────────────────┐
+│            AgentHarness                  │
+│  (LLM + 记忆管理 + 会话隔离)              │
+└─────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────┐
+│              Skill 层                    │
+│  (kanban.md - 定义行为规范和能力边界)     │
+│  • 角色定义：告诉 AI 它是什么、能做什么    │
+│  • 工具优先级：解决模糊请求的选择问题      │
+│  • 工具生命周期：防止重复调用工具          │
+│  • 错误处理：优雅处理异常情况              │
+└─────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────┐
+│              Tool 层                     │
+│  • query_tasks - 任务查询                │
+│  • manage_task - 任务创建/更新           │
+│  • generate_task_report - 报告生成       │
+│  • navigate_to_page - 页面导航           │
+│  • send_email - 邮件发送                 │
+└─────────────────────────────────────────┘
+    ↓
+后端 API / 前端导航
+```
+
+### 对话示例
+
+```
+用户: 有哪些高优先级任务？
+分身: 找到 3 个高优先级任务：
+      | 任务 | 状态 | 负责人 |
+      |------|------|--------|
+      | 用户登录 | 进行中 | 张三 |
+      | 数据导出 | 待办 | 李四 |
+      | 性能优化 | 待办 | 王五 |
+
+用户: 打开用户登录这个任务
+分身: [自动打开任务详情页] 已打开"用户登录"的详情页。
+
+用户: 把进度改成 80%
+分身: 已将"用户登录"的进度更新为 80%。
+
+用户: 这个任务的负责人是谁？
+分身: "用户登录"的负责人是张三。（注意：不会重复打开页面）
+```
+
+### Skill 设计最佳实践
+
+数字分身的行为由 `ai-service/skills/kanban.md` 定义，遵循以下最佳实践：
+
+1. **明确的角色定义** - 定义能力边界，避免执行不支持的操作
+2. **工具选择优先级** - 当多个工具适用时，明确选择顺序
+3. **工具生命周期管理** - 定义触发条件和结束条件，防止"工具强迫症"
+4. **完整的对话示例** - 提供正反示例，指导正确行为
+5. **错误处理指导** - 告诉 AI 如何处理异常情况
+
+详细文档见 [AI 整合技术报告](docs/ai-integration-guide.md)
+
+### 定时任务提醒
+
+数字分身支持每天 17:00 自动执行任务分析并发送邮件提醒：
+
+- 自动查询进行中的任务
+- 分析进度和潜在风险
+- 提供优先级建议
+- 发送 HTML 格式邮件
+
+配置方法见下方"邮件服务配置"章节。
+
+---
+
+## 其他功能特性
 
 - **拖拽式任务管理** - 流畅的拖拽体验，支持跨列移动和列内排序
 - **多列状态流转** - 待办、进行中、审核、已完成
 - **任务详情管理** - 标题、描述、负责人、优先级、截止日期、标签、进度
-- **任务评论讨论** - 支持主管追问和负责人回复，任务卡片显示评论数量
+- **任务评论讨论** - 支持主管追问和负责人回复
 - **自定义列管理** - 添加、编辑、删除列
-- **令牌保护** - 简单的访问控制，保护看板数据
-- **AI 智能助手** - 自然语言查询和分析任务数据，自动记忆用户偏好
-- **AI 页面导航** - 通过 AI 对话框打开设置页面、查看任务详情
-- **记忆容量管理** - 自动归档低重要性记忆，支持最多约50条记忆
-- **实时更新时间** - 显示每个任务的最后更新时间
+- **令牌保护** - 简单的访问控制
+- **记忆容量管理** - 自动归档低重要性记忆
 - **搜索功能** - 快速搜索任务、负责人、标签
-- **响应式设计** - 适配不同屏幕尺寸
-- **专业银行主题** - 深蓝金、科技蓝、森林绿三种专业主题，IBM Plex 字体系统
+- **专业银行主题** - 深蓝金、科技蓝、森林绿三种主题，IBM Plex 字体
+
+---
 
 ## 技术栈
 
@@ -31,15 +125,8 @@
 | AI服务 | FastAPI + Harness SDK |
 | 数据库 | SQLite |
 | 容器化 | Docker |
-| 字体系统 | IBM Plex Sans / IBM Plex Mono |
 
-## 界面展示
-
-系统提供现代化的赛博朋克风格界面，支持拖拽交互、任务搜索和多列管理。
-
-![看板界面](assets/layout.jpg)
-
-看板主界面展示所有任务列和任务卡片，支持拖拽任务在列之间移动，点击任务卡片可编辑详情。
+---
 
 ## 快速开始
 
@@ -53,182 +140,111 @@
    # 后端依赖
    cd server && npm install && cd ..
    
-   # AI 服务依赖（可选，需要 AI 功能时安装）
+   # AI 服务依赖
    cd ai-service && pip install -r requirements.txt && cd ..
    
-   # Harness SDK（AI 服务需要）
+   # Harness SDK
    pip install -e /data/harness/packages/sdk
    ```
 
-2. **配置 AI 服务（可选）**
+2. **配置 AI 服务**
    
    创建 `.env` 文件：
    ```bash
    cp .env.example .env
    ```
    
-   编辑 `.env`，配置 API Key：
+   编辑 `.env`：
    ```
    API_KEY=your-api-key
    API_BASE_URL=https://your-api-endpoint/v2
    AI_MODEL=your-model-name
    ```
 
-3. **启动开发服务器**
+3. **启动服务**
    
-   终端1（前端）：
-   ```bash
-   npm run dev
-   ```
+   终端1（前端）：`npm run dev`
    
-   终端2（后端）：
-   ```bash
-   cd server && npm start
-   ```
+   终端2（后端）：`cd server && npm start`
    
-   终端3（AI 服务，可选）：
-   ```bash
-   cd ai-service && python main.py
-   ```
+   终端3（AI 服务）：`cd ai-service && python main.py`
 
 4. **访问应用**
    
-   打开浏览器访问 `http://localhost:5173`
-   
-   点击右下角 AI 图标可与智能助手对话（需启动 AI 服务）
+   打开 `http://localhost:5173`，点击右下角 AI 图标与数字分身对话
 
 ### Docker 部署
 
-1. **配置环境变量**
+```bash
+# 配置环境变量
+cp .env.example .env
 
-   复制并编辑 `.env` 文件：
-   ```bash
-   cp .env.example .env
-   ```
+# 构建并运行
+./build-docker.sh
+./run-docker.sh
+```
 
-   编辑 `.env` 文件，配置 AI 服务和端口：
-   ```
-   DOCKER_PORT=8080
-   API_KEY=your-api-key
-   API_BASE_URL=https://your-api-endpoint/v2
-   AI_MODEL=your-model-name
-   ```
+---
 
-2. **构建镜像**
-   ```bash
-   ./build-docker.sh
-   ```
+## 邮件服务配置
 
-3. **运行容器**
-   ```bash
-   ./run-docker.sh
-   ```
-
-   脚本会自动：
-   - 从 `.env` 读取 `DOCKER_PORT`（默认 80）
-   - 使用项目目录 `server/data/` 作为数据库（与本地开发共用）
-
-4. **访问应用**
-
-   打开浏览器访问 `http://localhost:8080`（根据 `DOCKER_PORT` 配置）
-
-   点击右下角 AI 图标可与智能助手对话
-
-### 数据备份
-
-数据库文件位于 `server/data/kanban.db`，备份和恢复：
+在 `.env` 文件中配置 SMTP：
 
 ```bash
-# 备份
-cp server/data/kanban.db server/data/kanban-backup-$(date +%Y%m%d).db
+# SMTP 配置
+SMTP_SERVER=smtp.163.com
+SMTP_PORT=465
+SMTP_USER=your-email@163.com
+SMTP_PASSWORD=your-auth-code
+RECIPIENTS=user1@example.com,user2@example.com
 
-# 恢复
-cp server/data/kanban-backup-20240101.db server/data/kanban.db
+# 定时任务
+TEST_MODE=false  # true=每1分钟触发（测试），false=每天17:00（生产）
 ```
+
+**不同邮箱配置**：
+- **163邮箱**：端口 465，SSL，需要授权码
+- **Gmail**：端口 587，TLS，需要应用专用密码
+
+---
 
 ## 项目结构
 
 ```
 /data/kanban/
 ├── src/                    # 前端源码
-│   ├── components/         # React 组件
-│   │   ├── Board/         # 看板主容器
-│   │   ├── Column/        # 列组件
-│   │   ├── TaskCard/      # 任务卡片
-│   │   ├── TaskModal/     # 任务编辑弹窗
-│   │   ├── ColumnModal/   # 列编辑弹窗
-│   │   ├── TokenModal/    # 令牌输入弹窗
-│   │   └── AIChat/        # AI 聊天组件
-│   ├── hooks/             # 自定义 Hooks
-│   ├── services/          # API 服务
-│   ├── types/             # TypeScript 类型定义
-│   └── styles/            # 全局样式
+│   └── components/
+│       └── AIChat/        # 数字分身聊天组件
 ├── server/                 # 后端源码
-│   ├── server.js          # Express 服务器
-│   └── db.js              # 数据库初始化
-├── ai-service/             # AI 服务（Python FastAPI）
-│   ├── main.py            # FastAPI 主入口 + Harness SDK
-│   ├── requirements.txt   # Python 依赖
-│   └── config/
-│       └── dictionary.py  # 任务字段字典定义
-├── docs/                   # 文档
-├── Dockerfile              # Docker 配置
-├── build-docker.sh         # Docker 构建脚本
-├── run-docker.sh           # Docker 运行脚本
-└── package.json            # 项目配置
+│   ├── server.js
+│   └── db.js
+├── ai-service/             # AI 服务
+│   ├── main.py            # FastAPI 入口
+│   ├── scheduler.py       # 定时任务调度
+│   ├── skills/
+│   │   └── kanban.md      # 数字分身 Skill 定义
+│   └── tools/             # 自定义工具
+│       ├── query_tasks.py
+│       ├── manage_task.py
+│       ├── generate_report.py
+│       ├── navigate.py
+│       └── send_email.py
+└── docs/
+    └── ai-integration-guide.md  # AI 整合技术报告
 ```
 
-## 数据模型
-
-### Column (列)
-```typescript
-interface Column {
-  id: string;
-  title: string;
-  order: number;
-}
-```
-
-### Task (任务)
-```typescript
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  assignee: string;
-  priority: 'high' | 'medium' | 'low';
-  dueDate: string;
-  tags: string[];
-  columnId: string;
-  order: number;
-  progress: number;        // 0-100
-  progressText: string;    // 进度描述文字
-  createdAt: string;
-  updatedAt: string;
-}
-```
-
-### Settings (设置)
-```typescript
-interface Settings {
-  token: string;  // 访问令牌
-  theme: 'navy-gold' | 'tech-blue' | 'forest-green';  // 主题
-}
-```
-
-### Comment (评论)
-```typescript
-interface Comment {
-  id: string;
-  taskId: string;      // 关联任务ID
-  author: string;      // 评论人
-  content: string;     // 评论内容
-  createdAt: string;   // 创建时间
-  updatedAt: string;   // 更新时间
-}
-```
+---
 
 ## API 端点
+
+### AI 智能助手
+- `POST /api/ai/chat` - 多轮对话，自然语言查询和分析任务
+
+### 任务管理
+- `GET /api/tasks` - 获取所有任务
+- `POST /api/tasks` - 创建任务
+- `PUT /api/tasks/:id` - 更新任务
+- `DELETE /api/tasks/:id` - 删除任务
 
 ### 列管理
 - `GET /api/columns` - 获取所有列
@@ -236,184 +252,19 @@ interface Comment {
 - `PUT /api/columns/:id` - 更新列
 - `DELETE /api/columns/:id` - 删除列
 
-### 任务管理
-- `GET /api/tasks` - 获取所有任务
-- `GET /api/tasks/:id` - 获取单个任务
-- `POST /api/tasks` - 创建任务
-- `PUT /api/tasks/:id` - 更新任务
-- `DELETE /api/tasks/:id` - 删除任务
-- `POST /api/tasks/batch` - 批量更新任务（拖拽排序）
-
-### 设置管理
-- `GET /api/settings` - 获取设置
-- `PUT /api/settings` - 更新设置
-
 ### 评论管理
-- `GET /api/tasks/:id/comments` - 获取任务的所有评论
+- `GET /api/tasks/:id/comments` - 获取任务评论
 - `POST /api/tasks/:id/comments` - 添加评论
-- `PUT /api/comments/:id` - 更新评论
-- `DELETE /api/comments/:id` - 删除评论
 
-### AI 智能助手
-- `GET /api/ai/dictionary` - 获取任务字段字典（供 AI 理解数据结构）
-- `GET /api/ai/query` - 查询任务数据（支持 status、priority、assignee、overdue 等参数）
-- `POST /api/ai/chat` - 多轮对话，自然语言查询和分析任务
-
-#### AI 导航功能
-AI 对话框支持页面导航，可通过自然语言打开页面：
-- "打开设置页面" → 打开设置弹窗
-- "查看'用户登录'这个任务" → 打开任务详情
-- "返回看板" → 关闭所有弹窗返回主页
-
-### 导出功能
-- `GET /api/export/csv` - 导出所有任务及评论为 CSV 文件
-
-## AI 记忆系统
-
-AI 服务使用 Harness SDK 的记忆系统：
-
-- **MEMORY.md** - 存储长期记忆（用户偏好、项目约定等）
-- **容量限制** - 约 3000 tokens（约 50 条记忆）
-- **自动归档** - 超限时自动归档到 `MEMORY_ARCHIVE.md`
-- **存储位置** - `server/data/MEMORY.md`（本地开发和 Docker 共用）
-
-## 定时任务提醒
-
-AI 服务支持定时任务提醒功能，每天 17:00 自动检查进行中的任务并发送邮件。
-
-### 功能说明
-
-- 自动查询所有进行中的任务
-- 分析任务进度和潜在风险
-- 提供优先级建议
-- 发送 HTML 格式邮件提醒
-
-### 配置邮件服务
-
-在 `.env` 文件中添加 SMTP 配置：
-
-```bash
-# SMTP 配置
-SMTP_SERVER=smtp.163.com      # 163邮箱用 smtp.163.com
-SMTP_PORT=465                 # 163邮箱用 465(SSL)，Gmail用 587(TLS)
-SMTP_USER=your-email@163.com  # SMTP 用户名
-SMTP_PASSWORD=your-auth-code  # 163邮箱需要授权码（不是登录密码）
-RECIPIENTS=user1@example.com,user2@example.com  # 收件人列表
-
-# 定时任务配置
-TEST_MODE=false               # true=每1分钟触发（测试），false=每天17:00（生产）
-```
-
-**注意**：不同邮箱服务商配置不同：
-- **163邮箱**：端口 465，使用 SSL，需要邮箱授权码
-- **Gmail**：端口 587，使用 TLS，需要应用专用密码
-- **Yahoo**：端口 587，使用 TLS
-
-### Docker 测试定时任务
-
-#### 方法一：测试模式
-
-```bash
-# 1. 构建镜像
-./build-docker.sh
-
-# 2. 启动容器（测试模式，每1分钟触发）
-docker run -d --name kanban-test \
-  -p 80:80 \
-  -e TEST_MODE=true \
-  --env-file .env \
-  -v $(pwd)/server/data:/app/server/data \
-  kanban-board
-
-# 3. 查看日志验证
-docker logs -f kanban-test
-
-# 4. 验证邮件收到后，停止测试容器
-docker stop kanban-test && docker rm kanban-test
-
-# 5. 生产部署（每天17:00触发）
-./run-docker.sh
-```
-
-#### 方法二：手动触发测试
-
-```bash
-# 进入容器
-docker exec -it kanban bash
-
-# 调用测试接口手动触发
-curl -X POST http://localhost:3002/api/ai/test-reminder
-```
-
-#### 方法三：本地开发测试
-
-```bash
-# 启动 AI 服务（测试模式）
-TEST_MODE=true python ai-service/main.py
-
-# 或手动触发测试接口
-curl -X POST http://localhost:3002/api/ai/test-reminder
-```
-
-### 163邮箱授权码获取
-
-1. 登录 163 箱网页版
-2. 进入「设置」→「POP3/SMTP/IMAP」
-3. 开启「SMTP服务」
-4. 获取授权码（不是邮箱登录密码）
-5. 将授权码填入 `.env` 的 `SMTP_PASSWORD`
-
-## 功能说明
-
-### 令牌保护
-- 首次访问时需要设置令牌
-- 后续访问需输入令牌验证
-- 可通过界面按钮修改令牌
-- 令牌存储在服务器端 SQLite 数据库
-
-### 任务优先级
-- **高优先级** - 红色标识
-- **中优先级** - 黄色标识
-- **低优先级** - 绿色标识
-
-### 拖拽功能
-- 支持列内拖拽排序
-- 支持跨列拖拽移动
-- 实时保存位置信息
-
-### 并发控制
-- 使用乐观锁机制
-- 基于 `updatedAt` 字段检测冲突
-- 冲突时提示用户刷新数据
-
-## 开发指南
-
-### 本地开发环境要求
-- Node.js >= 18
-- npm >= 9
-- Python >= 3.10（AI 服务需要）
-- Harness SDK（位于 `/data/harness/packages/sdk`）
-
-### 可用脚本
-- `npm run dev` - 启动开发服务器
-- `npm run build` - 构建生产版本
-- `npm run preview` - 预览生产构建
-- `npm run lint` - 运行代码检查
-- `./build-docker.sh` - 构建 Docker 镜像
-- `./run-docker.sh` - 运行 Docker 容器
-
-## 数据存储位置
-
-- 本地开发和 Docker：共用 `server/data/kanban.db`
-- 数据在两种运行方式间互通
-- AI 记忆文件 `MEMORY.md` 同样共用
+---
 
 ## 安全说明
 
 - 令牌保护为简单防护机制，适合小型团队内部使用
 - 建议部署在内部网络或使用 HTTPS
 - 默认令牌为 `123456`，生产环境请修改
-- 登录后可通过界面右上角的"修改令牌"按钮更改令牌
+
+---
 
 ## 许可证
 
