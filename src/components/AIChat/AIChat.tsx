@@ -32,7 +32,7 @@ export default function AIChat({ onClose, onNavigate }: AIChatProps) {
   const [loading, setLoading] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   // 生成唯一会话ID - 使用时间戳 + 随机数确保唯一性
-  const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
+  const [sessionId, setSessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -125,8 +125,9 @@ export default function AIChat({ onClose, onNavigate }: AIChatProps) {
     }
   };
 
-  // 清空对话
+  // 清空对话 - 生成新 session_id 彻底清空历史
   const handleClear = () => {
+    setSessionId(`session-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
     setMessages([
       {
         id: 'welcome-new',
