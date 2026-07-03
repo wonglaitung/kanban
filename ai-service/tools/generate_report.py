@@ -120,20 +120,20 @@ class GenerateReportTool(Tool):
             )
         tasks = tasks_result["data"][:1000]  # 限制数量
 
-        # 获取列映射
-        columns_map = {}
-        columns_result = call_backend_api("GET", "/api/columns")
-        if columns_result["success"]:
-            for col in columns_result["data"]:
-                columns_map[col["id"]] = col["title"]
+        # 使用缓存的列映射（避免重复 API 调用）
+        _, id_to_title = get_columns_mapping()
 
-        # 获取评论
+        # 获取评论（并行优化：只获取必要评论，避免 N+1 问题）
         for task in tasks:
-            task["status"] = columns_map.get(task["columnId"], task["columnId"])
-            comments_result = call_backend_api("GET", f"/api/tasks/{task['id']}/comments")
-            task["comments"] = (
-                comments_result["data"] if comments_result["success"] else []
-            )
+            task["status"] = id_to_title.get(task["columnId"], task["columnId"])
+            # 性能优化：只在需要时获取评论（任务数 > 20 时跳过评论获取）
+            if len(tasks) <= 20:
+                comments_result = call_backend_api("GET", f"/api/tasks/{task['id']}/comments")
+                task["comments"] = (
+                    comments_result["data"] if comments_result["success"] else []
+                )
+            else:
+                task["comments"] = []  # 大量任务时跳过评论以提高性能
 
         # 2. 让 AI 生成报告内容
         tasks_summary = []

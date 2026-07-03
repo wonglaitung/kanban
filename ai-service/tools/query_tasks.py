@@ -86,15 +86,11 @@ class QueryTasksTool(Tool):
 
         tasks = result["data"]
 
-        # 添加状态名称映射
-        columns_map = {}
-        columns_result = call_backend_api("GET", "/api/columns")
-        if columns_result["success"]:
-            for col in columns_result["data"]:
-                columns_map[col["id"]] = col["title"]
+        # 使用缓存的列映射（避免重复 API 调用）
+        _, id_to_title = get_columns_mapping()
 
         for task in tasks:
-            task["status"] = columns_map.get(task["columnId"], task["columnId"])
+            task["status"] = id_to_title.get(task["columnId"], task["columnId"])
             task["overdue"] = is_overdue(task.get("dueDate"), task["status"])
 
         return ToolResult(

@@ -11,6 +11,7 @@ API 设计:
 
 import json
 import os
+import time
 import urllib.parse
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -136,6 +137,98 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# 全局变量：缓存的 Agent 实例
+_cached_agent = None
+_cached_agent_timestamp = 0
+AGENT_CACHE_TTL = 300  # Agent 缓存 5 分钟
+
+
+async def get_or_create_agent():
+    """
+    获取或创建 AgentHarness 实例（带缓存）
+
+    缓存 Agent 实例以避免每次请求都重新创建，
+    这可以显著提高性能（创建 Agent 需要加载 skills、初始化工具等）。
+    """
+    global _cached_agent, _cached_agent_timestamp
+
+    current_time = time.time()
+
+    # 检查缓存是否有效
+    if _cached_agent is not None and (current_time - _cached_agent_timestamp) < AGENT_CACHE_TTL:
+        return _cached_agent
+
+    # 创建新的 Agent 实例
+    api_key = (
+        os.environ.get("API_KEY")
+        or os.environ.get("OPENAI_API_KEY")
+        or os.environ.get("ANTHROPIC_API_KEY")
+    )
+    base_url = os.environ.get("API_BASE_URL") or os.environ.get("OPENAI_BASE_URL")
+    model = os.environ.get("AI_MODEL", "astron-code-latest")
+
+    if not api_key:
+        return None
+
+    try:
+        from harness import AgentHarness, HarnessConfig
+        from harness.memory.memory_file import MemoryScoringConfig
+        from harness.tools.builtins import UpdateCoreMemoryTool
+
+        from tools import (
+            GenerateReportTool,
+            GetTaskDictionaryTool,
+            ManageTaskTool,
+            NavigateToPageTool,
+            QueryTasksTool,
+            SendEmailTool,
+        )
+
+        memory_path = Path(__file__).parent.parent / "server" / "data"
+
+        # 创建工具实例
+        tools = [
+            GetTaskDictionaryTool(),
+            QueryTasksTool(),
+            ManageTaskTool(),
+            GenerateReportTool(api_key=api_key, base_url=base_url, model=model),
+            NavigateToPageTool(),
+            SendEmailTool(),
+            UpdateCoreMemoryTool(),
+        ]
+
+        # 创建 Agent
+        agent = AgentHarness(
+            config=HarnessConfig(
+                model=model,
+                provider="openai",
+                api_key=api_key,
+                base_url=base_url,
+                memory_md_path=memory_path,
+                memory_scoring=MemoryScoringConfig(
+                    enable_llm_evaluation=False,
+                    max_core_memory_tokens=3000,
+                    archive_fallback="file",
+                ),
+            ),
+            tools=tools,
+        )
+
+        # 加载并激活 Skill
+        skill_dir = Path(__file__).parent / "skills"
+        agent.load_skills_from_dir(skill_dir)
+        agent.activate_skill("kanban-assistant")
+
+        # 更新缓存
+        _cached_agent = agent
+        _cached_agent_timestamp = current_time
+
+        return agent
+
+    except Exception as e:
+        print(f"创建 Agent 失败: {e}")
+        return None
+
 
 @app.get("/health")
 async def health():
@@ -252,70 +345,16 @@ async def chat(request: ChatRequest):
     # 记录请求的 session_id
     print(f"[AI Service] Chat request - session_id: {request.session_id}")
 
-    api_key = (
-        os.environ.get("API_KEY")
-        or os.environ.get("OPENAI_API_KEY")
-        or os.environ.get("ANTHROPIC_API_KEY")
-    )
-    base_url = os.environ.get("API_BASE_URL") or os.environ.get("OPENAI_BASE_URL")
-    model = os.environ.get("AI_MODEL", "astron-code-latest")
+    # 获取缓存的 Agent 实例
+    agent = await get_or_create_agent()
 
-    if not api_key:
+    if agent is None:
         return ChatResponse(
             content="AI 服务未配置 API Key。请在 .env 文件中设置 API_KEY。",
             session_id=request.session_id or "default",
         )
 
     try:
-        from harness import AgentHarness, HarnessConfig
-        from harness.memory.memory_file import MemoryScoringConfig
-        from harness.tools.builtins import UpdateCoreMemoryTool
-
-        # 导入自定义工具
-        from tools import (
-            GenerateReportTool,
-            GetTaskDictionaryTool,
-            ManageTaskTool,
-            NavigateToPageTool,
-            QueryTasksTool,
-            SendEmailTool,
-        )
-
-        memory_path = Path(__file__).parent.parent / "server" / "data"
-
-        # 创建工具实例
-        tools = [
-            GetTaskDictionaryTool(),
-            QueryTasksTool(),
-            ManageTaskTool(),
-            GenerateReportTool(api_key=api_key, base_url=base_url, model=model),
-            NavigateToPageTool(),
-            SendEmailTool(),
-            UpdateCoreMemoryTool(),
-        ]
-
-        # 创建 Agent
-        agent = AgentHarness(
-            config=HarnessConfig(
-                model=model,
-                provider="openai",
-                api_key=api_key,
-                base_url=base_url,
-                memory_md_path=memory_path,
-                memory_scoring=MemoryScoringConfig(
-                    enable_llm_evaluation=False,
-                    max_core_memory_tokens=3000,
-                    archive_fallback="file",
-                ),
-            ),
-            tools=tools,
-        )
-
-        # 加载并激活 Skill
-        skill_dir = Path(__file__).parent / "skills"
-        agent.load_skills_from_dir(skill_dir)
-        agent.activate_skill("kanban-assistant")
-
         # 运行对话
         result = await agent.run(
             request.message,
@@ -380,67 +419,15 @@ async def start_scheduler_on_startup():
     """启动定时任务调度器"""
     global _scheduler_manager
 
-    api_key = (
-        os.environ.get("API_KEY")
-        or os.environ.get("OPENAI_API_KEY")
-        or os.environ.get("ANTHROPIC_API_KEY")
-    )
-    base_url = os.environ.get("API_BASE_URL") or os.environ.get("OPENAI_BASE_URL")
-    model = os.environ.get("AI_MODEL", "astron-code-latest")
+    # 获取缓存的 Agent 实例
+    agent = await get_or_create_agent()
 
-    if not api_key:
+    if agent is None:
         print("⚠️ 未配置 API Key，定时任务调度器不会启动")
         return None
 
     try:
-        from harness import AgentHarness, HarnessConfig
-        from harness.memory.memory_file import MemoryScoringConfig
-        from harness.tools.builtins import UpdateCoreMemoryTool
-
-        from tools import (
-            GenerateReportTool,
-            GetTaskDictionaryTool,
-            ManageTaskTool,
-            NavigateToPageTool,
-            QueryTasksTool,
-            SendEmailTool,
-        )
         from scheduler import setup_scheduler
-
-        memory_path = Path(__file__).parent.parent / "server" / "data"
-
-        # 创建工具实例
-        tools = [
-            GetTaskDictionaryTool(),
-            QueryTasksTool(),
-            ManageTaskTool(),
-            GenerateReportTool(api_key=api_key, base_url=base_url, model=model),
-            NavigateToPageTool(),
-            SendEmailTool(),
-            UpdateCoreMemoryTool(),
-        ]
-
-        # 创建 Agent
-        agent = AgentHarness(
-            config=HarnessConfig(
-                model=model,
-                provider="openai",
-                api_key=api_key,
-                base_url=base_url,
-                memory_md_path=memory_path,
-                memory_scoring=MemoryScoringConfig(
-                    enable_llm_evaluation=False,
-                    max_core_memory_tokens=3000,
-                    archive_fallback="file",
-                ),
-            ),
-            tools=tools,
-        )
-
-        # 加载并激活 Skill
-        skill_dir = Path(__file__).parent / "skills"
-        agent.load_skills_from_dir(skill_dir)
-        agent.activate_skill("kanban-assistant")
 
         # 设置并启动调度器
         _scheduler_manager = setup_scheduler(agent)
@@ -460,66 +447,13 @@ async def test_reminder():
 
     用于测试定时任务逻辑，无需等待 Cron 触发。
     """
-    api_key = (
-        os.environ.get("API_KEY")
-        or os.environ.get("OPENAI_API_KEY")
-        or os.environ.get("ANTHROPIC_API_KEY")
-    )
-    base_url = os.environ.get("API_BASE_URL") or os.environ.get("OPENAI_BASE_URL")
-    model = os.environ.get("AI_MODEL", "astron-code-latest")
+    # 获取缓存的 Agent 实例
+    agent = await get_or_create_agent()
 
-    if not api_key:
+    if agent is None:
         return {"error": "AI 服务未配置 API Key"}
 
     try:
-        from harness import AgentHarness, HarnessConfig
-        from harness.memory.memory_file import MemoryScoringConfig
-        from harness.tools.builtins import UpdateCoreMemoryTool
-
-        from tools import (
-            GenerateReportTool,
-            GetTaskDictionaryTool,
-            ManageTaskTool,
-            NavigateToPageTool,
-            QueryTasksTool,
-            SendEmailTool,
-        )
-
-        memory_path = Path(__file__).parent.parent / "server" / "data"
-
-        # 创建工具实例
-        tools = [
-            GetTaskDictionaryTool(),
-            QueryTasksTool(),
-            ManageTaskTool(),
-            GenerateReportTool(api_key=api_key, base_url=base_url, model=model),
-            NavigateToPageTool(),
-            SendEmailTool(),
-            UpdateCoreMemoryTool(),
-        ]
-
-        # 创建 Agent
-        agent = AgentHarness(
-            config=HarnessConfig(
-                model=model,
-                provider="openai",
-                api_key=api_key,
-                base_url=base_url,
-                memory_md_path=memory_path,
-                memory_scoring=MemoryScoringConfig(
-                    enable_llm_evaluation=False,
-                    max_core_memory_tokens=3000,
-                    archive_fallback="file",
-                ),
-            ),
-            tools=tools,
-        )
-
-        # 加载并激活 Skill
-        skill_dir = Path(__file__).parent / "skills"
-        agent.load_skills_from_dir(skill_dir)
-        agent.activate_skill("kanban-assistant")
-
         # 执行任务分析
         result = await agent.run(
             "检查所有进行中的任务，分析进度和潜在风险，提供优先级建议，生成HTML格式的邮件并发送提醒",

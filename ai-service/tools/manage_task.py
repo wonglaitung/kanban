@@ -252,17 +252,13 @@ class ManageTaskTool(Tool):
                 error=f"未找到标题包含 '{search_title}' 的任务",
             )
 
-        # 获取列映射
-        columns_result = call_backend_api("GET", "/api/columns")
-        columns_map = {}
-        if columns_result["success"]:
-            for col in columns_result["data"]:
-                columns_map[col["id"]] = col["title"]
+        # 使用缓存的列映射（避免重复 API 调用）
+        _, id_to_title = get_columns_mapping()
 
         if len(rows) > 1:
             tasks_info = []
             for r in rows:
-                task_status = columns_map.get(r["columnId"], r["columnId"])
+                task_status = id_to_title.get(r["columnId"], r["columnId"])
                 tasks_info.append(f"- {r['title']} (状态: {task_status})")
             return ToolResult(
                 tool_call_id="",

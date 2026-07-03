@@ -6,10 +6,12 @@
 
 import json
 import os
+import time
 import urllib.parse
 import urllib.request
 import urllib.error
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Optional
 
@@ -20,6 +22,12 @@ BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:3001")
 # Docker 中使用 /tmp/downloads，不挂载到宿主机，避免权限问题
 DOWNLOADS_DIR = Path(os.environ.get("DOWNLOADS_DIR", "/tmp/downloads"))
 DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+# 列映射缓存（5秒过期）
+_columns_cache = {"data": None, "timestamp": 0, "ttl": 5}
+
+# 性能日志开关（通过环境变量控制）
+ENABLE_PERF_LOG = os.environ.get("ENABLE_PERF_LOG", "false").lower() == "true"
 
 
 def call_backend_api(
@@ -37,6 +45,8 @@ def call_backend_api(
     Returns:
         API 响应数据
     """
+    start_time = time.time() if ENABLE_PERF_LOG else 0
+
     url = f"{BACKEND_URL}{path}"
 
     if params:
@@ -57,6 +67,11 @@ def call_backend_api(
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             result = json.loads(resp.read().decode())
+
+            if ENABLE_PERF_LOG:
+                elapsed = (time.time() - start_time) * 1000
+                print(f"[PERF] API {method} {path}: {elapsed:.1f}ms")
+
             return {"success": True, "data": result}
     except urllib.error.HTTPError as e:
         error_body = e.read().decode()
@@ -67,18 +82,35 @@ def call_backend_api(
 
 def get_columns_mapping() -> tuple[dict, dict]:
     """
-    动态获取列映射
+    动态获取列映射（带缓存，5秒TTL）
 
     Returns:
         (title_to_id, id_to_title) 两个映射字典
     """
+    global _columns_cache
+
+    current_time = time.time()
+
+    # 检查缓存是否有效
+    if _columns_cache["data"] is not None and (current_time - _columns_cache["timestamp"]) < _columns_cache["ttl"]:
+        return _columns_cache["data"]
+
+    # 缓存过期或不存在，重新获取
     result = call_backend_api("GET", "/api/columns")
     if not result["success"]:
+        # 如果请求失败但有缓存数据，继续使用缓存
+        if _columns_cache["data"] is not None:
+            return _columns_cache["data"]
         return {}, {}
 
     columns = result["data"]
     title_to_id = {col["title"]: col["id"] for col in columns}
     id_to_title = {col["id"]: col["title"] for col in columns}
+
+    # 更新缓存
+    _columns_cache["data"] = (title_to_id, id_to_title)
+    _columns_cache["timestamp"] = current_time
+
     return title_to_id, id_to_title
 
 

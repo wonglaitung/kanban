@@ -58,8 +58,8 @@ RUN npm ci
 # Stage 4: Production image
 FROM node:20-alpine
 
-# Install runtime dependencies (nginx only, Python comes from ai-builder)
-RUN apk add --no-cache nginx sqlite-libs
+# Install runtime dependencies (nginx with headers-more module to hide server info)
+RUN apk add --no-cache nginx nginx-mod-http-headers-more sqlite-libs
 
 WORKDIR /app
 
@@ -76,6 +76,9 @@ COPY --from=ai-builder /app/ai-service ./ai-service
 COPY --from=ai-builder /app/tiktoken_cache /app/tiktoken_cache
 ENV TIKTOKEN_CACHE_DIR=/app/tiktoken_cache
 
+# Disable Python stdout buffering for proper logging in Docker
+ENV PYTHONUNBUFFERED=1
+
 # Copy frontend build
 COPY --from=frontend-builder /app/dist ./dist
 
@@ -84,10 +87,14 @@ RUN mkdir -p /app/server/data /app/ai-service/data && \
     chmod -R 755 /app/server/data /app/ai-service/data
 
 # Create nginx config with proper MIME types and AI API proxy
-RUN echo 'events { worker_connections 1024; } \
+RUN echo 'load_module /usr/lib/nginx/modules/ngx_http_headers_more_filter_module.so; \
+events { worker_connections 1024; } \
 http { \
     include /etc/nginx/mime.types; \
     default_type application/octet-stream; \
+    server_tokens off; \
+    more_clear_headers "Server"; \
+    more_clear_headers "X-Powered-By"; \
     \
     server { \
         listen 80; \
@@ -134,12 +141,20 @@ http { \
     } \
 }' > /etc/nginx/nginx.conf
 
-# Create startup script (create downloads dir with proper permissions for nginx)
+# Create startup script with proper logging
 RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'mkdir -p /tmp/downloads && chmod 755 /tmp/downloads' >> /app/start.sh && \
-    echo 'cd /app/server && node server.js &' >> /app/start.sh && \
-    echo 'cd /app/ai-service && python3 main.py &' >> /app/start.sh && \
-    echo 'nginx -g "daemon off;"' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Start backend server (logs to stdout)' >> /app/start.sh && \
+    echo 'cd /app/server && node server.js 2>&1 &' >> /app/start.sh && \
+    echo 'echo "Backend server started"' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Start AI service (logs to stdout)' >> /app/start.sh && \
+    echo 'cd /app/ai-service && python3 main.py 2>&1 &' >> /app/start.sh && \
+    echo 'echo "AI service started"' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Start nginx in foreground (main process)' >> /app/start.sh && \
+    echo 'exec nginx -g "daemon off;"' >> /app/start.sh && \
     chmod +x /app/start.sh
 
 EXPOSE 80
