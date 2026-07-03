@@ -22,10 +22,11 @@ class ManageTaskTool(Tool):
     @property
     def description(self) -> str:
         return (
-            "管理任务。action='create'创建新任务，action='update'更新任务。"
+            "【直接操作任务】创建或更新任务，不需要先导航到任务页面。"
+            "action='create'创建新任务，action='update'更新任务。"
             "title是任务标题关键词（不是ID），用于匹配任务。"
-            "更新时：assignee改负责人，status改状态，priority改优先级。"
-            "示例：action='update', title='登录', status='进行中'"
+            "更新时：assignee改负责人，status改状态，priority改优先级，progress改进度。"
+            "示例：action='update', title='登录', progress=50 直接更新进度，无需先打开页面。"
         )
 
     @property

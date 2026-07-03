@@ -19,10 +19,10 @@ class NavigateToPageTool(Tool):
     @property
     def description(self) -> str:
         return (
-            "导航到指定页面。可用页面：settings（设置页面）、board（看板主页）、task（任务详情）。"
-            "当用户想打开设置、修改令牌、切换主题时使用 settings。"
-            "当用户想返回看板主页时使用 board。"
-            "当用户想查看某个任务详情时使用 task，需要提供 taskId 参数。"
+            "【仅用于页面导航】当用户明确说'打开'、'去'、'跳转'、'查看详情'时使用。"
+            "可用页面：settings（设置）、board（看板）、task（任务详情）。"
+            "**不要用于**：更新任务、查询任务、创建任务——这些操作有专门的工具。"
+            "示例：'打开任务A' → 使用本工具；'更新任务A进度' → 使用 manage_task，**不**使用本工具。"
         )
 
     @property

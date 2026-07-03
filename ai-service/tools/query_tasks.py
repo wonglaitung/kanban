@@ -20,7 +20,11 @@ class QueryTasksTool(Tool):
 
     @property
     def description(self) -> str:
-        return "查询任务数据，支持按状态、优先级、负责人筛选。查询逾期任务时，overdue参数必须为true。"
+        return (
+            "【直接查询任务】查询任务数据，不需要先导航到任何页面。"
+            "支持按状态、优先级、负责人筛选。查询逾期任务时，overdue参数必须为true。"
+            "示例：直接查询高优先级任务，无需先打开看板页面。"
+        )
 
     @property
     def input_schema(self) -> dict[str, Any]:
