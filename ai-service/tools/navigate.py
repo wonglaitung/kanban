@@ -68,6 +68,8 @@ class NavigateToPageTool(Tool):
             "page": page,
             "success": True,
             "message": f"已成功打开{page}页面",
+            # 关键：在工具结果中明确告知后续操作不需要再导航
+            "_hint": "导航完成。后续的更新、查询、创建操作请直接使用对应工具，不要再调用 navigate_to_page。",
         }
 
         if page == "task":
