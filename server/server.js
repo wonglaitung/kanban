@@ -118,7 +118,7 @@ app.get('/api/tasks', (req, res) => {
 // Search tasks by title
 app.get('/api/tasks/search', (req, res) => {
   try {
-    const { title, status, priority, assignee } = req.query;
+    const { title, status, priority, assignee, overdue } = req.query;
 
     let sql = 'SELECT * FROM tasks WHERE 1=1';
     const params = [];
@@ -141,6 +141,26 @@ app.get('/api/tasks/search', (req, res) => {
     if (assignee) {
       sql += ' AND assignee LIKE ?';
       params.push(`%${assignee}%`);
+    }
+
+    // 逾期过滤：dueDate 不为空，且小于当前日期，且不是已完成状态
+    if (overdue === 'true') {
+      // 获取已完成列的 ID
+      const doneColumn = db.prepare("SELECT id FROM columns WHERE title = '已完成'").get();
+      sql += " AND dueDate != '' AND date(dueDate) < date('now')";
+      if (doneColumn) {
+        sql += ' AND columnId != ?';
+        params.push(doneColumn.id);
+      }
+    } else if (overdue === 'false') {
+      // 非逾期：dueDate 为空，或大于等于当前日期，或是已完成状态
+      const doneColumn = db.prepare("SELECT id FROM columns WHERE title = '已完成'").get();
+      sql += " AND (dueDate = '' OR date(dueDate) >= date('now')";
+      if (doneColumn) {
+        sql += ' OR columnId = ?';
+        params.push(doneColumn.id);
+      }
+      sql += ')';
     }
 
     sql += ' ORDER BY "order"';

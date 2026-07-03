@@ -199,7 +199,11 @@ async def query_tasks(
     if assignee:
         params["assignee"] = assignee
 
-    result = call_backend_api("GET", "/api/tasks", params=params if params else None)
+    # 逾期参数传递给后端处理
+    if overdue is not None:
+        params["overdue"] = "true" if overdue else "false"
+
+    result = call_backend_api("GET", "/api/tasks/search", params=params if params else None)
     if not result["success"]:
         raise HTTPException(500, result["error"])
 
@@ -215,10 +219,9 @@ async def query_tasks(
         task["status"] = columns_map.get(task["columnId"], task["columnId"])
         task["overdue"] = is_overdue(task.get("dueDate"), task["status"])
 
+    # tags 过滤仍在前端处理（后端不支持）
     if tags:
         tasks = [t for t in tasks if tags in t.get("tags", [])]
-    if overdue is not None:
-        tasks = [t for t in tasks if t["overdue"] == overdue]
 
     tasks = tasks[:limit]
 

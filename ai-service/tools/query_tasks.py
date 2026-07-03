@@ -56,7 +56,7 @@ class QueryTasksTool(Tool):
         assignee = arguments.get("assignee")
         overdue = arguments.get("overdue")
 
-        # 构建查询参数
+        # 构建查询参数，使用 /api/tasks/search 接口进行后端过滤
         params = {}
         title_to_id, _ = get_columns_mapping()
         if status and status in title_to_id:
@@ -66,8 +66,15 @@ class QueryTasksTool(Tool):
         if assignee:
             params["assignee"] = assignee
 
-        # 调用后端 API 查询任务
-        result = call_backend_api("GET", "/api/tasks", params=params if params else None)
+        # 逾期参数传递给后端处理
+        if overdue is not None:
+            if isinstance(overdue, bool):
+                params["overdue"] = "true" if overdue else "false"
+            elif isinstance(overdue, str):
+                params["overdue"] = overdue.lower()
+
+        # 调用后端 API 查询任务（使用 search 接口）
+        result = call_backend_api("GET", "/api/tasks/search", params=params if params else None)
 
         if not result["success"]:
             return ToolResult(
@@ -89,12 +96,6 @@ class QueryTasksTool(Tool):
         for task in tasks:
             task["status"] = columns_map.get(task["columnId"], task["columnId"])
             task["overdue"] = is_overdue(task.get("dueDate"), task["status"])
-
-        # 逾期筛选（在 Python 中处理）
-        if overdue is not None:
-            if isinstance(overdue, str):
-                overdue = overdue.lower() == "true"
-            tasks = [t for t in tasks if t["overdue"] == overdue]
 
         return ToolResult(
             tool_call_id="",

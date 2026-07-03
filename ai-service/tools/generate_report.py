@@ -63,6 +63,10 @@ class GenerateReportTool(Tool):
                     "type": "string",
                     "description": "筛选负责人",
                 },
+                "overdue": {
+                    "type": "boolean",
+                    "description": "筛选逾期任务 (true=逾期, false=非逾期)",
+                },
             },
             "required": [],
         }
@@ -76,6 +80,7 @@ class GenerateReportTool(Tool):
         status = arguments.get("status")
         priority = arguments.get("priority")
         assignee = arguments.get("assignee")
+        overdue = arguments.get("overdue")
 
         try:
             from docx import Document
@@ -88,7 +93,7 @@ class GenerateReportTool(Tool):
                 error=f"依赖未安装: {str(e)}",
             )
 
-        # 1. 通过后端 API 查询任务数据
+        # 1. 通过后端 API 查询任务数据（使用 search 接口进行后端过滤）
         params = {}
         title_to_id, _ = get_columns_mapping()
         if status and status in title_to_id:
@@ -97,9 +102,14 @@ class GenerateReportTool(Tool):
             params["priority"] = priority
         if assignee:
             params["assignee"] = assignee
+        if overdue is not None:
+            if isinstance(overdue, bool):
+                params["overdue"] = "true" if overdue else "false"
+            elif isinstance(overdue, str):
+                params["overdue"] = overdue.lower()
 
         tasks_result = call_backend_api(
-            "GET", "/api/tasks", params=params if params else None
+            "GET", "/api/tasks/search", params=params if params else None
         )
         if not tasks_result["success"]:
             return ToolResult(
