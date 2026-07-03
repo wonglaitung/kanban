@@ -339,6 +339,33 @@ class ChatResponse(BaseModel):
     navigate: Optional[dict] = None
 
 
+# 操作意图关键词（不需要导航的操作）
+_OPERATION_KEYWORDS = [
+    "更新", "修改", "改", "设置", "设为",
+    "查询", "查看", "显示", "列出", "有哪些", "找",
+    "创建", "新增", "添加", "建立",
+    "删除", "移除",
+    "生成报告", "导出报告", "发送邮件",
+]
+
+
+def _detect_operation_intent(message: str) -> bool:
+    """检测用户消息是否包含操作意图"""
+    for keyword in _OPERATION_KEYWORDS:
+        if keyword in message:
+            return True
+    return False
+
+
+def _detect_navigate_intent(message: str) -> bool:
+    """检测用户消息是否包含导航意图"""
+    navigate_keywords = ["打开", "去", "跳转", "转到", "查看详情"]
+    for keyword in navigate_keywords:
+        if keyword in message:
+            return True
+    return False
+
+
 @app.post("/api/ai/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """AI 对话接口"""
@@ -355,9 +382,19 @@ async def chat(request: ChatRequest):
         )
 
     try:
+        # 检测用户意图，注入反导航提示
+        user_message = request.message
+        is_operation = _detect_operation_intent(user_message)
+        is_navigate = _detect_navigate_intent(user_message)
+
+        # 如果用户意图是操作但不是导航，注入提示
+        if is_operation and not is_navigate:
+            user_message = f"[系统指令：此请求直接执行操作，不要调用 navigate_to_page 工具]\n{request.message}"
+            print(f"[AI Service] Injected anti-navigation hint for operation intent")
+
         # 运行对话
         result = await agent.run(
-            request.message,
+            user_message,
             session_id=request.session_id,
         )
 
@@ -386,6 +423,11 @@ async def chat(request: ChatRequest):
                             pass
                 if navigate_action:
                     break
+
+        # 如果用户意图是操作但不是导航，忽略导航结果
+        if is_operation and not is_navigate and navigate_action:
+            print(f"[AI Service] Blocked unnecessary navigation for operation intent - session_id: {request.session_id}")
+            navigate_action = None
 
         # 记录导航操作
         if navigate_action:
