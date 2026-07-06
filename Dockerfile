@@ -59,7 +59,11 @@ RUN npm ci
 FROM node:20-alpine
 
 # Install runtime dependencies (nginx with headers-more module to hide server info)
-RUN apk add --no-cache nginx nginx-mod-http-headers-more sqlite-libs
+RUN apk add --no-cache nginx nginx-mod-http-headers-more sqlite-libs tzdata
+
+# Set timezone to Asia/Shanghai
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 WORKDIR /app
 
