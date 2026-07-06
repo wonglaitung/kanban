@@ -190,21 +190,60 @@ cp .env.example .env
 
 在 `.env` 文件中配置 SMTP：
 
+### 公网邮箱（需认证）
+
 ```bash
-# SMTP 配置
 SMTP_SERVER=smtp.163.com
 SMTP_PORT=465
+SMTP_REQUIRE_AUTH=true
 SMTP_USER=your-email@163.com
 SMTP_PASSWORD=your-auth-code
 RECIPIENTS=user1@example.com,user2@example.com
+```
 
-# 定时任务
+### 内网 SMTP（无认证）
+
+```bash
+SMTP_SERVER=内网SMTP服务器地址
+SMTP_PORT=25
+SMTP_REQUIRE_AUTH=false
+SMTP_USER=
+SMTP_PASSWORD=
+RECIPIENTS=user1@example.com,user2@example.com
+```
+
+### 配置说明
+
+| 参数 | 说明 |
+|------|------|
+| `SMTP_SERVER` | SMTP 服务器地址 |
+| `SMTP_PORT` | 端口：25（明文）、465（SSL）、587（STARTTLS） |
+| `SMTP_REQUIRE_AUTH` | 是否需要认证，内网无认证设为 `false` |
+| `SMTP_USER` | 用户名（通常是邮箱地址） |
+| `SMTP_PASSWORD` | 密码或授权码 |
+| `RECIPIENTS` | 收件人，多个用逗号分隔 |
+
+### 不同邮箱配置
+
+| 邮箱 | 端口 | 连接方式 | 认证 |
+|------|------|----------|------|
+| 163邮箱 | 465 | SSL | 授权码（非登录密码） |
+| Gmail | 587 | STARTTLS | 应用专用密码 |
+| 企业邮箱 | 465/587 | SSL/STARTTLS | 邮箱密码 |
+| 内网SMTP | 25 | 明文 | 无需认证 |
+
+### 定时任务
+
+```bash
 TEST_MODE=false  # true=每1分钟触发（测试），false=每天17:00（生产）
 ```
 
-**不同邮箱配置**：
-- **163邮箱**：端口 465，SSL，需要授权码
-- **Gmail**：端口 587，TLS，需要应用专用密码
+### 测试邮件发送
+
+```bash
+# 启动容器后测试
+./test-email.sh
+```
 
 ---
 

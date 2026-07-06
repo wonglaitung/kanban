@@ -120,6 +120,7 @@ Font system uses IBM Plex family (enterprise standard for financial applications
 5. **Memory path**: `server/data/MEMORY.md` - shared between local dev and Docker
 6. **Harness SDK**: Required at `/data/harness/packages/sdk` for AI service development
 7. **Chinese encoding**: Use `urllib.parse.urlencode(encoding='utf-8')` for URL parameters with Chinese characters
+8. **SMTP config**: Supports both authenticated (port 465/587) and non-authenticated (port 25) SMTP servers. Set `SMTP_REQUIRE_AUTH=false` for internal SMTP without authentication.
 
 ## AI Response Structure
 

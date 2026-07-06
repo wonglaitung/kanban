@@ -112,7 +112,7 @@ http { \
             proxy_set_header Connection "upgrade"; \
             proxy_set_header Host $host; \
             proxy_read_timeout 60s; \
-            proxy_connect_timeout 30s; \
+            proxy_connect_timeout 60s; \
         } \
         \
         location /api/ai { \
@@ -120,7 +120,7 @@ http { \
             proxy_http_version 1.1; \
             proxy_set_header Host $host; \
             proxy_set_header X-Real-IP $remote_addr; \
-            proxy_read_timeout 300s; \
+            proxy_read_timeout 900s; \
             proxy_connect_timeout 60s; \
             proxy_send_timeout 300s; \
         } \

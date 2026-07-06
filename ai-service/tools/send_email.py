@@ -60,16 +60,27 @@ class SendEmailTool(Tool):
 
         # 从环境变量获取配置
         smtp_server = os.environ.get("SMTP_SERVER")
-        smtp_user = os.environ.get("SMTP_USER")
-        smtp_pass = os.environ.get("SMTP_PASSWORD")
+        smtp_port = int(os.environ.get("SMTP_PORT", 25))
+        smtp_user = os.environ.get("SMTP_USER", "")
+        smtp_pass = os.environ.get("SMTP_PASSWORD", "")
+        require_auth = os.environ.get("SMTP_REQUIRE_AUTH", "true").lower() == "true"
         recipients_str = os.environ.get("RECIPIENTS", "")
 
-        if not smtp_server or not smtp_user or not smtp_pass:
+        if not smtp_server:
             return ToolResult(
                 tool_call_id="",
                 success=False,
                 content="",
-                error="SMTP 配置不完整，请检查 SMTP_SERVER、SMTP_USER、SMTP_PASSWORD 环境变量",
+                error="SMTP 配置不完整，请检查 SMTP_SERVER 环境变量",
+            )
+
+        # 只有需要认证时才检查用户名密码
+        if require_auth and (not smtp_user or not smtp_pass):
+            return ToolResult(
+                tool_call_id="",
+                success=False,
+                content="",
+                error="SMTP 认证需要 SMTP_USER 和 SMTP_PASSWORD，或设置 SMTP_REQUIRE_AUTH=false",
             )
 
         if not recipients_str:
@@ -90,19 +101,12 @@ class SendEmailTool(Tool):
                 error="收件人列表为空",
             )
 
-        # 根据服务器类型选择端口和连接方式
-        if "163.com" in smtp_server:
-            smtp_port = 465
-            use_ssl = True
-        elif "gmail.com" in smtp_server:
-            smtp_port = 587
-            use_ssl = False
-        elif "yahoo.com" in smtp_server:
-            smtp_port = 587
-            use_ssl = False
-        else:
-            smtp_port = int(os.environ.get("SMTP_PORT", 587))
-            use_ssl = False
+        # 根据端口选择连接方式
+        # 465: SSL 直连
+        # 587: STARTTLS
+        # 25: 无加密或 STARTTLS
+        use_ssl = smtp_port == 465
+        use_starttls = smtp_port == 587
 
         # 构建邮件
         msg = MIMEMultipart("alternative")
@@ -123,14 +127,19 @@ class SendEmailTool(Tool):
 
         for attempt in range(max_attempts):
             try:
+                # 根据端口选择连接方式
                 if use_ssl:
                     server = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=30)
                 else:
                     server = smtplib.SMTP(smtp_server, smtp_port, timeout=30)
-                    server.starttls()
+                    if use_starttls:
+                        server.starttls()
 
-                server.login(smtp_user, smtp_pass)
-                server.sendmail(smtp_user, recipients, msg.as_string())
+                # 只在需要认证时登录
+                if require_auth and smtp_user and smtp_pass:
+                    server.login(smtp_user, smtp_pass)
+
+                server.sendmail(smtp_user or smtp_server, recipients, msg.as_string())
                 server.quit()
 
                 print(f"✅ 邮件发送成功：{subject} -> {', '.join(recipients)}")
