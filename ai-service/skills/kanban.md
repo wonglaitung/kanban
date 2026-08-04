@@ -122,7 +122,7 @@ tools:
 
 #### 必须包含的章节
 
-1. **进行中任务** - 表格格式，含状态标记（正常/即将到期/逾期）
+1. **进行中任务** - 表格格式，分两部分展示：**重点任务**（priority=high）和**其它**（medium/low），含状态标记（正常/即将到期/逾期）
 2. **风险提示** - 三分类：逾期/即将到期（3天内）/进度滞后（<50%）
 3. **优先级建议** - 具体可操作的建议
 4. **本周完成情况** - 已完成任务列表及完成时间
@@ -135,6 +135,16 @@ tools:
 <p>报告时间：2026-07-06 17:00</p>
 
 <h3>一、进行中任务 (3个)</h3>
+<h4>重点任务 (1个)</h4>
+<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+  <tr style="background: #1a365d; color: white;">
+    <th>任务</th><th>负责人</th><th>进度</th><th>截止日期</th><th>状态</th>
+  </tr>
+  <tr style="background: #fff3cd;">
+    <td>API 接口开发</td><td>李四</td><td>30%</td><td>2026-07-08</td><td>⚠️ 即将到期</td>
+  </tr>
+</table>
+<h4>其它 (2个)</h4>
 <table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
   <tr style="background: #1a365d; color: white;">
     <th>任务</th><th>负责人</th><th>进度</th><th>截止日期</th><th>状态</th>
@@ -142,8 +152,8 @@ tools:
   <tr>
     <td>完成用户登录功能</td><td>张三</td><td>60%</td><td>2026-07-10</td><td>✅ 正常</td>
   </tr>
-  <tr style="background: #fff3cd;">
-    <td>API 接口开发</td><td>李四</td><td>30%</td><td>2026-07-08</td><td>⚠️ 即将到期</td>
+  <tr>
+    <td>前端页面开发</td><td>王五</td><td>80%</td><td>2026-07-15</td><td>✅ 正常</td>
   </tr>
 </table>
 
@@ -179,9 +189,10 @@ tools:
 
 1. **必须使用 HTML 格式**（邮件客户端不支持 Markdown）
 2. **必须包含全部 5 个章节**，即使某章节为空也要标注"暂无"
-3. **风险提示必须三分类**：逾期/即将到期/进度滞后
-4. **优先级建议必须具体**，不能是泛泛而谈
-5. **表格必须使用样式**，保证可读性
+3. **进行中任务必须分两部分**：重点任务（priority=high）和其它（medium/low），某部分为空时标注"暂无"
+4. **风险提示必须三分类**：逾期/即将到期/进度滞后
+5. **优先级建议必须具体**，不能是泛泛而谈
+6. **表格必须使用样式**，保证可读性
 
 ### send_email 工具
 
@@ -197,9 +208,15 @@ tools:
 <h2>任务进度提醒</h2>
 <p>报告时间：2026-07-02 17:00</p>
 <h3>进行中任务 (3个)</h3>
+<h4>重点任务 (1个)</h4>
 <table>
   <tr><th>任务</th><th>进度</th><th>负责人</th></tr>
   <tr><td>任务A</td><td>60%</td><td>张三</td></tr>
+</table>
+<h4>其它 (2个)</h4>
+<table>
+  <tr><th>任务</th><th>进度</th><th>负责人</th></tr>
+  <tr><td>任务C</td><td>80%</td><td>王五</td></tr>
 </table>
 <h3>风险提示</h3>
 <ul>
