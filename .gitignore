@@ -36,6 +36,9 @@ nohup.out
 # Claude Code local settings
 .claude/settings.local.json
 
+# opencode local tooling
+.opencode/
+
 # Database (runtime data)
 server/data/
 

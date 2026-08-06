@@ -330,13 +330,13 @@ app.get('/api/settings', (req, res) => {
 
 app.put('/api/settings', (req, res) => {
   try {
-    const { token, theme } = req.body;
+    const { token, theme, announcement } = req.body;
 
     // Get current settings to preserve values not being updated
     const current = db.prepare('SELECT * FROM settings WHERE id = 1').get();
 
-    const stmt = db.prepare('UPDATE settings SET token = ?, theme = ? WHERE id = 1');
-    stmt.run(token ?? current.token, theme ?? current.theme);
+    const stmt = db.prepare('UPDATE settings SET token = ?, theme = ?, announcement = ? WHERE id = 1');
+    stmt.run(token ?? current.token, theme ?? current.theme, announcement ?? current.announcement ?? '');
 
     const settings = db.prepare('SELECT * FROM settings WHERE id = 1').get();
     res.json(settings);

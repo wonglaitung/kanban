@@ -75,6 +75,13 @@ function initSchema() {
     // Column already exists, ignore error
   }
 
+  // Add announcement column if it doesn't exist (migration for existing databases)
+  try {
+    db.exec('ALTER TABLE settings ADD COLUMN announcement TEXT DEFAULT \'\'');
+  } catch (e) {
+    // Column already exists, ignore error
+  }
+
   // Insert default data if not exists
   const settingsStmt = db.prepare('SELECT * FROM settings WHERE id = 1');
   if (!settingsStmt.get()) {

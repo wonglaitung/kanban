@@ -27,6 +27,7 @@ export type StaleFilter = 'all' | '1day' | '3days' | '5days';
 export interface Settings {
   token: string;
   theme: Theme;
+  announcement?: string;
 }
 
 export interface DragDropContext {

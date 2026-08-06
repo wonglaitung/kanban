@@ -1,0 +1,47 @@
+﻿.announcement-modal {
+  max-width: 520px;
+}
+
+.announcement-modal form {
+  padding: 24px;
+}
+
+.announcement-modal .form-group {
+  margin-bottom: 24px;
+}
+
+.announcement-modal .form-group label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.announcement-modal .form-group textarea {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(10, 14, 26, 0.5);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  font-family: var(--font-body);
+  resize: vertical;
+}
+
+.announcement-modal .form-group textarea:focus {
+  outline: none;
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.1), 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+.announcement-modal .form-group textarea::placeholder {
+  color: var(--text-muted);
+  font-family: inherit;
+}

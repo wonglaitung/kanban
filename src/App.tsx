@@ -5,6 +5,8 @@ import { ColumnModal } from './components/ColumnModal';
 import { TokenModal } from './components/TokenModal';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { SettingsMenu } from './components/SettingsMenu';
+import { AnnouncementBar } from './components/AnnouncementBar';
+import { AnnouncementModal } from './components/AnnouncementModal';
 import AIChat from './components/AIChat/AIChat';
 import { useColumns } from './hooks/useColumns';
 import { useTasks } from './hooks/useTasks';
@@ -30,6 +32,8 @@ function App() {
   const [staleFilter, setStaleFilter] = useState<StaleFilter>('all');
   const [showChangeToken, setShowChangeToken] = useState(false);
   const [copilotExpanded, setCopilotExpanded] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [copilotWidth, setCopilotWidth] = useState(() => {
     const saved = localStorage.getItem('copilot-width');
     return saved ? parseInt(saved, 10) : 400;
@@ -121,6 +125,9 @@ function App() {
         setCurrentTheme(theme);
         document.documentElement.setAttribute('data-theme', theme);
 
+        // Load announcement
+        setAnnouncement(settings.announcement || '');
+
         // Check if already authenticated in this session
         const authKey = 'kanban_auth';
         const storedAuth = sessionStorage.getItem(authKey);
@@ -152,6 +159,12 @@ function App() {
     setCurrentTheme(theme);
     document.documentElement.setAttribute('data-theme', theme);
     await updateSettings({ token: storedToken, theme });
+  };
+
+  const handleSaveAnnouncement = async (text: string) => {
+    const next = text.trim();
+    await updateSettings({ token: storedToken, theme: currentTheme, announcement: next });
+    setAnnouncement(next);
   };
 
   const handleTokenSuccess = (token: string) => {
@@ -378,6 +391,7 @@ function App() {
               onThemeChange={handleThemeChange}
               onChangeToken={() => setShowChangeToken(true)}
               onExportCsv={handleExportCsv}
+              onEditAnnouncement={() => setShowAnnouncementModal(true)}
             />
           </div>
         </div>
@@ -385,6 +399,7 @@ function App() {
 
       <div className="app-content">
         <main className="app-main">
+          <AnnouncementBar announcement={announcement} />
           <Board
             columns={columns}
             tasks={filteredTasks}
@@ -448,6 +463,15 @@ function App() {
             setShowColumnModal(false);
             setSelectedColumn(null);
           }}
+        />
+      )}
+
+      {/* Announcement Modal */}
+      {showAnnouncementModal && (
+        <AnnouncementModal
+          announcement={announcement}
+          onSave={handleSaveAnnouncement}
+          onClose={() => setShowAnnouncementModal(false)}
         />
       )}
 
