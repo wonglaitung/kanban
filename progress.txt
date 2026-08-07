@@ -1,5 +1,15 @@
 # 项目进度记录
 
+## 2026-08-07 手动补发通知邮件 (8977dd2)
+
+- 设置菜单新增"补发邮件"按钮，手动触发通知邮件补发
+- AI 服务新增 `/api/ai/send-reminder`（替代并删除 `/api/ai/test-reminder`）
+- 接口触发即忘：`asyncio.create_task` 后台执行报告生成+发送，HTTP 立即返回
+- 定时任务提示词提取为 `REMINDER_GOAL` 共享常量，定时与手动补发邮件格式一致
+- 集成测试 `ai-service/tests/test_send_reminder.py`（3 用例，pytest）
+
+---
+
 ## 2026-04-13 项目状态
 
 ### 已完成功能 ✓

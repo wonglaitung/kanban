@@ -858,6 +858,32 @@ user root;
 
 ---
 
+### 36. 长耗时任务用后台任务 + 立即返回
+**需求背景**: 手动补发通知邮件，但报告生成（AI agent）可能耗时数分钟
+
+**问题**: 若在 FastAPI 端点里 `await agent.run(...)` 同步等待，HTTP 请求会被占住几分钟，前端虽可继续用（fetch 非阻塞），但体验差且浪费连接
+
+**解决方案**:
+```python
+# 后台执行，接口立即返回
+async def _run_reminder():
+    try:
+        await agent.run(REMINDER_GOAL, session_id=...)
+    except Exception as e:
+        print(f"失败: {e}")
+
+asyncio.create_task(_run_reminder())
+return {"success": True}
+```
+
+**经验总结**:
+- 耗时数分钟的任务用 `asyncio.create_task` 后台执行，接口毫秒级返回
+- 后台任务必须 try/except + 日志，否则静默失败无法排查（本需求"没发出邮件"正是要解决此痛点）
+- 共享提示词提取为常量（`REMINDER_GOAL`），定时与手动触发共用，避免两处文案漂移
+- 测试无 SDK/API Key 环境时，用 AsyncMock 替换 agent + 注入假模块（`sys.modules`），直接 await 端点函数而非走 HTTP/TestClient（后者后台任务在请求结束会被取消，时序不可控）
+
+---
+
 ### 35. AI 导航影响其他用户的问题
 **问题背景**: Docker 多用户环境下，一个用户通过 AI 打开任务卡时，其他用户的页面也会打开任务卡
 
