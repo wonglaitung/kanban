@@ -115,3 +115,15 @@ export async function chat(message: string, sessionId?: string): Promise<ChatRes
   }
   return response.json();
 }
+
+/**
+ * 手动补发通知邮件（触发即忘，不等待生成结果）
+ */
+export async function sendReminder(): Promise<void> {
+  const response = await fetch(`${API_BASE}/send-reminder`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error(`触发补发失败: ${response.statusText}`);
+  }
+}

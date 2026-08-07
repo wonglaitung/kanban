@@ -20,9 +20,10 @@ interface SettingsMenuProps {
   onChangeToken: () => void;
   onExportCsv?: () => void;
   onEditAnnouncement?: () => void;
+  onSendReminder?: () => void;
 }
 
-export function SettingsMenu({ currentTheme, onThemeChange, onChangeToken, onExportCsv, onEditAnnouncement }: SettingsMenuProps) {
+export function SettingsMenu({ currentTheme, onThemeChange, onChangeToken, onExportCsv, onEditAnnouncement, onSendReminder }: SettingsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -68,6 +69,18 @@ export function SettingsMenu({ currentTheme, onThemeChange, onChangeToken, onExp
               )}
             </button>
           ))}
+          {onSendReminder && (
+            <button
+              className="settings-option"
+              onClick={() => {
+                setIsOpen(false);
+                onSendReminder();
+              }}
+            >
+              <span className="settings-option-icon">✉️</span>
+              <span className="settings-option-label">补发邮件</span>
+            </button>
+          )}
           <div className="settings-divider" />
           {onExportCsv && (
             <button

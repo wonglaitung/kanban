@@ -11,34 +11,8 @@ from harness.triggers.cron import CronTrigger
 from harness.triggers.manager import TriggerManager
 from harness.triggers.types import TriggerAction
 
-
-def setup_scheduler(agent) -> TriggerManager:
-    """
-    配置定时任务调度器
-
-    Args:
-        agent: AgentHarness 实例
-
-    Returns:
-        TriggerManager 实例
-    """
-    manager = TriggerManager(agent)
-
-    # 通过环境变量切换测试/生产模式
-    test_mode = os.environ.get("TEST_MODE", "false").lower() == "true"
-
-    if test_mode:
-        # 测试模式：每1分钟触发
-        schedule = "*/1 * * * *"
-        print("⚠️ 测试模式：定时任务每1分钟触发")
-    else:
-        # 生产模式：周一至周五17:00触发
-        schedule = "0 17 * * 1-5"
-        print("✅ 生产模式：定时任务周一至周五17:00触发")
-
-    # 创建 TriggerAction
-    action = TriggerAction(
-        goal="""执行工作日任务提醒流程，生成完整的HTML格式邮件报告：
+# 工作日任务提醒目标：定时任务与手动补发共用，保证邮件内容格式一致
+REMINDER_GOAL = """执行工作日任务提醒流程，生成完整的HTML格式邮件报告：
 
 1. 查询所有进行中和已完成的任务
 2. 按以下固定格式生成报告：
@@ -69,7 +43,36 @@ def setup_scheduler(agent) -> TriggerManager:
 ### 五、下周计划
 列出待办列中即将开始的任务
 
-3. 调用 send_email 工具发送邮件（必须使用 HTML 格式）""",
+3. 调用 send_email 工具发送邮件（必须使用 HTML 格式）"""
+
+
+def setup_scheduler(agent) -> TriggerManager:
+    """
+    配置定时任务调度器
+
+    Args:
+        agent: AgentHarness 实例
+
+    Returns:
+        TriggerManager 实例
+    """
+    manager = TriggerManager(agent)
+
+    # 通过环境变量切换测试/生产模式
+    test_mode = os.environ.get("TEST_MODE", "false").lower() == "true"
+
+    if test_mode:
+        # 测试模式：每1分钟触发
+        schedule = "*/1 * * * *"
+        print("⚠️ 测试模式：定时任务每1分钟触发")
+    else:
+        # 生产模式：周一至周五17:00触发
+        schedule = "0 17 * * 1-5"
+        print("✅ 生产模式：定时任务周一至周五17:00触发")
+
+    # 创建 TriggerAction
+    action = TriggerAction(
+        goal=REMINDER_GOAL,
         workspace_dir=str(Path(__file__).parent.parent / "server" / "data"),
         skills=["kanban-assistant"],
         max_iterations=50,

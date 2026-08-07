@@ -440,33 +440,42 @@ async def start_scheduler_on_startup():
         return None
 
 
-@app.post("/api/ai/test-reminder")
-async def test_reminder():
+@app.post("/api/ai/send-reminder")
+async def send_reminder():
     """
-    手动触发任务提醒测试（仅用于测试）
+    手动补发通知邮件（触发即忘）
 
-    用于测试定时任务逻辑，无需等待 Cron 触发。
+    重新生成当日任务报告并通过 send_email 工具发送邮件。
+    报告生成可能耗时数分钟，接口立即返回，实际执行在后台任务中完成。
     """
+    import asyncio
+
     # 获取缓存的 Agent 实例
     agent = await get_or_create_agent()
 
     if agent is None:
-        return {"error": "AI 服务未配置 API Key"}
+        return {"success": False, "error": "AI 服务未配置 API Key"}
 
-    try:
-        # 执行任务分析
-        result = await agent.run(
-            "检查所有进行中的任务，分析进度和潜在风险，提供优先级建议，生成HTML格式的邮件并发送提醒",
-            session_id="test-reminder",
-        )
+    async def _run_reminder():
+        session_id = f"send-reminder-{int(time.time())}"
+        print(f"[AI Service] Manual reminder started - session_id: {session_id}")
+        try:
+            from scheduler import REMINDER_GOAL
 
-        return {
-            "success": True,
-            "content": result.content,
-        }
+            result = await agent.run(
+                REMINDER_GOAL,
+                session_id=session_id,
+            )
+            print(f"[AI Service] Manual reminder finished - session_id: {session_id}")
+            return result
+        except Exception as e:
+            print(f"[AI Service] ❌ 手动补发邮件失败: {e}")
+            return None
 
-    except Exception as e:
-        return {"error": str(e)}
+    # 后台任务执行，接口立即返回
+    asyncio.create_task(_run_reminder())
+
+    return {"success": True, "message": "已触发补发邮件，请留意收件箱"}
 
 
 if __name__ == "__main__":

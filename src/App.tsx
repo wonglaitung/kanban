@@ -11,6 +11,7 @@ import AIChat from './components/AIChat/AIChat';
 import { useColumns } from './hooks/useColumns';
 import { useTasks } from './hooks/useTasks';
 import { getSettings, updateSettings, exportCsv } from './services/api';
+import { sendReminder } from './services/aiApi';
 import type { Task, Column as ColumnType, Theme, StaleFilter } from './types';
 import './App.css';
 
@@ -289,6 +290,15 @@ function App() {
     }
   };
 
+  // 手动补发通知邮件（触发即忘，不等待结果）
+  const handleSendReminder = useCallback(async () => {
+    try {
+      await sendReminder();
+    } catch (error) {
+      console.error('Failed to trigger reminder:', error);
+    }
+  }, []);
+
   // AI 导航处理
   const handleNavigate = (page: string, params?: Record<string, unknown>) => {
     if (page === 'settings') {
@@ -392,6 +402,7 @@ function App() {
               onChangeToken={() => setShowChangeToken(true)}
               onExportCsv={handleExportCsv}
               onEditAnnouncement={() => setShowAnnouncementModal(true)}
+              onSendReminder={handleSendReminder}
             />
           </div>
         </div>
