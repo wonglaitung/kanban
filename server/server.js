@@ -467,6 +467,133 @@ app.delete('/api/comments/:id', (req, res) => {
   }
 });
 
+// === MindMap API ===
+
+// Helper: delete a node and its subtree (used recursively within transaction)
+function deleteMindMapSubtree(deleteStmt, id) {
+  const children = db.prepare('SELECT id FROM mindmap_nodes WHERE parentId = ?').all(id);
+  for (const child of children) {
+    deleteMindMapSubtree(deleteStmt, child.id);
+  }
+  deleteStmt.run(id);
+}
+
+// Get all mindmap nodes
+app.get('/api/mindmap/nodes', (req, res) => {
+  try {
+    const nodes = db.prepare('SELECT * FROM mindmap_nodes ORDER BY parentId, "order"').all();
+    res.json(nodes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create a mindmap node
+app.post('/api/mindmap/nodes', (req, res) => {
+  try {
+    const { title, note, color, taskId, parentId } = req.body;
+    if (!title) {
+      return res.status(400).json({ error: 'Title is required' });
+    }
+
+    const id = 'mm-' + Date.now();
+    const now = new Date().toISOString();
+
+    // Compute next order among siblings
+    const maxOrder = parentId
+      ? (db.prepare('SELECT MAX("order") as maxOrder FROM mindmap_nodes WHERE parentId = ?').get(parentId).maxOrder ?? -1)
+      : (db.prepare('SELECT MAX("order") as maxOrder FROM mindmap_nodes WHERE parentId IS NULL').get().maxOrder ?? -1);
+
+    const stmt = db.prepare(`
+      INSERT INTO mindmap_nodes (id, title, note, color, taskId, parentId, "order", createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    stmt.run(id, title, note || '', color || '', taskId || null, parentId || null, maxOrder + 1, now, now);
+
+    const node = db.prepare('SELECT * FROM mindmap_nodes WHERE id = ?').get(id);
+    res.status(201).json(node);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update a mindmap node
+app.put('/api/mindmap/nodes/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, note, color, taskId } = req.body;
+
+    const existing = db.prepare('SELECT * FROM mindmap_nodes WHERE id = ?').get(id);
+    if (!existing) {
+      return res.status(404).json({ error: 'MindMap node not found' });
+    }
+
+    const now = new Date().toISOString();
+    const stmt = db.prepare(`
+      UPDATE mindmap_nodes SET
+        title = ?, note = ?, color = ?, taskId = ?, updatedAt = ?
+      WHERE id = ?
+    `);
+    stmt.run(
+      title ?? existing.title,
+      note !== undefined ? note : existing.note,
+      color !== undefined ? color : existing.color,
+      taskId !== undefined ? taskId : existing.taskId,
+      now,
+      id
+    );
+
+    const node = db.prepare('SELECT * FROM mindmap_nodes WHERE id = ?').get(id);
+    res.json(node);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete a mindmap node (cascades to subtree)
+app.delete('/api/mindmap/nodes/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const existing = db.prepare('SELECT * FROM mindmap_nodes WHERE id = ?').get(id);
+    if (!existing) {
+      return res.status(404).json({ error: 'MindMap node not found' });
+    }
+
+    const deleteStmt = db.prepare('DELETE FROM mindmap_nodes WHERE id = ?');
+    const transaction = db.transaction(() => deleteMindMapSubtree(deleteStmt, id));
+    transaction();
+
+    res.status(204).end();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Batch update mindmap nodes (for drag & drop reparent/reorder)
+app.post('/api/mindmap/nodes/batch', (req, res) => {
+  try {
+    const { updates } = req.body; // Array of { id, parentId?, order? }
+
+    const updateStmt = db.prepare(`
+      UPDATE mindmap_nodes SET parentId = ?, "order" = ? WHERE id = ?
+    `);
+
+    const transaction = db.transaction(() => {
+      for (const u of updates) {
+        updateStmt.run(u.parentId || null, u.order ?? 0, u.id);
+      }
+    });
+
+    transaction();
+
+    const nodes = db.prepare('SELECT * FROM mindmap_nodes ORDER BY parentId, "order"').all();
+    res.json(nodes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // === Export API ===
 
 // Export all tasks with comments as CSV

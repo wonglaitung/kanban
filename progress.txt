@@ -1,5 +1,19 @@
 # 项目进度记录
 
+## 2026-08-20 思维导图功能（工作主线串联）
+
+- 新增思维导图视图：头部「看板 / 思维导图」切换，单张全局导图
+- 独立页面渲染横向树（纯 CSS flex + SVG 图标，不引入新依赖）
+- 节点能力：增删改、拖拽调整层级/顺序（HTML5 DnD，before/child/after 三档落点）、折叠/展开、节点关联看板任务
+- 节点字段：标题、备注、颜色标记（6 色预设）、关联任务 ID；节点显示关联任务摘要（进度/负责人/优先级），点击打开任务详情
+- 数据模型：新增 `mindmap_nodes` 表（id/title/note/color/taskId/parentId/order/createdAt/updatedAt），向后兼容迁移
+- API：GET/POST/PUT/DELETE /api/mindmap/nodes + POST /api/mindmap/nodes/batch（批量排序，事务）
+- 删除节点级联删除整棵子树（事务内递归）
+- 前端：MindMap/MindMapNode/MindMapModal 组件、useMindMap hook、MindMapNode 类型、MINDMAP_COLORS 预设
+- 三套银行主题自动适配（复用现有 CSS 变量）
+
+---
+
 ## 2026-08-07 手动补发通知邮件 (8977dd2)
 
 - 设置菜单新增"补发邮件"按钮，手动触发通知邮件补发

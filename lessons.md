@@ -1,5 +1,38 @@
 # 开发经验与学习笔记
 
+## 思维导图开发经验
+
+### 37. 树形结构的拖拽与递归渲染
+**需求背景**: 思维导图需要拖拽调整节点层级（reparent）与顺序
+
+**实现方案**:
+1. **递归渲染**: 每个节点组件从全量 nodes 数组计算 children 并递归渲染（而非传 children 数组），避免父组件重复计算
+2. **HTML5 原生 DnD**: 用 `draggable` + `onDragOver/onDrop`，按鼠标在目标卡片内的 x 位置三档判定：左 30% = before（插入到该节点前）、中间 = child（成为子节点）、右 30% = after（插入到该节点后）
+3. **批处理排序**: drop 后对目标同级组整组重编号（0..n-1），POST /batch 事务更新 parentId+order
+4. **防循环**: isDescendant 检查阻止把节点拖入自身子树
+
+**关键代码**:
+```tsx
+// 按 x 位置判定落点
+const x = e.clientX - rect.left;
+let position = x < width * 0.3 ? 'before' : x > width * 0.7 ? 'after' : 'child';
+```
+
+**经验总结**:
+- 递归组件传全量数据 + 自己算 children，比传构造好的 children 数组更简洁、无需每层重建
+- HTML5 DnD 拖拽到子级卡片时 onDragOver 高频触发 setState，用 prev 比较去重避免重渲染风暴
+- 树形 reparent + 排序一次 batch 提交，比逐条 PUT 更可靠、更少请求
+
+### 38. 与 @dnd-kit 的取舍
+**问题背景**: 项目已有 @dnd-kit（看板拖拽），思维导图拖拽是否复用？
+
+**决策**: 树形结构用原生 HTML5 DnD，而非 @dnd-kit
+- @dnd-kit 适合线性 sortable（列/卡片），树形 reparent 需要自定义落点判定
+- 原生 DnD 零依赖、判定逻辑直白，且思维导图拖拽频率低、不需要动画/无障碍增强
+- 经验：**先匹配场景再选工具**，同一项目不同交互可用不同方案
+
+---
+
 ## 技术选型经验
 
 ### 1. 拖拽库选择：@dnd-kit

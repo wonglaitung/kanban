@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Column, Task, Settings, Comment } from '../types';
+import type { Column, Task, Settings, Comment, MindMapNode } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -130,6 +130,39 @@ export const deleteComment = async (id: string): Promise<void> => {
 // Export CSV
 export const exportCsv = async (): Promise<Blob> => {
   const response = await api.get('/export/csv', { responseType: 'blob' });
+  return response.data;
+};
+
+// MindMap API
+export const getMindMapNodes = async (): Promise<MindMapNode[]> => {
+  const response = await api.get<MindMapNode[]>('/mindmap/nodes');
+  return response.data;
+};
+
+export const createMindMapNode = async (node: {
+  title: string;
+  note?: string;
+  color?: string;
+  taskId?: string;
+  parentId?: string;
+}): Promise<MindMapNode> => {
+  const response = await api.post<MindMapNode>('/mindmap/nodes', node);
+  return response.data;
+};
+
+export const updateMindMapNode = async (id: string, updates: Partial<MindMapNode>): Promise<MindMapNode> => {
+  const response = await api.put<MindMapNode>(`/mindmap/nodes/${id}`, updates);
+  return response.data;
+};
+
+export const deleteMindMapNode = async (id: string): Promise<void> => {
+  await api.delete(`/mindmap/nodes/${id}`);
+};
+
+export const batchUpdateMindMapNodes = async (
+  updates: Array<{ id: string; parentId?: string; order?: number }>
+): Promise<MindMapNode[]> => {
+  const response = await api.post<MindMapNode[]>('/mindmap/nodes/batch', { updates });
   return response.data;
 };
 

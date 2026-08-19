@@ -68,6 +68,24 @@ function initSchema() {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_comments_taskId ON comments(taskId)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_comments_createdAt ON comments(createdAt)`);
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS mindmap_nodes (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      note TEXT DEFAULT '',
+      color TEXT DEFAULT '',
+      taskId TEXT,
+      parentId TEXT,
+      "order" INTEGER NOT NULL DEFAULT 0,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
+    )
+  `);
+
+  // Create indexes for mindmap table
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_mindmap_parent ON mindmap_nodes(parentId)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_mindmap_task ON mindmap_nodes(taskId)`);
+
   // Add theme column if it doesn't exist (migration for existing databases)
   try {
     db.exec('ALTER TABLE settings ADD COLUMN theme TEXT DEFAULT \'dark-neon\'');

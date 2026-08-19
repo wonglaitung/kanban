@@ -44,6 +44,27 @@ export interface Comment {
   updatedAt: string;
 }
 
+export interface MindMapNode {
+  id: string;
+  title: string;
+  note: string;
+  color: string;
+  taskId: string;
+  parentId: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const MINDMAP_COLORS = [
+  { value: '#c9a227', label: '金色' },
+  { value: '#3182ce', label: '蓝' },
+  { value: '#38a169', label: '绿' },
+  { value: '#e53e3e', label: '红' },
+  { value: '#dd6b20', label: '橙' },
+  { value: '#718096', label: '灰' },
+] as const;
+
 export const PRIORITY_COLORS = {
   high: '#ef4444',
   medium: '#f59e0b',

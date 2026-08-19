@@ -8,6 +8,7 @@ import { SettingsMenu } from './components/SettingsMenu';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { AnnouncementModal } from './components/AnnouncementModal';
 import AIChat from './components/AIChat/AIChat';
+import { MindMap } from './components/MindMap';
 import { useColumns } from './hooks/useColumns';
 import { useTasks } from './hooks/useTasks';
 import { getSettings, updateSettings, exportCsv } from './services/api';
@@ -35,6 +36,7 @@ function App() {
   const [copilotExpanded, setCopilotExpanded] = useState(false);
   const [announcement, setAnnouncement] = useState('');
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [view, setView] = useState<'board' | 'mindmap'>('board');
   const [copilotWidth, setCopilotWidth] = useState(() => {
     const saved = localStorage.getItem('copilot-width');
     return saved ? parseInt(saved, 10) : 400;
@@ -188,6 +190,13 @@ function App() {
     setActiveColumnId(task.columnId);
     setShowTaskModal(true);
   }, []);
+
+  const handleOpenTaskById = useCallback((taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      handleEditTask(task);
+    }
+  }, [tasks, handleEditTask]);
 
   const handleDeleteTask = useCallback((taskId: string) => {
     setDeleteTarget({ type: 'task', id: taskId });
@@ -396,6 +405,22 @@ function App() {
             </div>
           </div>
           <div className="header-right">
+            <div className="view-toggle">
+              <button
+                className={`view-toggle-btn ${view === 'board' ? 'active' : ''}`}
+                onClick={() => setView('board')}
+                title="看板视图"
+              >
+                看板
+              </button>
+              <button
+                className={`view-toggle-btn ${view === 'mindmap' ? 'active' : ''}`}
+                onClick={() => setView('mindmap')}
+                title="思维导图视图"
+              >
+                思维导图
+              </button>
+            </div>
             <SettingsMenu
               currentTheme={currentTheme}
               onThemeChange={handleThemeChange}
@@ -411,20 +436,24 @@ function App() {
       <div className="app-content">
         <main className="app-main">
           <AnnouncementBar announcement={announcement} />
-          <Board
-            columns={columns}
-            tasks={filteredTasks}
-            totalTasks={tasks.length}
-            onAddTask={handleAddTask}
-            onEditTask={handleEditTask}
-            onDeleteTask={handleDeleteTask}
-            onDuplicateTask={handleDuplicateTask}
-            onEditColumn={handleEditColumn}
-            onDeleteColumn={handleDeleteColumn}
-            onAddColumn={handleAddColumn}
-            onTaskMove={async () => {}}
-            onReorder={handleReorder}
-          />
+          {view === 'mindmap' ? (
+            <MindMap tasks={tasks} onOpenTask={handleOpenTaskById} />
+          ) : (
+            <Board
+              columns={columns}
+              tasks={filteredTasks}
+              totalTasks={tasks.length}
+              onAddTask={handleAddTask}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTask}
+              onDuplicateTask={handleDuplicateTask}
+              onEditColumn={handleEditColumn}
+              onDeleteColumn={handleDeleteColumn}
+              onAddColumn={handleAddColumn}
+              onTaskMove={async () => {}}
+              onReorder={handleReorder}
+            />
+          )}
         </main>
 
         {/* AI Copilot Sidebar */}

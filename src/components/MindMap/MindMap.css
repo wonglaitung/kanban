@@ -1,0 +1,88 @@
+.mindmap-canvas {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+  background:
+    radial-gradient(circle, var(--border-color) 1px, transparent 1px);
+  background-size: 24px 24px;
+  position: relative;
+}
+
+.mindmap-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 12px 16px;
+  background: var(--dark-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.mindmap-label {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.mindmap-add-root-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--dark-surface);
+  border: 1px solid var(--accent-primary);
+  border-radius: 8px;
+  color: var(--accent-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mindmap-add-root-btn:hover {
+  background: var(--dark-card);
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-1px);
+}
+
+.mindmap-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: max-content;
+  padding: 8px;
+}
+
+.mindmap-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 300px;
+  border: 1px dashed var(--border-color);
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.mindmap-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 300px;
+  color: var(--text-muted);
+}
+
+.mindmap-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+}

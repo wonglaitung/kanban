@@ -119,6 +119,39 @@ body {
   flex-shrink: 0;
 }
 
+.view-toggle {
+  display: flex;
+  align-items: center;
+  background: var(--dark-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.view-toggle-btn {
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.view-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.view-toggle-btn.active {
+  background: var(--accent-primary);
+  color: var(--dark-bg);
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
 .stale-filter-select {
   background: var(--dark-surface);
   border: 1px solid var(--border-color);
