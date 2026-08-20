@@ -7,7 +7,7 @@
 
 **实现方案**:
 1. **递归渲染**: 每个节点组件从全量 nodes 数组计算 children 并递归渲染（而非传 children 数组），避免父组件重复计算
-2. **HTML5 原生 DnD**: 用 `draggable` + `onDragOver/onDrop`，按鼠标在目标卡片内的 x 位置三档判定：左 30% = before（插入到该节点前）、中间 = child（成为子节点）、右 30% = after（插入到该节点后）
+2. **HTML5 原生 DnD**: 用 `draggable` + `onDragOver/onDrop`，按鼠标在目标卡片内的位置判定落点
 3. **批处理排序**: drop 后对目标同级组整组重编号（0..n-1），POST /batch 事务更新 parentId+order
 4. **防循环**: isDescendant 检查阻止把节点拖入自身子树
 
@@ -22,6 +22,22 @@ let position = x < width * 0.3 ? 'before' : x > width * 0.7 ? 'after' : 'child';
 - 递归组件传全量数据 + 自己算 children，比传构造好的 children 数组更简洁、无需每层重建
 - HTML5 DnD 拖拽到子级卡片时 onDragOver 高频触发 setState，用 prev 比较去重避免重渲染风暴
 - 树形 reparent + 排序一次 batch 提交，比逐条 PUT 更可靠、更少请求
+
+### 37b. 拖拽落点区域划分：左右分区优于横向三分
+**问题背景**: 第一版按横向三档（左30%前/中40%子/右30%后），用户反馈"放节点到不同层级很困难"
+
+**改进方案（v2）**: x 在卡片右半屏 → child，左半屏再按 y 上下分 before/after
+```tsx
+function resolveDropPosition(rect, x, y) {
+  if (x >= rect.width * 0.5) return 'child';          // 右半屏 = 成为子节点
+  return y < rect.height * 0.5 ? 'before' : 'after';  // 左半屏上下 = 插入前/后
+}
+```
+
+**经验总结**:
+- **拖拽落点建议二维分区而非一维**：单用 x 时 child 命中带窄且要求横向精确对准；x 管层级（右=深）、y 管顺序（上下=前/后），命中面更大、更符合直觉
+- **dragover 预览与 drop 判定必须同源**：抽成共用纯函数，否则预览与最终落点不一致会让用户困惑（旧代码两处 copy-paste 逻辑一旦漂移即出此 bug）
+- 视觉反馈要配合落点：child 用虚线分支+卡片位移表达"层级加深"，比单色遮罩更直观
 
 ### 38. 与 @dnd-kit 的取舍
 **问题背景**: 项目已有 @dnd-kit（看板拖拽），思维导图拖拽是否复用？

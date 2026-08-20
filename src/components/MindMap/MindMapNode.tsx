@@ -20,6 +20,13 @@ interface MindMapNodeProps {
   onDropNode: (targetId: string, position: 'before' | 'after' | 'child') => void;
 }
 
+type DropPosition = 'before' | 'after' | 'child';
+
+function resolveDropPosition(rect: DOMRect, x: number, y: number): DropPosition {
+  if (x >= rect.width * 0.5) return 'child';
+  return y < rect.height * 0.5 ? 'before' : 'after';
+}
+
 export function MindMapNode({
   node,
   nodes,
@@ -50,15 +57,8 @@ export function MindMapNode({
     e.dataTransfer.dropEffect = 'move';
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const width = rect.width;
-    let position: 'before' | 'after' | 'child';
-    if (x < width * 0.3) {
-      position = 'before';
-    } else if (x > width * 0.7) {
-      position = 'after';
-    } else {
-      position = 'child';
-    }
+    const y = e.clientY - rect.top;
+    const position = resolveDropPosition(rect, x, y);
     onDragOverNode(node.id, position);
   };
 
@@ -66,22 +66,15 @@ export function MindMapNode({
     e.preventDefault();
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const width = rect.width;
-    let position: 'before' | 'after' | 'child';
-    if (x < width * 0.3) {
-      position = 'before';
-    } else if (x > width * 0.7) {
-      position = 'after';
-    } else {
-      position = 'child';
-    }
+    const y = e.clientY - rect.top;
+    const position = resolveDropPosition(rect, x, y);
     onDropNode(node.id, position);
   };
 
   return (
     <div className={`mm-node ${isRoot ? 'root' : ''}`}>
       <div
-        className={`mm-node-card ${draggingId === node.id ? 'dragging' : ''} ${linkedTask ? 'has-task' : ''}`}
+        className={`mm-node-card ${draggingId === node.id ? 'dragging' : ''} ${linkedTask ? 'has-task' : ''} ${isDropTarget && dropTarget!.position === 'child' ? 'drag-over-child' : ''}`}
         style={{ borderLeftColor: node.color || undefined }}
         draggable
         onDragStart={e => {
