@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Task } from '../../types';
 import { PRIORITY_COLORS, PRIORITY_LABELS } from '../../types';
-import { getComments } from '../../services/api';
+import { useCommentCounts } from '../../hooks/useCommentCounts';
 import './TaskCard.css';
 
 interface TaskCardProps {
@@ -11,7 +10,6 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onDuplicate: (taskId: string) => void;
-  isDragging?: boolean;
 }
 
 function formatUpdateTime(dateString: string): string {
@@ -42,7 +40,7 @@ function getDueDateStatus(dueDate: string): 'overdue' | 'urgent' | 'normal' {
   return 'normal';                       // 超过一周
 }
 
-export function TaskCard({ task, onEdit, onDelete, onDuplicate, isDragging: _isDragging }: TaskCardProps) {
+export function TaskCard({ task, onEdit, onDelete, onDuplicate }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -52,7 +50,8 @@ export function TaskCard({ task, onEdit, onDelete, onDuplicate, isDragging: _isD
     isDragging: isSortableDragging,
   } = useSortable({ id: task.id });
 
-  const [commentCount, setCommentCount] = useState(0);
+  const { counts } = useCommentCounts();
+  const commentCount = counts[task.id] || 0;
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -61,20 +60,6 @@ export function TaskCard({ task, onEdit, onDelete, onDuplicate, isDragging: _isD
 
   const priorityColor = PRIORITY_COLORS[task.priority];
   const priorityLabel = PRIORITY_LABELS[task.priority];
-
-  // Load comment count
-  useEffect(() => {
-    const loadCommentCount = async () => {
-      try {
-        const comments = await getComments(task.id);
-        setCommentCount(comments.length);
-      } catch (error) {
-        // Ignore error, just show 0
-        setCommentCount(0);
-      }
-    };
-    loadCommentCount();
-  }, [task.id]);
 
   return (
     <div

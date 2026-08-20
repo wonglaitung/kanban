@@ -4,6 +4,12 @@
   gap: 16px;
 }
 
+.mm-node-drop {
+  position: relative;
+  padding: 10px 0;
+  margin: -10px 0;
+}
+
 .mm-node-card {
   position: relative;
   min-width: 200px;
@@ -37,6 +43,18 @@
 .mm-node-card.dragging {
   opacity: 0.4;
   transform: scale(0.98);
+}
+
+.mm-node-card.invalid {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+  box-shadow: 0 0 0 1px var(--danger) inset;
+  cursor: not-allowed;
+}
+
+.mm-node-card.drag-over-blocked {
+  box-shadow: 0 0 0 2px var(--danger) inset;
+  cursor: not-allowed;
 }
 
 .mm-node-header {
@@ -228,39 +246,14 @@
   box-shadow: 0 0 0 2px var(--accent-primary) inset;
 }
 
-.mm-drop-indicator.child::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  width: 30px;
-  height: 2px;
-  border-top: 2px dashed var(--accent-primary);
-  transform: translateY(-1px);
-}
-
-.mm-drop-indicator.before {
-  top: -8px;
+.mm-drop-indicator.blocked {
+  top: 0;
   left: 0;
   right: 0;
-  border-top-width: 3px;
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--accent-primary) 30%, transparent),
-    transparent
-  );
-}
-
-.mm-drop-indicator.after {
-  bottom: -8px;
-  left: 0;
-  right: 0;
-  border-bottom-width: 3px;
-  background: linear-gradient(
-    to top,
-    color-mix(in srgb, var(--accent-primary) 30%, transparent),
-    transparent
-  );
+  bottom: 0;
+  border: 2px dashed var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  border-radius: 6px;
 }
 
 .mm-node-card.drag-over-child {

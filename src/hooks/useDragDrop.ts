@@ -16,11 +16,10 @@ import type { Task, Column } from '../types';
 interface UseDragDropProps {
   tasks: Task[];
   columns: Column[];
-  onTaskMove: (taskId: string, targetColumnId: string, newOrder: number) => Promise<void>;
   onReorder: (updates: Array<{ id: string; order: number; columnId?: string }>) => Promise<void>;
 }
 
-export function useDragDrop({ tasks, columns, onTaskMove: _onTaskMove, onReorder }: UseDragDropProps) {
+export function useDragDrop({ tasks, columns, onReorder }: UseDragDropProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {

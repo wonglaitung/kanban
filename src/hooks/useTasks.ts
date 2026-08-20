@@ -134,7 +134,7 @@ export function useTasks() {
   }, []);
 
   // WebSocket 消息处理 - 增量更新任务列表
-  const handleWSMessage = useCallback((data: { type: string; task: any }) => {
+  const handleWSMessage = useCallback((data: { type: string; task: Task }) => {
     if (data.type === 'create') {
       setTasks(prev => {
         // 避免重复添加

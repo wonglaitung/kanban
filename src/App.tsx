@@ -454,7 +454,6 @@ function App() {
               onEditColumn={handleEditColumn}
               onDeleteColumn={handleDeleteColumn}
               onAddColumn={handleAddColumn}
-              onTaskMove={async () => {}}
               onReorder={handleReorder}
             />
           )}

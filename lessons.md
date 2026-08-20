@@ -2,6 +2,119 @@
 
 ## 思维导图开发经验
 
+### 37h. 兄弟重排的终极方案：插入线跟随光标（取代按卡分区）
+**问题背景**: 用户第三次反馈"2 和 4 交换位置困难"。v4 二维分区逻辑正确（e2e 实测能交换），但 UX 仍差：定位需拖过中间节点精确命中小区域；第一个子节点上方仅 10px 细带且易误触父节点（拖到父卡会变成根节点/追加）
+**改进（v5）**: 插入线跟随光标模型
+```tsx
+// 分区（MindMapNode 内判定）
+if (isInvalid) zone = 'blocked';
+else if (y在卡内 && x >= 卡宽/2) zone = 'child';
+else zone = 'insert';  // 左半卡 + 上下带全部 = 同级插入
+// 插入线（MindMap 端，dragover 时计算）
+cardRects = siblings.map(s => query(`[data-node-id="${s.id}"] .mm-node-card`).getBoundingClientRect());
+index = 第一个 card.midpoint > clientY 的下标;
+lineY = index==0 ? card[0].top-5 : index==n ? card[n-1].bottom+5 : (card[i-1].bottom + card[i].top)/2;
+// 插入线渲染在 .mindmap-tree(position:relative) 内，坐标 = viewport坐标 - treeRect
+```
+**经验总结**:
+- "按卡片划分精确命中区"总有极限：卡片小、兄弟多、跨中间节点时定位难。**让指示器跟随光标、drop 落在指示器处**才是重排类交互的正解（dnd-kit 列表同理）
+- 判定分区与落点几何要解耦：卡片判定 Zone（child/insert/blocked）在子组件，插入 index/线坐标计算在父组件（需要全兄弟组几何）
+- 用 `data-node-id` + `querySelector` 在 dragover 时取 DOM rect 做几何计算，简单可靠（无需 ref 集合传递）
+- 视觉反馈优先级：跟随线 > 单卡高亮，用户在拖拽中"看线放"，而非"瞄准卡"
+
+### 37f. 顶部工具栏瘦身：全宽横条 → fit-content 胶囊
+**问题背景**: 用户反馈「工作主线太长、占地方」——思维导图顶部工具栏是通栏全宽横条（1162×61px），只为放一个 label + 一个按钮，视觉和空间浪费
+**改进**: `display: inline-flex; width: fit-content` + `border-radius: 999px` + 缩小 padding/字号，变为自适应宽度的紧凑胶囊（182×42px），宽度缩减约 85%；保留 `position: sticky` 以便长树滚动时按钮仍可达
+**经验总结**:
+- 工具栏不必总是通栏铺满容器：内容少时用 `width: fit-content` 自适应，既省空间又聚焦
+- sticky + fit-content 可共存（滚动时小胶囊仍固定在顶部），功能不因瘦身丢失
+
+### 37g. 工具栏彻底不占行：文档流 → 悬浮 FAB
+**问题背景**: 即使 fit-content 胶囊仍是文档流块级元素，占一整行高度；用户要的是"不占行"
+**改进**: 把工具按钮移出文档流，改为绝对定位悬浮 FAB：
+- MindMap 外包 `.mindmap { position:relative; flex:1; min-height:0; display:flex }`，`.mindmap-canvas { flex:1 }` 填满
+- 按钮 `.mindmap-fab { position:absolute; right/bottom:28px; 40×40 圆形 }`，不占任何行，画布滚动在下方
+- 空树时仍保留居中"添加根节点"按钮，FAB 仅在存在根节点时显示
+**经验总结**:
+- "占一行"的本质是元素在文档流中；彻底解决是移出文档流（absolute/fixed），而非继续缩小
+- 悬浮按钮与滚动容器配合：absolute 定位于外层非滚动容器，画布内部滚动互不干扰
+- 顺带识别出另一条占行元素——公告条：提供"×"关闭（sessionStorage 持久化隐藏），用户可随时收起
+
+### 37c. HTML5 DnD 两个隐形大坑
+
+**坑 1：drop 事件会冒泡，导致"双重处理"**
+- 现象：节点内 drop 处理后，事件继续冒泡到容器级 drop handler（如"拖到画布变根节点"），同一拖拽被处理两次，结果随机（取决于异步 API 返回顺序）
+- 修复：节点 handler 加 `e.stopPropagation()`，让"落到节点上"和"落到空白处"互斥
+
+**坑 2：无效节点上 preventDefault + dropEffect='none' 会锁死拖拽**
+- 现象：对无效落点（自身子树）同时 `preventDefault()` 和 `dataTransfer.dropEffect='none'`，Chromium 会判定整个拖拽"不可放置"，从此不再向光标下的其他元素派发 dragover，indicator 卡死在源节点
+- 修复：**仅对有效节点调用 `preventDefault()`**；无效节点不 preventDefault（浏览器自然显示禁止光标），但仍上报 `blocked` 状态驱动 UI 反馈
+
+**经验总结**:
+- HTML5 DnD 的 dragover 派发高度依赖 preventDefault 状态，任何"局部禁止"都要小心是否影响全局
+- 事件冒泡在 DnD 场景下尤其隐蔽：父容器 onDrop + 子节点 onDrop 会级联触发
+- 调试这类问题：临时在 handler 里 console.log 事件到达情况，比盯 indicator 盲猜高效得多
+
+### 37b. 拖拽落点区域划分：左右分区优于横向三分
+**问题背景**: 第一版按横向三档（左30%前/中40%子/右30%后），用户反馈"放节点到不同层级很困难"
+
+**改进方案（v2）**: x 在卡片右半屏 → child，左半屏再按 y 上下分 before/after
+```tsx
+function resolveDropPosition(rect, x, y) {
+  if (x >= rect.width * 0.5) return 'child';          // 右半屏 = 成为子节点
+  return y < rect.height * 0.5 ? 'before' : 'after';  // 左半屏上下 = 插入前/后
+}
+```
+
+**经验总结**:
+- **拖拽落点建议二维分区而非一维**：单用 x 时 child 命中带窄且要求横向精确对准；x 管层级（右=深）、y 管顺序（上下=前/后），命中面更大、更符合直觉
+- **dragover 预览与 drop 判定必须同源**：抽成共用纯函数，否则预览与最终落点不一致会让用户困惑（旧代码两处 copy-paste 逻辑一旦漂移即出此 bug）
+- 视觉反馈要配合落点：child 用虚线分支+卡片位移表达"层级加深"，比单色遮罩更直观
+
+### 37d. v2 左右分区仍难用 → 垂直直觉模型（v3）
+**问题背景**: v2（右半=child、左半上下=before/after）用户仍反馈"落点语义不清楚、命中区域太小、无效落点无提示"
+**改进方案（v3）**: 卡片外包一层 `.mm-node-drop`（上下各 10px padding），垂直三段：
+```tsx
+const DROP_BAND = 10;
+function resolveDropPosition(rect, y) {
+  if (y < DROP_BAND) return 'before';              // 卡片上方带 = 插前
+  if (y > rect.height - DROP_BAND) return 'after'; // 卡片下方带 = 插后
+  return 'child';                                   // 落到卡片本体 = 成为子节点
+}
+```
+- before/after 命中面从「左半屏 100×18px」扩大为「卡片全宽 × 10px 上下带」
+- child 命中面 = 整张卡片（最大面积、最直觉：落到卡上就是变子节点）
+- 无效反馈：拖拽源子树整体置灰（`invalid`），悬停时红虚线框（`blocked`）+ 禁止光标 + drop 拦截
+- 附加：悬停折叠节点 child 区自动展开，便于深入层级
+
+**经验总结**:
+- 树形拖拽的语义要贴近"列表插入 + 落到卡上"的通用直觉（上=前、下=后、卡上=子），而不是用 x 轴方向表达层级——x 语义需要用户记忆，y 语义天然可读
+- 用 wrapper padding 制造命中带（而非压缩卡片内部），命中面更大且不挤压卡片内容；配合负 margin 保持原有间距
+- 无效反馈要"常显 + 悬停强化"两级：子树置灰（常显）+ 悬停红框（强化），用户拖拽途中始终知道哪里不能放
+
+### 37e. 相邻兄弟节点交换难 → v4 二维分区（右=子、左=前后、全宽带=前后）
+**问题背景**: v3 下"交换相邻兄弟顺序"仍困难（如 1→[3,2,4] 换 2/4）。根因：before/after 只在卡片外 10px 缝隙（200×10=2000px²），极易误落到卡片上变成 child
+**改进方案（v4）**: 二维分区，三个档位面积均衡（各约 4000px²）：
+```tsx
+function resolveDropPosition(rect, x, y) {
+  if (y < DROP_BAND) return 'before';                  // 上全宽带 = 前
+  if (y > rect.height - DROP_BAND) return 'after';     // 下全宽带 = 后
+  const cardH = rect.height - DROP_BAND * 2;
+  const cy = y - DROP_BAND;
+  if (x >= rect.width * 0.5) return 'child';           // 右半卡 = 子节点
+  return cy < cardH * 0.5 ? 'before' : 'after';        // 左半卡上下 = 前/后
+}
+```
+- 交换兄弟：拖到目标卡片**左上角/右上角（左半卡上部）**或上方全宽带即可，不再要求命中 10px 缝隙
+- 三档面积：before = 上带 2000 + 左上半 2000 = 4000；after 同理；child = 右半卡 4000
+- before/after 指示线贴卡片上下边缘（-1px），两种触发路径共用同一视觉锚点
+
+**经验总结**:
+- 相邻交换的本质是需要"足够大的前后插入目标"；外部缝隙带太窄，必须借用卡片本身面积（左半卡上半 = before）
+- 一维垂直分区无法同时给足 child 与 before/after；**x 管层级、y 管顺序**的二维分区是树形 DnD 的面积均衡解
+- 右半卡=child 与树布局方向一致（子节点在右），符合"往右拖=加深"直觉
+- e2e 测试数据标题要与用户真实数据区分（避免选择器误匹配用户节点），并在测试后彻底清理+核对数据
+
 ### 37. 树形结构的拖拽与递归渲染
 **需求背景**: 思维导图需要拖拽调整节点层级（reparent）与顺序
 

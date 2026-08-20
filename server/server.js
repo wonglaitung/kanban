@@ -371,6 +371,22 @@ app.post('/api/tasks/batch', (req, res) => {
 
 // === Comments API ===
 
+// Batch comment counts for all tasks (avoids N+1 on the board)
+app.get('/api/tasks/comments/counts', (req, res) => {
+  try {
+    const rows = db
+      .prepare('SELECT taskId, COUNT(*) as count FROM comments GROUP BY taskId')
+      .all();
+    const counts = {};
+    for (const row of rows) {
+      counts[row.taskId] = row.count;
+    }
+    res.json(counts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get all comments for a task
 app.get('/api/tasks/:id/comments', (req, res) => {
   try {

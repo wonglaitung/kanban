@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
+import type { Task } from '../types';
 
 // 生产环境使用 nginx 代理的 /ws 路径，开发环境直接连接 3003 端口
 const WS_URL = import.meta.env.PROD
   ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`
   : 'ws://localhost:3003';
 
-export function useWebSocket(onMessage: (data: { type: string; task: any }) => void) {
+export function useWebSocket(onMessage: (data: { type: string; task: Task }) => void) {
   const onMessageRef = useRef(onMessage);
   onMessageRef.current = onMessage;
 

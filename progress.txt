@@ -1,12 +1,62 @@
 # 项目进度记录
 
-## 2026-08-20 思维导图拖拽层级优化（本轮）
+## 2026-08-20 兄弟交换仍难 → 插入线跟随光标模型 v5
 
-- 落点判定改为左右+上下分区：x 在目标卡片右半屏 → child（成为子节点），左半屏按 y 上下分 before/after（插入前/后）
-- child 命中面从旧横向中间 40% 提升至 50%，"往右拖=加深层级"符合直觉
-- 判定逻辑抽为 resolveDropPosition 纯函数，dragover 预览与 drop 落点同源，消除 copy-paste 漂移
-- 视觉预览增强：child 高亮描边+淡背景+右侧虚线分支+卡片右移 6px；before/after 加粗横贯线+渐变
+- 反馈「2 和 4 交换位置还是困难」：v4 二维分区逻辑正确（实测可交换），难点在于**定位**——需拖过中间节点、精确命中小区域，且第一个子节点上方只有 10px 细带，易误触父节点
+- 彻底改为**插入线跟随光标**模型：拖到同级区域后，一条全宽竖直线跟随光标 Y 移动（按各兄弟卡中点计算最近间隙），落点一目了然，无需精确命中
+- 分区语义简化：**卡片右半 = 成为子节点**（child，保留高亮）；**左半 + 上下带 = 同级插入**（显示跟随线）；无效子树仍 blocked
+- 结构：`.mm-node-drop` 加 `data-node-id`，MindMap 端 dragover 时 querySelector 取兄弟卡 rect 计算 index 与线坐标，插入线渲染在 `.mindmap-tree`（position:relative）内；移除卡片级 before/after 指示器
+- 前端文件：MindMap.tsx / MindMapNode.tsx / MindMap.css / MindMapNode.css；无后端/数据库改动
+- 验证：插入线随光标移动（y583→y533）；落点=线位置（S1→[S2,S4,S3]）；child/before/after/blocked/变根节点/auto-expand 回归 6 项全过；用户数据 `1→[2,3,4]`+`10→[12,11,13]` 完好
+
+---
+
+## 2026-08-20 工作主线占空间 → 悬浮 FAB + 公告条可关闭
+
+- 反馈「胶囊也占了一行」：将思维导图顶部工具栏彻底移出文档流，改为**悬浮圆形 FAB**（右下角 40px，仅"+"图标），树直接用满画布顶部
+- 结构改动：MindMap 外包 `.mindmap` 相对定位容器，`.mindmap-canvas` 填满，FAB `position:absolute` 不占任何行
+- 同时识别出另一条"工作主线长条"——**公告条**（全宽 1154×32px）：加"×"关闭按钮（sessionStorage 记住，会话内隐藏），关闭后 mindmap 上移 40px；间距 padding 6/12→4/10、margin 10/24→8/0 更紧凑
+- 验证：树起始 y205→y120（累计省 85px）；FAB 点击正常弹出添加根节点弹窗；关闭公告刷新后仍隐藏；无页面报错
+- 前端文件：MindMap.tsx / MindMap.css / AnnouncementBar.tsx / AnnouncementBar.css；无后端/数据库改动
+
+---
+
+## 2026-08-20 工作主线工具栏占空间 → 紧凑胶囊（被 FAB 替代）
+
+- 反馈「工作主线太长、占地方」：指思维导图顶部通栏工具栏（1162×61px 全宽横条）
+- 改为**自适应宽度小胶囊**：`display: inline-flex; width: fit-content` + 圆角 999px，实际 182×42px（宽度缩减约 85%），sticky 定位保留（长树滚动时仍可达）
+- label 字号 14→12px，按钮 padding 8/14→5/10px
+- 前端文件：MindMap.css；无后端/数据库改动
+- 验证：build 通过，工具栏渲染 182×42、标签+按钮布局正常，视图切换无错误
+
+---
+
+## 2026-08-20 相邻兄弟交换困难 → 二维分区 v4
+
+- 反馈「页面上 2 和 4 交换位置困难」：根因是 v3 的 before/after 只在卡片外 10px 缝隙（200×10=2000px²），相邻交换需精确命中细缝，稍偏即落卡片变 child
+- 改为**二维分区** `resolveDropPosition(rect, x, y)`：上/下全宽带（各10px）= before/after；卡片右半 = child；卡片左半上部 = before、左半下部 = after
+- 三档命中面均衡（各约 4000px²），相邻交换改为拖到目标卡左上角/上方宽带即可
+- before/after 指示线贴卡片上下边缘（-1px），与"外部带/左半卡"两种触发路径视觉统一
 - 前端文件：MindMapNode.tsx / MindMapNode.css；无后端/数据库改动
+- 验证：resolveDropPosition 单元 12/12 通过；Playwright 真实拖拽「拖 S4 到 S2 左上卡区」成功实现交换（S1→[S3,S4,S2]）；用户真实数据 `1→[3,2,4]` 已确认未被影响
+- 教训：e2e 测试数据标题与用户真实节点区分，避免选择器误改用户数据（本轮曾误改后已恢复）
+
+---
+
+## 2026-08-20 思维导图拖拽改版（用户反馈第二轮）
+
+针对反馈「落点语义不清楚 / 命中区域太小 / 无效落点无提示」重构拖拽交互：
+
+- 落点语义改为**垂直直觉模型**：卡片上方 band → before（插前），卡片下方 band → after（插后），落到卡片本体 → child（成为子节点）；`resolveDropPosition` 改用 wrapper 上下各 10px 命中带 + 卡片全宽判定
+- 命中区域加大：before/after 从「左半屏上下 100×18px」改为「卡片全宽 × 10px 上下带」；child 命中面 = 整张卡片（最大）
+- 无效落点反馈：拖拽时源节点整棵子树置灰+红边（`invalid`），悬停其上显示红色虚线框（`blocked`）+ 禁止光标，drop 被拦截
+- 折叠节点自动展开：拖拽悬停到折叠节点的 child 区时自动展开，便于深入层级
+- 修复两个 HTML5 DnD 关键 bug：
+  1. **drop 事件冒泡**：节点 drop 处理后继续冒泡到 canvas `handleDropCanvas`，同一拖拽被二次处理（既按 before/after 又按变根节点）；节点 handler 加 `stopPropagation`
+  2. **无效节点 preventDefault**：对无效节点同时 `preventDefault` + `dropEffect='none'` 会让 Chromium 判定整体不可放置，停止向后续元素派发 dragover，indicator 卡死在源节点；改为仅有效节点 `preventDefault`
+- 新增 `invalidIds`（拖拽源子树）驱动无效高亮；`dropTarget` 增加 `blocked` 档
+- 前端文件：MindMap.tsx / MindMapNode.tsx / MindMapNode.css；无后端/数据库改动
+- 端到端验证（Playwright+Chromium 真实鼠标拖拽）：child/before/after/blocked/变根节点/auto-expand 六项全部通过；同时修复 ESLint 配置与存量代码问题（`eslint.config.js`、死代码清理、any→Task 类型、exhaustive-deps）
 
 ---
 

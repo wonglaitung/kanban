@@ -16,7 +16,6 @@ interface BoardProps {
   onEditColumn: (column: ColumnType) => void;
   onDeleteColumn: (columnId: string) => void;
   onAddColumn: () => void;
-  onTaskMove: (taskId: string, targetColumnId: string, newOrder: number) => Promise<void>;
   onReorder: (updates: Array<{ id: string; order: number; columnId?: string }>) => Promise<void>;
 }
 
@@ -31,7 +30,6 @@ export function Board({
   onEditColumn,
   onDeleteColumn,
   onAddColumn,
-  onTaskMove: _onTaskMove,
   onReorder,
 }: BoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -196,7 +194,6 @@ export function Board({
                 onEdit={() => {}}
                 onDelete={() => {}}
                 onDuplicate={() => {}}
-                isDragging
               />
             </div>
           )}

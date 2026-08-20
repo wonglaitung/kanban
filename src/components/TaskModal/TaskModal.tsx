@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { Task, Comment } from '../../types';
 import { getComments, createComment, updateComment, deleteComment } from '../../services/api';
+import { useCommentCounts } from '../../hooks/useCommentCounts';
 import './TaskModal.css';
 
 interface TaskModalProps {
@@ -60,6 +61,7 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Comments state
+  const { refresh: refreshCommentCounts } = useCommentCounts();
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentLoading, setCommentLoading] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -92,14 +94,7 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
     }
   }, [task, columnId, currentUser]);
 
-  // Load comments
-  useEffect(() => {
-    if (task?.id) {
-      loadComments();
-    }
-  }, [task?.id]);
-
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     if (!task?.id) return;
     try {
       setCommentLoading(true);
@@ -110,7 +105,12 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
     } finally {
       setCommentLoading(false);
     }
-  };
+  }, [task?.id]);
+
+  // Load comments
+  useEffect(() => {
+    loadComments();
+  }, [loadComments]);
 
   const handleChange = (field: string, value: string | number | Task['priority']) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -183,6 +183,7 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
       setNewComment('');
       // Save current user to localStorage
       localStorage.setItem(CURRENT_USER_KEY, currentUser.trim());
+      refreshCommentCounts();
     } catch (error) {
       console.error('Failed to add comment:', error);
       alert('添加评论失败，请重试');
@@ -221,6 +222,7 @@ export function TaskModal({ task, columnId, onSave, onClose }: TaskModalProps) {
     try {
       await deleteComment(commentId);
       setComments(prev => prev.filter(c => c.id !== commentId));
+      refreshCommentCounts();
     } catch (error) {
       console.error('Failed to delete comment:', error);
       alert('删除评论失败，请重试');

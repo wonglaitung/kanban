@@ -108,6 +108,11 @@ api.interceptors.response.use(
 );
 
 // Comments API
+export const getCommentCounts = async (): Promise<Record<string, number>> => {
+  const response = await api.get<Record<string, number>>('/tasks/comments/counts');
+  return response.data;
+};
+
 export const getComments = async (taskId: string): Promise<Comment[]> => {
   const response = await api.get<Comment[]>(`/tasks/${taskId}/comments`);
   return response.data;

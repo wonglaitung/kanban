@@ -1,3 +1,10 @@
+.mindmap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
 .mindmap-canvas {
   flex: 1;
   overflow: auto;
@@ -8,23 +15,33 @@
   position: relative;
 }
 
-.mindmap-toolbar {
+.mindmap-fab {
+  position: absolute;
+  right: 28px;
+  bottom: 28px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  padding: 12px 16px;
-  background: var(--dark-card);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  position: sticky;
-  top: 0;
-  z-index: 5;
+  justify-content: center;
+  background: var(--accent-primary);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 16px var(--shadow-color);
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.mindmap-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--shadow-color);
 }
 
 .mindmap-label {
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
   letter-spacing: 0.02em;
@@ -57,6 +74,17 @@
   gap: 20px;
   min-width: max-content;
   padding: 8px;
+  position: relative;
+}
+
+.mm-insert-line {
+  position: absolute;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--accent-primary);
+  box-shadow: 0 0 8px var(--accent-primary);
+  z-index: 3;
+  pointer-events: none;
 }
 
 .mindmap-empty {
