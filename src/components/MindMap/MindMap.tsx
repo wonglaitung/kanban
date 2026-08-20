@@ -8,12 +8,13 @@ import './MindMap.css';
 
 interface MindMapProps {
   tasks: Task[];
+  doneColumnId?: string;
   onOpenTask: (taskId: string) => void;
 }
 
 type DropPosition = 'before' | 'after' | 'child';
 
-export function MindMap({ tasks, onOpenTask }: MindMapProps) {
+export function MindMap({ tasks, doneColumnId, onOpenTask }: MindMapProps) {
   const { nodes, loading, rootNodes, addNode, editNode, removeNode, moveNode } = useMindMap();
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -221,6 +222,7 @@ export function MindMap({ tasks, onOpenTask }: MindMapProps) {
         <MindMapModal
           node={modalState.node}
           tasks={tasks}
+          doneColumnId={doneColumnId}
           onSave={handleSave}
           onClose={() => setModalState(null)}
         />

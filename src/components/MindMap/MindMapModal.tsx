@@ -6,11 +6,12 @@ import './MindMapModal.css';
 interface MindMapModalProps {
   node: MindMapNode | null;
   tasks: Task[];
+  doneColumnId?: string;
   onSave: (data: { title: string; note: string; color: string; taskId: string }) => Promise<void>;
   onClose: () => void;
 }
 
-export function MindMapModal({ node, tasks, onSave, onClose }: MindMapModalProps) {
+export function MindMapModal({ node, tasks, doneColumnId, onSave, onClose }: MindMapModalProps) {
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
   const [color, setColor] = useState<string>(MINDMAP_COLORS[0].value);
@@ -90,18 +91,21 @@ export function MindMapModal({ node, tasks, onSave, onClose }: MindMapModalProps
             </div>
           </div>
 
-          <div className="form-group">
-            <label>关联任务</label>
-            <select value={taskId} onChange={e => setTaskId(e.target.value)}>
-              <option value="">不关联任务</option>
-              {tasks
-                .slice()
-                .sort((a, b) => a.title.localeCompare(b.title, 'zh'))
-                .map(t => (
-                  <option key={t.id} value={t.id}>{t.title}</option>
-                ))}
-            </select>
-          </div>
+          {doneColumnId && (
+            <div className="form-group">
+              <label>关联任务</label>
+              <select value={taskId} onChange={e => setTaskId(e.target.value)}>
+                <option value="">不关联任务</option>
+                {tasks
+                  .filter(t => t.id === taskId || t.columnId !== doneColumnId)
+                  .slice()
+                  .sort((a, b) => a.title.localeCompare(b.title, 'zh'))
+                  .map(t => (
+                    <option key={t.id} value={t.id}>{t.title}</option>
+                  ))}
+              </select>
+            </div>
+          )}
 
           <div className="form-actions">
             <button type="button" className="cancel-btn" onClick={onClose}>取消</button>

@@ -36,7 +36,7 @@ function App() {
   const [copilotExpanded, setCopilotExpanded] = useState(false);
   const [announcement, setAnnouncement] = useState('');
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
-  const [view, setView] = useState<'board' | 'mindmap'>('board');
+  const [view, setView] = useState<'board' | 'mindmap'>('mindmap');
   const [copilotWidth, setCopilotWidth] = useState(() => {
     const saved = localStorage.getItem('copilot-width');
     return saved ? parseInt(saved, 10) : 400;
@@ -437,7 +437,11 @@ function App() {
         <main className="app-main">
           <AnnouncementBar announcement={announcement} />
           {view === 'mindmap' ? (
-            <MindMap tasks={tasks} onOpenTask={handleOpenTaskById} />
+            <MindMap
+              tasks={tasks}
+              doneColumnId={columns.find(c => c.title === '已完成')?.id}
+              onOpenTask={handleOpenTaskById}
+            />
           ) : (
             <Board
               columns={columns}
