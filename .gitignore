@@ -37,7 +37,7 @@ nohup.out
 .claude/settings.local.json
 
 # opencode local tooling
-.opencode/
+.opencode/*
 !.opencode/commands/
 !.opencode/commands/**
 
