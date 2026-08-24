@@ -38,6 +38,8 @@ nohup.out
 
 # opencode local tooling
 .opencode/
+!.opencode/commands/
+!.opencode/commands/**
 
 # Database (runtime data)
 server/data/
