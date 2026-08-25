@@ -86,6 +86,26 @@ function initSchema() {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_mindmap_parent ON mindmap_nodes(parentId)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_mindmap_task ON mindmap_nodes(taskId)`);
 
+  // Clean up historical duplicate task links (keep earliest node per taskId, null the rest)
+  try {
+    db.exec(`
+      UPDATE mindmap_nodes
+      SET taskId = NULL
+      WHERE id NOT IN (
+        SELECT MIN(id) FROM mindmap_nodes WHERE taskId IS NOT NULL GROUP BY taskId
+      ) AND taskId IS NOT NULL
+    `);
+  } catch (e) {
+    // ignore cleanup errors
+  }
+
+  // Enforce one-to-one link between tasks and mindmap nodes (partial unique index allows multiple NULLs)
+  try {
+    db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_mindmap_task_unique ON mindmap_nodes(taskId) WHERE taskId IS NOT NULL`);
+  } catch (e) {
+    // index already exists
+  }
+
   // Add theme column if it doesn't exist (migration for existing databases)
   try {
     db.exec('ALTER TABLE settings ADD COLUMN theme TEXT DEFAULT \'dark-neon\'');

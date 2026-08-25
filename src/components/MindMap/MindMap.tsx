@@ -300,6 +300,7 @@ export function MindMap({ tasks, doneColumnId, onOpenTask }: MindMapProps) {
       {modalState && (
         <MindMapModal
           node={modalState.node}
+          nodes={nodes}
           tasks={tasks}
           doneColumnId={doneColumnId}
           onSave={handleSave}

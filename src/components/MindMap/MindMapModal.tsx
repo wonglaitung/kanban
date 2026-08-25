@@ -1,23 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { MindMapNode, Task } from '../../types';
 import { MINDMAP_COLORS } from '../../types';
 import './MindMapModal.css';
 
 interface MindMapModalProps {
   node: MindMapNode | null;
+  nodes: MindMapNode[];
   tasks: Task[];
   doneColumnId?: string;
   onSave: (data: { title: string; note: string; color: string; taskId: string }) => Promise<void>;
   onClose: () => void;
 }
 
-export function MindMapModal({ node, tasks, doneColumnId, onSave, onClose }: MindMapModalProps) {
+export function MindMapModal({ node, nodes, tasks, doneColumnId, onSave, onClose }: MindMapModalProps) {
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
   const [color, setColor] = useState<string>(MINDMAP_COLORS[0].value);
   const [taskId, setTaskId] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const linkedTaskIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const n of nodes) {
+      if (n.taskId && n.taskId !== node?.taskId) set.add(n.taskId);
+    }
+    return set;
+  }, [nodes, node]);
 
   useEffect(() => {
     if (node) {
@@ -40,6 +49,10 @@ export function MindMapModal({ node, tasks, doneColumnId, onSave, onClose }: Min
       onClose();
     } catch (error) {
       console.error('Failed to save mind map node:', error);
+      const msg =
+        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        '保存失败，请重试';
+      setErrors(prev => ({ ...prev, form: msg }));
     } finally {
       setLoading(false);
     }
@@ -97,7 +110,7 @@ export function MindMapModal({ node, tasks, doneColumnId, onSave, onClose }: Min
               <select value={taskId} onChange={e => setTaskId(e.target.value)}>
                 <option value="">不关联任务</option>
                 {tasks
-                  .filter(t => t.id === taskId || t.columnId !== doneColumnId)
+                  .filter(t => t.id === taskId || (t.columnId !== doneColumnId && !linkedTaskIds.has(t.id)))
                   .slice()
                   .sort((a, b) => a.title.localeCompare(b.title, 'zh'))
                   .map(t => (
@@ -106,6 +119,8 @@ export function MindMapModal({ node, tasks, doneColumnId, onSave, onClose }: Min
               </select>
             </div>
           )}
+
+          {errors.form && <span className="error form-error">{errors.form}</span>}
 
           <div className="form-actions">
             <button type="button" className="cancel-btn" onClick={onClose}>取消</button>

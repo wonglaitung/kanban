@@ -512,6 +512,13 @@ app.post('/api/mindmap/nodes', (req, res) => {
       return res.status(400).json({ error: 'Title is required' });
     }
 
+    if (taskId) {
+      const clash = db.prepare('SELECT id FROM mindmap_nodes WHERE taskId = ?').get(taskId);
+      if (clash) {
+        return res.status(409).json({ error: '该任务已关联到其他导图节点' });
+      }
+    }
+
     const id = 'mm-' + Date.now();
     const now = new Date().toISOString();
 
@@ -542,6 +549,14 @@ app.put('/api/mindmap/nodes/:id', (req, res) => {
     const existing = db.prepare('SELECT * FROM mindmap_nodes WHERE id = ?').get(id);
     if (!existing) {
       return res.status(404).json({ error: 'MindMap node not found' });
+    }
+
+    const newTaskId = taskId !== undefined ? taskId : existing.taskId;
+    if (newTaskId && newTaskId !== existing.taskId) {
+      const clash = db.prepare('SELECT id FROM mindmap_nodes WHERE taskId = ? AND id != ?').get(newTaskId, id);
+      if (clash) {
+        return res.status(409).json({ error: '该任务已关联到其他导图节点' });
+      }
     }
 
     const now = new Date().toISOString();
