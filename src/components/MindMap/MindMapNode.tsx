@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { MindMapNode as MindMapNodeType, Task } from '../../types';
 import { PRIORITY_LABELS } from '../../types';
 import './MindMapNode.css';
@@ -6,6 +7,7 @@ interface MindMapNodeProps {
   node: MindMapNodeType;
   nodes: MindMapNodeType[];
   tasks: Task[];
+  branchColor: string;
   collapsed: Set<string>;
   draggingId: string | null;
   invalidIds: Set<string>;
@@ -40,6 +42,7 @@ export function MindMapNode({
   node,
   nodes,
   tasks,
+  branchColor,
   collapsed,
   draggingId,
   invalidIds,
@@ -65,6 +68,19 @@ export function MindMapNode({
     .sort((a, b) => a.order - b.order);
   const isCollapsed = collapsed.has(node.id);
 
+  const noteRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [noteOverflow, setNoteOverflow] = useState(false);
+  useEffect(() => {
+    const el = noteRef.current;
+    if (el && node.note) {
+      // clamped（2 行）状态下 clientHeight 为截断高度，scrollHeight 为全文高度；溢出则显示切换按钮
+      setNoteOverflow(el.scrollHeight > el.clientHeight + 1);
+    } else {
+      setNoteOverflow(false);
+    }
+  }, [node.note]);
+
   const handleDragOver = (e: React.DragEvent) => {
     if (!isInvalid) {
       e.preventDefault();
@@ -88,7 +104,7 @@ export function MindMapNode({
   };
 
   return (
-    <div className={`mm-node ${isRoot ? 'root' : ''}`}>
+    <div className={`mm-node ${isRoot ? 'root' : ''}`} style={{ '--branch-color': branchColor } as CSSProperties}>
       <div
         className="mm-node-drop"
         data-node-id={node.id}
@@ -154,7 +170,25 @@ export function MindMapNode({
             </div>
           </div>
 
-          {node.note && <div className="mm-node-note">{node.note}</div>}
+          {node.note && (
+            <>
+              <div
+                ref={noteRef}
+                className={`mm-node-note${expanded ? '' : ' clamped'}`}
+              >
+                {node.note}
+              </div>
+              {noteOverflow && (
+                <button
+                  type="button"
+                  className="mm-note-toggle"
+                  onClick={() => setExpanded(v => !v)}
+                >
+                  {expanded ? '收起' : '展开'}
+                </button>
+              )}
+            </>
+          )}
 
           {linkedTask && (
             <div className="mm-task-summary">
@@ -191,6 +225,7 @@ export function MindMapNode({
               node={child}
               nodes={nodes}
               tasks={tasks}
+              branchColor={branchColor}
               collapsed={collapsed}
               draggingId={draggingId}
               invalidIds={invalidIds}

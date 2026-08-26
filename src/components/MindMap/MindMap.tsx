@@ -6,6 +6,18 @@ import { MindMapModal } from './MindMapModal';
 import { ConfirmDialog } from '../ConfirmDialog';
 import './MindMap.css';
 
+/** 根节点分支色板（暗色背景高区分度，与主题无关）；按根节点出现顺序分配，超出循环复用。 */
+const BRANCH_PALETTE = [
+  '#5AA9E6', // 蓝
+  '#F6AD55', // 橙
+  '#68D391', // 绿
+  '#B794F4', // 紫
+  '#FC8181', // 红
+  '#4FD1C5', // 青
+  '#F687B3', // 粉
+  '#ECC94B', // 黄
+];
+
 interface MindMapProps {
   tasks: Task[];
   doneColumnId?: string;
@@ -257,12 +269,13 @@ export function MindMap({ tasks, doneColumnId, onOpenTask }: MindMapProps) {
           </div>
         ) : (
           <div className="mindmap-tree">
-            {roots.map(root => (
+            {roots.map((root, index) => (
               <MindMapNode
                 key={root.id}
                 node={root}
                 nodes={nodes}
                 tasks={tasks}
+                branchColor={BRANCH_PALETTE[index % BRANCH_PALETTE.length]}
                 collapsed={collapsed}
                 draggingId={draggingId}
                 invalidIds={invalidIds}
