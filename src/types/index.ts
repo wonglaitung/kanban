@@ -52,6 +52,7 @@ export interface MindMapNode {
   taskId: string;
   parentId: string;
   order: number;
+  done?: boolean | number;
   createdAt: string;
   updatedAt: string;
 }

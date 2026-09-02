@@ -12,10 +12,12 @@ interface MindMapNodeProps {
   draggingId: string | null;
   invalidIds: Set<string>;
   dropTarget: DropTarget | null;
+  doneColumnId?: string;
   onToggleCollapse: (id: string) => void;
   onAddChild: (id: string) => void;
   onEdit: (node: MindMapNodeType) => void;
   onDelete: (node: MindMapNodeType) => void;
+  onToggleDone: (id: string, done: boolean) => void;
   onOpenTask: (taskId: string) => void;
   onDragStart: (id: string) => void;
   onDragEnd: () => void;
@@ -47,10 +49,12 @@ export function MindMapNode({
   draggingId,
   invalidIds,
   dropTarget,
+  doneColumnId,
   onToggleCollapse,
   onAddChild,
   onEdit,
   onDelete,
+  onToggleDone,
   onOpenTask,
   onDragStart,
   onDragEnd,
@@ -59,6 +63,8 @@ export function MindMapNode({
 }: MindMapNodeProps) {
   const linkedTask = node.taskId ? tasks.find(t => t.id === node.taskId) : null;
   const isRoot = !node.parentId;
+  const isTaskDone = !!(linkedTask && doneColumnId && linkedTask.columnId === doneColumnId);
+  const isDone = !!node.done || isTaskDone;
   const isDropTarget = dropTarget?.id === node.id;
   const isInvalid = invalidIds.has(node.id);
   const isBlocked = isDropTarget && dropTarget!.zone === 'blocked';
@@ -112,7 +118,7 @@ export function MindMapNode({
         onDrop={handleDrop}
       >
         <div
-          className={`mm-node-card ${draggingId === node.id ? 'dragging' : ''} ${linkedTask ? 'has-task' : ''} ${isInvalid ? 'invalid' : ''} ${isBlocked ? 'drag-over-blocked' : ''} ${isChildTarget ? 'drag-over-child' : ''}`}
+          className={`mm-node-card ${draggingId === node.id ? 'dragging' : ''} ${linkedTask ? 'has-task' : ''} ${isDone ? 'done' : ''} ${isInvalid ? 'invalid' : ''} ${isBlocked ? 'drag-over-blocked' : ''} ${isChildTarget ? 'drag-over-child' : ''}`}
           style={{ borderLeftColor: node.color || undefined }}
           draggable
           onDragStart={e => {
@@ -137,6 +143,13 @@ export function MindMapNode({
               <span className="mm-collapse-placeholder" />
             )}
             <span className="mm-node-title">{node.title}</span>
+            {isDone && (
+              <span className="mm-done-badge" title={isTaskDone ? '任务已完成' : '手工标记'}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </span>
+            )}
             <div className="mm-node-actions">
               <button
                 className="mm-action-btn"
@@ -158,6 +171,16 @@ export function MindMapNode({
                 </svg>
               </button>
               <button
+                className="mm-action-btn done-toggle"
+                disabled={isTaskDone}
+                onClick={e => { e.stopPropagation(); onToggleDone(node.id, !node.done); }}
+                title={isTaskDone ? '由关联任务状态决定，请在看板移动任务' : node.done ? '取消完成标记' : '标记完成'}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </button>
+              <button
                 className="mm-action-btn delete"
                 onClick={e => { e.stopPropagation(); onDelete(node); }}
                 title="删除节点"
@@ -170,7 +193,7 @@ export function MindMapNode({
             </div>
           </div>
 
-          {node.note && (
+          {!isDone && node.note && (
             <>
               <div
                 ref={noteRef}
@@ -190,7 +213,7 @@ export function MindMapNode({
             </>
           )}
 
-          {linkedTask && (
+          {linkedTask && !isDone && (
             <div className="mm-task-summary">
               <button
                 className="mm-task-link"
@@ -230,10 +253,12 @@ export function MindMapNode({
               draggingId={draggingId}
               invalidIds={invalidIds}
               dropTarget={dropTarget}
+              doneColumnId={doneColumnId}
               onToggleCollapse={onToggleCollapse}
               onAddChild={onAddChild}
               onEdit={onEdit}
               onDelete={onDelete}
+              onToggleDone={onToggleDone}
               onOpenTask={onOpenTask}
               onDragStart={onDragStart}
               onDragEnd={onDragEnd}

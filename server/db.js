@@ -106,6 +106,13 @@ function initSchema() {
     // index already exists
   }
 
+  // Add done column to mindmap_nodes if it doesn't exist (migration for completion marking)
+  try {
+    db.exec('ALTER TABLE mindmap_nodes ADD COLUMN done INTEGER DEFAULT 0');
+  } catch (e) {
+    // Column already exists, ignore error
+  }
+
   // Add theme column if it doesn't exist (migration for existing databases)
   try {
     db.exec('ALTER TABLE settings ADD COLUMN theme TEXT DEFAULT \'dark-neon\'');

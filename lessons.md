@@ -2,6 +2,14 @@
 
 ## 思维导图开发经验
 
+### 37i. 本地多实例联调：PORT 与 WS_PORT 是两个独立端口
+**问题背景**: 临时起第二个后端实例验证 API 时，设 `PORT=3013` 后 curl 仍返回 HTTP 426 "Upgrade Required"——server.js 里 `WS_PORT = process.env.WS_PORT || 3003` 与 PORT 无关，WebSocket（ws）独立监听 3003；更隐蔽的是 Windows 下同端口可被两个套接字绑定（SO_REUSEADDR），日志显示 "API running on port 3003" 但请求实际落到 ws，排查易被日志误导
+**经验总结**:
+- 本仓库后端占**两个**端口：API（PORT，默认 3001）+ WebSocket（WS_PORT，默认 3003）；起临时实例必须同时设 `set PORT=X&& set WS_PORT=Y&& node server.js`
+- HTTP 426 Upgrade Required 来自 ws 对非升级请求的固定响应——见到它先想到"打到 WebSocket 端口了"，不是 API 挂了
+- Windows 上 netstat 显示某端口 LISTENING 不代表是你以为的进程；用 PowerShell `Get-CimInstance Win32_Process -Filter "Name='node.exe'"` 按 CommandLine 精确找到自己起的实例再 taskkill
+- 非交互 shell 里 `timeout /t N` 会报 "Input redirection is not supported"，用 `ping -n N 127.0.0.1 >nul` 代替延时
+
 ### 37h. 兄弟重排的终极方案：插入线跟随光标（取代按卡分区）
 **问题背景**: 用户第三次反馈"2 和 4 交换位置困难"。v4 二维分区逻辑正确（e2e 实测能交换），但 UX 仍差：定位需拖过中间节点精确命中小区域；第一个子节点上方仅 10px 细带且易误触父节点（拖到父卡会变成根节点/追加）
 **改进（v5）**: 插入线跟随光标模型

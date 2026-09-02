@@ -1,5 +1,18 @@
 # 项目进度记录
 
+## 2026-09-02 思维导图完成标记：已完成节点打标 + 瘦身单行
+
+- 需求：思维导图中已完成的卡片不删除、做特殊标记；且完成后「缩小只剩标题，不占地方」；支持手工打标
+- 语义：节点完成 = 手工 done 标记 ∪ （关联任务在看板「已完成」列）；两来源视觉一致（绿 ✓ 徽标 + 标题划线 + 降透明度 0.55），tooltip 区分来源
+- 瘦身：isDone 时隐藏 note 与任务摘要区，卡片自然缩至单行标题；树结构/折叠/拖拽/hover 操作全保留；取消打标即恢复完整卡片
+- 打标交互：hover 操作区新增 ✓ 按钮（添加/编辑/删除之外第 4 个）；节点关联任务已在已完成列时按钮禁用（提示去看板移动任务），防止状态打架
+- 数据：mindmap_nodes 加 done 列（ALTER TABLE + try/catch 幂等迁移，DEFAULT 0）；PUT /api/mindmap/nodes/:id 接受 done（0/1 归一化，body 未携带时保留旧值——Modal 编辑不误清）；MindMapNode.done?: boolean | number（SQLite 返回 0/1）
+- 前端：MindMap.tsx（handleToggleDone 转调 editNode、doneColumnId 下传）/ MindMapNode.tsx（isDone 判定、徽标、瘦身、递归透传）/ MindMapNode.css（.done 样式、徽标、禁用态）
+- 验证：lint/build 通过；API 语义 4 例（创建0/打标1/仅改标题保留1/取消0）；UI 手工打标与瘦身渲染用户实测通过；测试节点已清理
+- 文件：server/db.js、server/server.js、src/types/index.ts、src/components/MindMap/{MindMap,MindMapNode}.tsx、MindMapNode.css
+
+---
+
 ## 2026-08-20 兄弟交换仍难 → 插入线跟随光标模型 v5
 
 - 反馈「2 和 4 交换位置还是困难」：v4 二维分区逻辑正确（实测可交换），难点在于**定位**——需拖过中间节点、精确命中小区域，且第一个子节点上方只有 10px 细带，易误触父节点

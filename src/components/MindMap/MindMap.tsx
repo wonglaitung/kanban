@@ -70,6 +70,13 @@ export function MindMap({ tasks, doneColumnId, onOpenTask }: MindMapProps) {
     setDeleteNode(null);
   }, [deleteNode, removeNode]);
 
+  const handleToggleDone = useCallback(
+    (id: string, done: boolean) => {
+      editNode(id, { done });
+    },
+    [editNode]
+  );
+
   // --- Drag & Drop ---
   const handleDragStart = useCallback((id: string) => {
     setDraggingId(id);
@@ -280,10 +287,12 @@ export function MindMap({ tasks, doneColumnId, onOpenTask }: MindMapProps) {
                 draggingId={draggingId}
                 invalidIds={invalidIds}
                 dropTarget={dropTarget}
+                doneColumnId={doneColumnId}
                 onToggleCollapse={toggleCollapse}
                 onAddChild={handleAddChild}
                 onEdit={node => setModalState({ node, parentId: node.parentId })}
                 onDelete={setDeleteNode}
+                onToggleDone={handleToggleDone}
                 onOpenTask={onOpenTask}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}

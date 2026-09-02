@@ -544,7 +544,7 @@ app.post('/api/mindmap/nodes', (req, res) => {
 app.put('/api/mindmap/nodes/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const { title, note, color, taskId } = req.body;
+    const { title, note, color, taskId, done } = req.body;
 
     const existing = db.prepare('SELECT * FROM mindmap_nodes WHERE id = ?').get(id);
     if (!existing) {
@@ -562,7 +562,7 @@ app.put('/api/mindmap/nodes/:id', (req, res) => {
     const now = new Date().toISOString();
     const stmt = db.prepare(`
       UPDATE mindmap_nodes SET
-        title = ?, note = ?, color = ?, taskId = ?, updatedAt = ?
+        title = ?, note = ?, color = ?, taskId = ?, done = ?, updatedAt = ?
       WHERE id = ?
     `);
     stmt.run(
@@ -570,6 +570,7 @@ app.put('/api/mindmap/nodes/:id', (req, res) => {
       note !== undefined ? note : existing.note,
       color !== undefined ? color : existing.color,
       taskId !== undefined ? taskId : existing.taskId,
+      done !== undefined ? (done ? 1 : 0) : (existing.done ?? 0),
       now,
       id
     );
