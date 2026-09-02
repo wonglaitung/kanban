@@ -512,8 +512,9 @@ app.post('/api/mindmap/nodes', (req, res) => {
       return res.status(400).json({ error: 'Title is required' });
     }
 
-    if (taskId) {
-      const clash = db.prepare('SELECT id FROM mindmap_nodes WHERE taskId = ?').get(taskId);
+    const cleanTaskId = taskId ? taskId : null;
+    if (cleanTaskId) {
+      const clash = db.prepare('SELECT id FROM mindmap_nodes WHERE taskId = ?').get(cleanTaskId);
       if (clash) {
         return res.status(409).json({ error: '该任务已关联到其他导图节点' });
       }
@@ -531,7 +532,7 @@ app.post('/api/mindmap/nodes', (req, res) => {
       INSERT INTO mindmap_nodes (id, title, note, color, taskId, parentId, "order", createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    stmt.run(id, title, note || '', color || '', taskId || null, parentId || null, maxOrder + 1, now, now);
+    stmt.run(id, title, note || '', color || '', cleanTaskId, parentId || null, maxOrder + 1, now, now);
 
     const node = db.prepare('SELECT * FROM mindmap_nodes WHERE id = ?').get(id);
     res.status(201).json(node);
@@ -551,7 +552,7 @@ app.put('/api/mindmap/nodes/:id', (req, res) => {
       return res.status(404).json({ error: 'MindMap node not found' });
     }
 
-    const newTaskId = taskId !== undefined ? taskId : existing.taskId;
+    const newTaskId = taskId !== undefined ? (taskId ? taskId : null) : existing.taskId;
     if (newTaskId && newTaskId !== existing.taskId) {
       const clash = db.prepare('SELECT id FROM mindmap_nodes WHERE taskId = ? AND id != ?').get(newTaskId, id);
       if (clash) {
@@ -569,7 +570,7 @@ app.put('/api/mindmap/nodes/:id', (req, res) => {
       title ?? existing.title,
       note !== undefined ? note : existing.note,
       color !== undefined ? color : existing.color,
-      taskId !== undefined ? taskId : existing.taskId,
+      newTaskId,
       done !== undefined ? (done ? 1 : 0) : (existing.done ?? 0),
       now,
       id
